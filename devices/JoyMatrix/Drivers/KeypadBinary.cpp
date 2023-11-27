@@ -1,3 +1,4 @@
+#include "MatrixOS.h"
 #include "Device.h"
 // #include "ulp_keypad.h"
 #include "ulp_riscv.h"
@@ -19,6 +20,15 @@ namespace Device::KeyPad::Binary
     for (uint8_t y = 0; y < y_size; y++)
     { io_conf.pin_bit_mask |= (1ULL << keypad_read_pins[y]); }
     gpio_config(&io_conf);
+
+    // Config FuncInput Pins
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    io_conf.pin_bit_mask = 0;
+    io_conf.pin_bit_mask |= (1ULL << keypad_funcRead_pins[0]);
+    gpio_config(&io_conf);
     
     // Config Output Pins
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -30,6 +40,8 @@ namespace Device::KeyPad::Binary
     { io_conf.pin_bit_mask |= (1ULL << keypad_write_pins[x]); }
     gpio_config(&io_conf);
 
+
+
     // Set all output pins to low
     for (uint8_t x = 0; x < 4; x++)
     { gpio_set_level(keypad_write_pins[x], 0); }
@@ -38,6 +50,25 @@ namespace Device::KeyPad::Binary
     {
       for (uint8_t y = 0; y < y_size; y++)
       { keypadState[x][y].setConfig(&keypad_config); }
+      
+      if(x<4)
+      {
+        switch (x)
+        {
+          case 0:
+            RShiftState.setConfig(&keypad_config);
+            break;
+          case 1:
+            LShiftState.setConfig(&keypad_config);
+            break;
+          case 2:
+            LAltState.setConfig(&keypad_config);
+            break;
+          case 3:
+            RAltState.setConfig(&keypad_config);
+            break;
+        }
+      }
     }
   }
 
@@ -74,12 +105,18 @@ namespace Device::KeyPad::Binary
   {
     for(uint8_t x = 0; x < x_size; x++)
     {
-      gpio_set_level(keypad_write_pins[3], x < 8 ? 0 : 1);
+      //TODO 需要更好的代码提高gpio翻转速度
+      //gpio_set_level(keypad_write_pins[3], x < 8 ? 0 : 1);
 
       for(uint8_t a = 0; a < 4; a++) {
         gpio_set_level(keypad_write_pins[a], (x >> a) & 1);
       }
-      
+
+      for(uint8_t a = 0; a < 4; a++) {
+        gpio_set_level(keypad_write_pins[a], (x >> a) & 1);
+      }
+
+
       for(uint8_t y = 0; y < y_size; y++)
       {
         Fract16 reading = gpio_get_level(keypad_read_pins[y]) * FRACT16_MAX;
@@ -95,8 +132,59 @@ namespace Device::KeyPad::Binary
           }
         }     
       }
-    }
 
+      if (x < 4) // RShift LShift RAlt LAlt
+      { 
+        Fract16 reading = gpio_get_level(keypad_funcRead_pins[0]) * FRACT16_MAX;
+        switch (x)
+        {
+          case 0:
+          {
+            bool updated = RShiftState.update(reading, false);
+            if (updated){
+              if (NotifyOS(1, &RShiftState))
+              {
+                return true;
+              }
+            }
+            break;
+          }
+          case 1:
+          {
+            bool updated = LShiftState.update(reading, false);
+            if (updated){
+              if (NotifyOS(2, &LShiftState))
+              {
+                return true;
+              }
+            }
+            break;
+          }
+          case 2:
+          {
+            bool updated = LAltState.update(reading, false);
+            if (updated){
+              if (NotifyOS(3, &LAltState))
+              {
+                return true;
+              }
+            }
+            break;
+          }
+          case 3:
+          {
+            bool updated = RAltState.update(reading, false);
+            if (updated){
+              if (NotifyOS(4, &RAltState))
+              {
+                return true;
+              }
+            }
+            break;
+          }
+        }
+      }
+    }
     return false;
   }
 }

@@ -21,7 +21,7 @@ namespace Device
 
     I2C::Init();
     Encoder::Init();
-    Rocker::Init();
+    AnalogInput::Init();
 
     HWMidi::Init();
     BLEMIDI::Init(name);
@@ -54,7 +54,6 @@ namespace Device
     {
       KeyPad::Clear();
       MatrixOS::UserVar::brightness.Set(Device::brightness_level[0]);
-      MatrixOS::UserVar::currentBrightness.Set(Device::brightness_level[0]);
     }
     else if (KeyPad::GetKey(KeyPad::XY2ID(Point(0, 1)))->velocity &&
              KeyPad::GetKey(KeyPad::XY2ID(Point(1, 2)))->velocity &&
@@ -69,7 +68,6 @@ namespace Device
       Device::NVS::Clear();
       MatrixOS::SYS::Reboot();
     }
-    MatrixOS::UserVar::currentBrightness = MatrixOS::UserVar::brightness; // 没找到怎么储存UserVar，用启动时赋值代替
   }
 
   void LoadDeviceInfo() {

@@ -26,6 +26,10 @@
 
 
 #define FUNCTION_KEY 0  // Keypad Code for main function key
+#define RSHIFT_KEY   1
+#define LSHIFT_KEY   2
+#define LALT_KEY     3
+#define RALT_KEY     4
 #define DEVICE_SETTING
 
 #define DEVICE_SAVED_VAR_SCOPE "Device"
@@ -64,6 +68,9 @@ namespace Device
     void Scan();
     bool ScanKeyPad();
     bool ScanFN();
+    bool ShiftActived();
+    bool AltActived();
+    uint8_t GetVelocity();
     // bool ScanTouchBar();
 
     namespace Binary
@@ -87,37 +94,26 @@ namespace Device
   namespace I2C
   {
     void Init();
-    uint16_t PCF8575_Read();
-    void ADS1115_Write(uint8_t ADDR, uint8_t Reg, uint8_t reg_MSB, uint8_t reg_LSB);
-    uint16_t ADS1115_Read(uint8_t ADDR);
-    void ADS1115_Setting(uint8_t ADDR, uint8_t MUX);
+    uint16_t PCF8574_Read();
   }
 
-  namespace Rocker
+  namespace AnalogInput
   {
     void Init();
     void Scan();
-    int8_t GetX(uint8_t LR);
-    int8_t GetY(uint8_t LR);
-    uint8_t GetButton(uint8_t LR);
-    uint8_t GetPressure(uint8_t LR);
-    void SetChannel(uint8_t* channel);
-    void ModWheelOff(uint8_t n);
-    void ModWheelLock();
+    uint16_t* GetPtr(string input);
+    uint16_t GetRaw(string input);
+    int8_t GetRocker(AnalogConfig config);
+    void PitchWheel();
   }
 
   namespace Encoder
   {
     void Init();
-    void Setup(Color* ColorInput, uint8_t Type , uint8_t Ch , uint8_t Val , int32_t* Ptr, int32_t Min ,int32_t Max, int32_t Default, uint8_t n);
-    void Scan();
-    void Encoder_Read(void* arg);
-    void encoder_isr_handler(void* arg);
-    Color* GetColor(uint8_t n);
-    int32_t* GetValue(uint8_t n);
-    int32_t* GetDefault(uint8_t n);
-    uint8_t* GetActiveKnob();
-    void knobFunction(uint8_t n);
+    void Setup(KnobConfig *config, uint8_t n);
+    void Disable(uint8_t n);
+    void DisableAll();
+    KnobConfig* GetConfig(uint8_t n);
   }
 
   namespace NVS

@@ -28,6 +28,7 @@ namespace MatrixOS
   namespace SYS
   {
     inline bool inited = false;
+    inline bool FNExit = false;
     void Init(void);
 
     uint32_t Millis(void);
@@ -80,7 +81,6 @@ namespace MatrixOS
                                // ID is assigned to given XY
     Point ID2XY(uint16_t keyID);  // Locate XY for given key ID, return Point(INT16_MIN, INT16_MIN) if no XY found for
                                   // given ID;
-
   }
 
   namespace USB
@@ -113,8 +113,12 @@ namespace MatrixOS
     noexpose void Init(void);
 
     bool Get(MidiPacket* midiPacketDest, uint16_t timeout_ms = 0);
-    bool Send(MidiPacket midiPacket, uint16_t timeout_ms = 0);
+    bool Send(MidiPacket midiPacket, uint16_t timeout_ms); // In os\framwork\ComponentVariable.h header file
     bool SendSysEx(uint16_t port, uint16_t length, uint8_t* data, bool includeMeta = true);  // If include meta, it will send the correct header and ending;
+    void HoldNote(uint8_t channel, uint8_t note, Point xy);
+    bool CheckHoldingNote(uint8_t channel, uint8_t note);
+    bool CheckHoldingNote(Point xy);
+    bool CheckHoldingNote();
 
     // Those APIs are only for MidiPort to use
     noexpose bool RegisterMidiPort(uint16_t port_id, MidiPort* midiPort);

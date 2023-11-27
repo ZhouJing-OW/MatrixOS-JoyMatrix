@@ -24,7 +24,6 @@ void BrightnessControl::Start() {
   UITwoToneSelector brightnessSelector(dimension, map_length, Color(0xFFFFFF), Color(0xFF0000), (uint8_t*)&MatrixOS::UserVar::brightness.value, threshold, map,
                                        [&](uint8_t value) -> void {
                                          MatrixOS::UserVar::brightness.Set(value);
-                                         MatrixOS::UserVar::currentBrightness.Set(value);
                                          displayValue = value / multiplier;
                                        });
   AddUIComponent(brightnessSelector,

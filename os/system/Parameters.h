@@ -29,7 +29,7 @@
 
 #define USB_CDC_COUNT 0  // There will be one extra  used by the system, actual count is USB_CDC_COUNT + 1
 #define USB_MIDI_COUNT 1
-#define USB_HID_COUNT 1
+#define USB_HID_COUNT 0
 #define USB_MSC_COUNT 0
 #define USB_VENDOR_COUNT 0
 

@@ -106,6 +106,8 @@ struct KeyInfo {
   bool update(Fract16 velocity, bool applyCurve = true) {
     if (config == nullptr)
     { return false; }
+
+    if (applyCurve && config->velocity_sensitive)
     { velocity = applyVelocityCurve(velocity); }
 
     // Reset back to normal keys

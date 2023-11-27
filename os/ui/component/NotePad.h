@@ -1,16 +1,22 @@
 #pragma once
 
+#include "UIComponent.h"
 #include "MatrixOS.h"
 
-class MainNotePad : public UIComponent {
+class NotePad : public UIComponent {
  public:
   Dimension dimension;
-  MainPadConfig* config;
+  NotePadConfig* config;
   std::vector<uint8_t> noteMap;
-  std::unordered_map<uint8_t, uint8_t> activeNotes;
-  uint8_t AT;
+  Point position = Point(0, 0);
 
-  virtual Color GetColor() { return config->rootColor; }
+  NotePad(Dimension dimension, NotePadConfig* config) {
+    this->dimension = dimension;
+    this->config = config;
+    GenerateKeymap();
+  }
+
+  virtual Color GetColor() { return config->color; }
   virtual Dimension GetSize() { return dimension; }
 
   uint8_t InScale(uint8_t note) {
@@ -78,6 +84,7 @@ class MainNotePad : public UIComponent {
   }
 
   virtual bool Render(Point origin) {
+    position = origin;
     uint8_t index = 0;
     for (int8_t y = 0; y < dimension.y; y++)
     {
@@ -86,14 +93,14 @@ class MainNotePad : public UIComponent {
         uint8_t note = noteMap[index];
         Point globalPos = origin + Point(x, y);
         if (note == 255)
-        { MatrixOS::LED::SetColor(globalPos, Color(0)); }
-        else if (activeNotes.find(note) != activeNotes.end())  // If find the note is currently active. Show it as white
-        { MatrixOS::LED::SetColor(globalPos, Color(0xFFFFFF)); }
+        { MatrixOS::LED::SetColor(globalPos, COLOR_BLANK); }
+        else if (MatrixOS::MIDI::CheckHoldingNote(config->channel, note))  // If find the note is currently active. Show it as white
+        { MatrixOS::LED::SetColor(globalPos, COLOR_WHITE); }
         else
         {
           uint8_t inScale = InScale(note);  // Check if the note is in scale.
           if (inScale == 0)
-          { MatrixOS::LED::SetColor(globalPos, Color(0)); }
+          { MatrixOS::LED::SetColor(globalPos, COLOR_BLANK); }
           else if (inScale == 1)
           { MatrixOS::LED::SetColor(globalPos, config->color); }
           else if (inScale == 2)
@@ -110,40 +117,11 @@ class MainNotePad : public UIComponent {
     uint8_t note = noteMap[xy.y * dimension.x + xy.x];
     if (note == 255)
     { return false; }
-    if (keyInfo->state == PRESSED)
-    { 
-      uint8_t pressure;
-      if (Device::pressure > MatrixOS::UserVar::pressureToVelocity_Min)
-        pressure = Device::pressure;
-      else
-        pressure = MatrixOS::UserVar::pressureToVelocity_Min;
-      if (pressure > MatrixOS::UserVar::pressureToVelocity_Max)
-        pressure = MatrixOS::UserVar::pressureToVelocity_Max;
-
-      MatrixOS::MIDI::Send(MidiPacket(0, NoteOn, config->channel, note, MatrixOS::UserVar::pressureSensitive ? pressure : MatrixOS::UserVar::pressureToVelocity_Default));
-      activeNotes[note]++;  // If this key doesn't exist, unordered_map will auto assign it to 0.
-    }
-    else if (MatrixOS::UserVar::pressureSensitive && keyInfo->state == AFTERTOUCH)
-    {       
-      if (Device::pressure != AT){
-        MatrixOS::MIDI::Send(MidiPacket(0, AfterTouch, config->channel, note, Device::pressure));
-        MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, config->channel, 74, Device::pressure));
-        AT = Device::pressure;
-      }
-    }
-    else if (keyInfo->state == RELEASED)
-    {
-      MatrixOS::MIDI::Send(MidiPacket(0, NoteOff, config->channel, note, 0));
-      if (activeNotes[note]-- <= 1)
-      { activeNotes.erase(note); }
+    if (keyInfo->state == PRESSED) {
+      MatrixOS::MIDI::HoldNote(config->channel, note, xy + position);
     }
     return true;
   }
 
-  MainNotePad(Dimension dimension, MainPadConfig* config) {
-    this->dimension = dimension;
-    this->config = config;
-    activeNotes.reserve(8);
-    GenerateKeymap();
-  }
+  
 };

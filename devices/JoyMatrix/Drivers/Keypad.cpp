@@ -1,4 +1,5 @@
 // Define Device Keypad Function
+#include "MatrixOS.h"
 #include "Device.h"
 #include "timers.h"
 
@@ -90,13 +91,28 @@ namespace Device::KeyPad
     return false;
   }
 
+  bool ShiftActived() {
+    bool actived = (Device::KeyPad::GetKey(RSHIFT_KEY)->active()) | (Device::KeyPad::GetKey(LSHIFT_KEY)->active());
+    return actived;
+  }
+
+  bool AltActived() {
+    bool actived = (Device::KeyPad::GetKey(RALT_KEY)->active()) | (Device::KeyPad::GetKey(LALT_KEY)->active());
+    return actived;
+  }
+
   void Clear() {
     fnState.Clear();
+    RShiftState.Clear();
+    LShiftState.Clear();
+    LAltState.Clear();
+    RAltState.Clear();
 
     for (uint8_t x = 0; x < x_size; x++)
     {
       for (uint8_t y = 0; y < y_size; y++)
-      { keypadState[x][y].Clear(); }
+      { if(!MatrixOS::MIDI::CheckHoldingNote(Point(x,y)))
+        keypadState[x][y].Clear(); }
     }
 
     // for (uint8_t i = 0; i < touchbar_size; i++)
@@ -114,6 +130,14 @@ namespace Device::KeyPad
         {
           case 0:
             return &fnState;
+          case 1:
+            return &RShiftState;
+          case 2:
+            return &LShiftState;
+          case 3:
+            return &LAltState;
+          case 4:
+            return &RAltState;
         }
         break;
       }
@@ -185,5 +209,20 @@ namespace Device::KeyPad
       }*/
     }
     return Point(INT16_MIN, INT16_MIN);
+  }
+
+  uint8_t GetVelocity(){
+    uint8_t velocity;
+    if (Device::KeyPad::pressureSensitive == true)
+    {
+      uint8_t range = Device::KeyPad::velocity_max - Device::KeyPad::velocity_min;
+      uint8_t devicePressure = Device::KeyPad::LPressure >= Device::KeyPad::RPressure ? Device::KeyPad::LPressure : Device::KeyPad::RPressure;
+      velocity = devicePressure * range / 127 + Device::KeyPad::velocity_min;
+    }
+    else
+    {
+      velocity = Device::KeyPad::velocity_def;
+    }
+    return velocity;
   }
 }

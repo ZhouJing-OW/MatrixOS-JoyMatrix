@@ -8,7 +8,6 @@ extern std::unordered_map<uint32_t, Application_Info*> applications;
 
 namespace MatrixOS::SYS
 {
-
   void ApplicationFactory(void* param) {
     MLOGD("Application Factory", "App ID %X", active_app_id);
 
@@ -164,14 +163,12 @@ namespace MatrixOS::SYS
         // ESP_LOGI("System".c_str(), "Brightness Level Selected");
         MLOGD("System", "Brightness Level Selected");
         UserVar::brightness = new_brightness;
-        UserVar::currentBrightness = new_brightness;
         return;
       }
     }
     // ESP_LOGI("System".c_str(), "Lowest Level Selected");
     MLOGD("System", "Lowest Level Selected");
     UserVar::brightness = Device::brightness_level[0];
-    UserVar::currentBrightness = Device::brightness_level[0];
   }
 
   uint32_t GenerateAPPID(string author, string app_name) {

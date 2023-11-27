@@ -34,6 +34,9 @@ class Color {
   static void RgbToHsv(Color rgb, float* h, float* s, float* v);
 
   operator bool() { return R || G || B || W; }
+  bool operator==(const Color& other) const { 
+    return R == other.R && G == other.G && B == other.B && W == other.W;
+  }
 };
 
 const uint8_t led_gamma[256] = {
@@ -49,3 +52,18 @@ const uint8_t led_gamma[256] = {
     126, 127, 129, 131, 133, 135, 137, 138, 140, 142, 144, 146, 148, 150, 152, 154, 156, 158, 160, 162, 164, 167,
     169, 171, 173, 175, 177, 180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213, 215, 218,
     220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255};
+
+const Color COLOR_RED = Color(0xFF0000); //#FF0000
+const Color COLOR_PINK = Color(0xFF0080); //#FF0080
+const Color COLOR_ORANGE = Color(0xFF8000); //#FF8000
+const Color COLOR_YELLOW = Color(0xFFFF00); //#FFFF00
+const Color COLOR_GREEN = Color(0x80FF00); //#80FF00
+const Color COLOR_LIME = Color(0x00FF00); //#00FF00
+const Color COLOR_GUPPIE = Color(0x00FF80); //#00FF80
+const Color COLOR_CYAN = Color(0x00FFFF); //#00FFFF
+const Color COLOR_AZURE = Color(0x0080FF); //#0080FF
+const Color COLOR_BLUE = Color(0x0000FF); //#0000FF
+const Color COLOR_VIOLET = Color(0x8000FF); //#8000FF
+const Color COLOR_FUCHSIA = Color(0xFF00FF); //#FF00FF
+const Color COLOR_WHITE = Color(0xFFFFFF); //#FFFFFF
+const Color COLOR_BLANK = Color(0x000000); //#000000

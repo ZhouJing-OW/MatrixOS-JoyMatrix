@@ -6,7 +6,8 @@
 #include "applications/CustomKeymap/CustomKeymap.h"
 
 // USER APPLICATION
-#include "applications/MainPad/MainPad.h"
+#include "applications/Drambo/Drambo.h"
+// #include "applications/MainPad/MainPad.h"
 // #include "applications/Lighting/Lighting.h"
 #include "applications/HIDtest/HIDtest.h"
 

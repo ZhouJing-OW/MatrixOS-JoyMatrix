@@ -2,7 +2,6 @@
 
 #include "MatrixOS.h"
 
-
 class ChannelButton : public UIComponent {
  public:
   Dimension dimension;
@@ -61,7 +60,7 @@ class ChannelButton : public UIComponent {
       if(Device::muteState == true){
         MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, config->channelCH[i], config->channelMute[i], 127));
       }
-      else if (Device::leftShift | Device::rightShift)
+      else if (Device::KeyPad::shiftActived())
       {
         MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, config->channelCH[i], config->channelSelect[i], 127));
         MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, config->channelCH[i], config->channelSolo[i], 127));
@@ -86,7 +85,7 @@ class ChannelButton : public UIComponent {
     {
       if(Device::muteState == true){
         MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, config->channelCH[i], config->channelMute[i], 0));
-      } else if(Device::leftShift | Device::rightShift){
+      } else if(Device::KeyPad::shiftActived()){
         MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, config->channelCH[i], config->channelSelect[i], 0));
         MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, config->channelCH[i], config->channelSolo[i], 0));
       } else {

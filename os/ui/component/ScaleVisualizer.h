@@ -1,5 +1,6 @@
 #pragma once
 
+#include "UIComponent.h"
 #include "MatrixOS.h"
 
 class ScaleVisualizer : public UIComponent {
@@ -9,7 +10,7 @@ class ScaleVisualizer : public UIComponent {
   Color color;
   Color rootColor;
 
-  ScaleVisualizer(uint8_t* rootKey, uint16_t* scale, Color color = Color(0x00FFFF), Color rootColor = Color(0x0040FF)) {
+  ScaleVisualizer(uint8_t* rootKey, uint16_t* scale, Color color = COLOR_CYAN, Color rootColor = COLOR_AZURE) {
     this->rootKey = rootKey;
     this->scale = scale;
     this->color = color;

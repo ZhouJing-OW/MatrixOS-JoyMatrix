@@ -10,7 +10,16 @@ namespace MatrixOS::UIInterface
 
     UI numberSelector(name, color);
 
-    Device::Encoder::Setup(&color, 2, 0, 0, &value, lower_limit, upper_limit, 0, 0); 
+    KnobConfig knobConfig = {
+        .name = name,
+        .color = color,
+        .value2 = value,
+        .min = lower_limit,
+        .max = upper_limit,
+    };
+
+    Device::Encoder::DisableAll();
+    Device::Encoder::Setup(&knobConfig, 0);
 
     UIButtonWithColorFunc knobColor(
     "", [&]() -> Color { return color.Scale(value * 239 / upper_limit  + 16); }, [&]() -> void {}, [&]() -> void {});
@@ -54,8 +63,8 @@ namespace MatrixOS::UIInterface
 
 
     numberSelector.Start();
-    
-    Device::Encoder::Setup(&color, 0, 0, 0, nullptr, 0, 127, 0, 0);
+
+    Device::Encoder::DisableAll();
     return value;
   }
 }

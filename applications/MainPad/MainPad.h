@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MatrixOS.h"
-#include "applications/Note/Scales.h"
+// #include "applications/Note/Scales.h"
 #include "UI/UI.h"
 #include "applications/Application.h"
 
@@ -24,8 +24,6 @@ struct MainPadConfig {
     bool enfourceScale = true;
     bool alignRoot = true;  // Only works when overlap is set to 0
     bool followChannelChange = false;
-
-    bool emptyBit[5]; //空位，用于对齐16bit
 };
 
 #define CC_CONFIGS_HASH StaticHash("ZhouJing-Main-buttonConfigs")
@@ -63,8 +61,6 @@ struct KnobConfig {
    int32_t defaultValue[4][8];
    Color color[4] = {Color(0x9900FF)};
    bool followChannelChange[4] = {true};
-
-   bool emptyBit[4]; //空位，用于对齐8bit
 };
 
 class MainPad : public Application {
@@ -77,14 +73,6 @@ class MainPad : public Application {
   CreateSavedVar("MainPad", lastActiveConfig1, uint8_t, 0);
   CreateSavedVar("MainPad", lastActiveConfig2, uint8_t, 1);
   CreateSavedVar("MainPad", splitView, bool, false);
-
-  CreateSavedVar("MainPad", emptybit2, bool, 0); //空位，用于对齐8bit
-  CreateSavedVar("MainPad", emptybit3, bool, 0);
-  CreateSavedVar("MainPad", emptybit4, bool, 0);
-  CreateSavedVar("MainPad", emptybit5, bool, 0);
-  CreateSavedVar("MainPad", emptybit6, bool, 0);
-  CreateSavedVar("MainPad", emptybit7, bool, 0);
-  CreateSavedVar("MainPad", emptybit8, bool, 0);
 
   void Setup() override;
 

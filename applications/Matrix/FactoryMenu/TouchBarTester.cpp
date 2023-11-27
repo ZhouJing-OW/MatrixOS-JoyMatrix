@@ -1,4 +1,4 @@
-#include "FactoryMenu.h"
+/* #include "FactoryMenu.h"
 
 void FactoryMenu::TouchBarTester() {
   bool touchbar_tested[32];
@@ -77,3 +77,5 @@ void FactoryMenu::TouchBarTester() {
   MatrixOS::KEYPAD::Clear();
   MatrixOS::LED::Fill(0);
 }
+
+*/

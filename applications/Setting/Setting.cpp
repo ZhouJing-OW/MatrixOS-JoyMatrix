@@ -12,11 +12,12 @@ void Setting::Start() {
   // TODO: Let's assume all dimension are even atm. (No device with odd dimension should exist. Srsly why does Samson
   // Conspiracy exists?) Also assume at least 4x4
 
-  threshold = Device::brightness_level[sizeof(Device::brightness_level) / sizeof(Device::brightness_level[0]) - 1]; //Get the last element
+  // threshold = Device::brightness_level[sizeof(Device::brightness_level) / sizeof(Device::brightness_level[0]) - 1]; //Get the last element
+  threshold = Device::brightness_level[4];
   map = Device::fine_brightness_level;
   map_length = sizeof(Device::fine_brightness_level) / sizeof(Device::fine_brightness_level[0]);
 
-  Dimension dimension = Dimension(map_length / 4 + bool(map_length % 4), 4);
+  Dimension dimension = Dimension(map_length, 1);
 
   float multiplier = (float)threshold / 100;
   int32_t displayValue = ((float)MatrixOS::UserVar::brightness / multiplier);
@@ -24,11 +25,9 @@ void Setting::Start() {
   UITwoToneSelector brightnessSelector(dimension, map_length, Color(0xFFFFFF), Color(0xFF0000), (uint8_t*)&MatrixOS::UserVar::brightness.value, threshold, map,
                                        [&](uint8_t value) -> void {
                                          MatrixOS::UserVar::brightness.Set(value);
-                                         MatrixOS::UserVar::currentBrightness.Set(value);
                                          displayValue = value / multiplier;
                                        });
-  AddUIComponent(brightnessSelector,
-                 Point(6, 0));
+  AddUIComponent(brightnessSelector,Point(2, 1));
 
   // Brightness Control
   // UIButtonLarge brightnessBtn(

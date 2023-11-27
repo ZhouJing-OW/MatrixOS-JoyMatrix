@@ -8,6 +8,7 @@
 #include "Dimension.h"
 #include "Color.h"
 #include "LogLevel.h"
+#include "Scales.h"
 
 //Custom Data Struct
 #include "KeyEvent.h"
@@ -23,4 +24,5 @@
 
 //OS Component
 #include "MidiPort.h"
+#include "ComponentVariable.h"
 #include "SavedVariable.h"

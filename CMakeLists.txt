@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.5)
 # get_filename_component(PROJECT ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set(DEVICE "MATRIX")
 set(PROJECT "MatrixOS-${DEVICE}")
-set(FAMILY "MatrixBlock6_ESP32S3")
+set(FAMILY "JoyMatrix")
 set(IDF_TARGET "esp32s3")
 
 # Check for Device info

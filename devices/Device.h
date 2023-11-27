@@ -42,6 +42,7 @@ namespace Device
                                // ID is assigned to given XY
     Point ID2XY(uint16_t keyID);  // Locate XY for given key ID, return Point(INT16_MIN, INT16_MIN) if no XY found for
                                   // given ID;
+    uint8_t GetVelocity();
   }
 
   // namespace BKP  // Back up register, presistant ram after software reset.

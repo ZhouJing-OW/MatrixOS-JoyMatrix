@@ -14,7 +14,7 @@ void MatrixBoot::Setup() {
 
 bool MatrixBoot::Idle(bool ready) {
   uint8_t step = counter % 12;
-  if (timer.Tick(80))
+  if (timer.Tick(60))
   {
     MatrixOS::LED::Fill(0);
     const Color local_color = Color(MATRIX_BOOT_IDLE, MATRIX_BOOT_IDLE, MATRIX_BOOT_IDLE);
@@ -58,8 +58,8 @@ void MatrixBoot::BootPhase1() {
   if (boot_phase_1_tick_time == 0)
     boot_phase_1_tick_time = MatrixOS::SYS::Millis();
 
-  const uint16_t section_time = 80;
-  if (timer.Tick(10))
+  const uint16_t section_time = 40;
+  if (timer.Tick(5))
   {
     uint32_t delta_time = MatrixOS::SYS::Millis() - boot_phase_1_tick_time;
     uint8_t local_brightness = min(MATRIX_BOOT_BRIGHTNESS * ((float)delta_time / section_time), MATRIX_BOOT_BRIGHTNESS);
@@ -197,16 +197,16 @@ void MatrixBoot::BootPhase2() {
     { hue[1] = 212; }
   #endif
 
-  const uint16_t start_offset = 150;
-  if (timer.Tick(10))
+  const uint16_t start_offset = 60;
+  if (timer.Tick(3))
   {
 
     if (boot_phase_2_start_time == 0)
       boot_phase_2_start_time = MatrixOS::SYS::Millis();
 
     uint32_t delta_time = MatrixOS::SYS::Millis() - boot_phase_2_start_time;
-    uint8_t quad_size = max(Device::x_size, Device::y_size) / 2;
-    if (delta_time > (quad_size - 2) * start_offset + 700 + 100)
+    uint8_t quad_size = max(24, 4) / 2;
+    if (delta_time > (quad_size) * start_offset + 300)
     { Exit(); }
 
     for (uint8_t r = 0; r < quad_size; r++)  // radius
@@ -220,8 +220,14 @@ void MatrixBoot::BootPhase2() {
         uint16_t local_deltatime_half = local_deltatime + start_offset / 2;
         Color half_color1 = BootPhase2Color(local_deltatime_half, hue[0]);
         Color half_color2 = BootPhase2Color(local_deltatime_half, hue[1]);
-        BootPhase2QuadSetColor(r - 1, r, half_color1, half_color2);
-        BootPhase2QuadSetColor(r, r - 1, half_color1, half_color2);
+        BootPhase2QuadSetColor(r, 1, half_color1, half_color2);
+        BootPhase2QuadSetColor(r - 1, 1, half_color1, half_color2);
+        BootPhase2QuadSetColor(r, 0, half_color1, half_color2);
+        BootPhase2QuadSetColor(r - 1, 0, half_color1, half_color2);
+        BootPhase2QuadSetColor(r - 4, 2, half_color1, half_color2);
+        BootPhase2QuadSetColor(r - 5, 2, half_color1, half_color2);
+        BootPhase2QuadSetColor(r + 3, 2, half_color1, half_color2);
+        BootPhase2QuadSetColor(r + 2, 2, half_color1, half_color2);
       }
     }
     MatrixOS::LED::Update();

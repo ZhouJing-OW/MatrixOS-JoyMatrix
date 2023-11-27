@@ -50,35 +50,7 @@ void HIDtest::Setup() {
     keypadUI.AddUIComponent(Startkey, Point(11, 3));
 
     UIGamepadKey Selectkey(Color(0x0000FF), GAMEPAD_SELECT);
-    keypadUI.AddUIComponent(Selectkey, Point(12, 3));
-
-    UIButtonWithColorFunc LX("mainView", [&]() -> Color { return Color(0xFFFF00).Scale(Device::Rocker::GetX(0) + 128); }, [&]() -> void {}, [&]() -> void {});
-    keypadUI.AddUIComponent(LX, Point(8, 1));
-
-    UIButtonWithColorFunc LY("mainView", [&]() -> Color { return Color(0xFFFF00).Scale(Device::Rocker::GetY(0) + 128); }, [&]() -> void {}, [&]() -> void {});
-    keypadUI.AddUIComponent(LY, Point(9, 1));
-
-    UIButtonWithColorFunc LB(
-        "mainView", [&]() -> Color { return Color(0xFFFF00).Scale(Device::Rocker::GetButton(0) * 80); }, [&]() -> void {},
-        [&]() -> void {});
-    keypadUI.AddUIComponent(LB, Point(10, 1));
-
-    UIButtonWithColorFunc LP("mainView", [&]() -> Color { return Color(0xFFFF00).Scale(Device::Rocker::GetPressure(0) * 2); }, [&]() -> void {}, [&]() -> void {});
-    keypadUI.AddUIComponent(LP, Point(11, 1));
-
-    UIButtonWithColorFunc RX("mainView", [&]() -> Color { return Color(0x00FFFF).Scale(Device::Rocker::GetX(1) + 128); }, [&]() -> void {}, [&]() -> void {});
-    keypadUI.AddUIComponent(RX, Point(12, 1));
-
-    UIButtonWithColorFunc RY("mainView", [&]() -> Color { return Color(0x00FFFF).Scale(Device::Rocker::GetY(1) + 128); }, [&]() -> void {}, [&]() -> void {});
-    keypadUI.AddUIComponent(RY, Point(13, 1));
-
-    UIButtonWithColorFunc RB(
-        "mainView", [&]() -> Color { return Color(0x00FFFF).Scale(Device::Rocker::GetButton(1) * 60); }, [&]() -> void {},
-        [&]() -> void {});
-    keypadUI.AddUIComponent(RB, Point(14, 1));
-
-    UIButtonWithColorFunc RP("mainView", [&]() -> Color { return Color(0x00FFFF).Scale(Device::Rocker::GetPressure(1) * 2); }, [&]() -> void {}, [&]() -> void {});
-    keypadUI.AddUIComponent(RP, Point(15, 1));        
+    keypadUI.AddUIComponent(Selectkey, Point(12, 3)); 
 
     keypadUI.Start();
     Exit();

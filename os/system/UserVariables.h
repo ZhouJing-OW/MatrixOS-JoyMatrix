@@ -12,11 +12,7 @@ namespace MatrixOS::UserVar
   UserVar(device_id, uint16_t, 0);
   UserVar(rotation, EDirection, TOP);
   UserVar(brightness, uint8_t, 16);
-  UserVar(currentBrightness, uint8_t, 16);
+  UserVar(global_MIDI_CH, uint8_t, 0);
   UserVar(velocity_sensitive, bool, false);
-  UserVar(pressureSensitive, bool, false);
-  UserVar(pressureToVelocity_Default, uint8_t, 127);
-  UserVar(pressureToVelocity_Max, uint8_t, 127);
-  UserVar(pressureToVelocity_Min, uint8_t, 40);
   
 }

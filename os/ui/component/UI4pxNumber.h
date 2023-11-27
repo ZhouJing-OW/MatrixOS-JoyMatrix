@@ -12,7 +12,7 @@ class UI4pxNumber : public UIComponent {
   int32_t* value;
   uint8_t spacing;
 
-  UI4pxNumber(Color color, uint8_t digits, int32_t* value, Color alternative_color = Color(0xFFFFFF), uint8_t spacing = 1) {
+  UI4pxNumber(Color color, uint8_t digits, int32_t* value, Color alternative_color = COLOR_WHITE, uint8_t spacing = 1) {
     this->color = color;
     this->digits = digits;
     this->value = value;
@@ -31,7 +31,7 @@ class UI4pxNumber : public UIComponent {
       for (int8_t x = 0; x < 3; x++)
       {
         for (int8_t y = 0; y < 4; y++)
-        { MatrixOS::LED::SetColor(origin + Point(x, 3 - y), bitRead(number4px[value][x], y) ? color : Color(0)); }
+        { MatrixOS::LED::SetColor(origin + Point(x, 3 - y), bitRead(number4px[value][x], y) ? color : COLOR_BLANK); }
       }
     }
   }
@@ -46,7 +46,7 @@ class UI4pxNumber : public UIComponent {
       { Render4pxNumber(render_origin, digit % 2 ? GetAlternativeColor() : GetColor(), (int)(*value / std::pow(10, digit)) % 10); }
       else
       {
-        Render4pxNumber(render_origin, Color(0), 10);
+        Render4pxNumber(render_origin, COLOR_BLANK, 10);
       }
 
       render_origin = render_origin + Point(3 + spacing, 0);

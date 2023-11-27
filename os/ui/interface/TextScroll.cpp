@@ -1,7 +1,7 @@
 #include "MatrixOS.h"
 #include "../data/4pxfont.h"
 
-#define TEXT_SCROLL_SPACING 1
+#define TEXT_SCROLL_SPACING 2
 
 namespace MatrixOS::UIInterface
 {
@@ -97,11 +97,13 @@ namespace MatrixOS::UIInterface
               // Wait for the next frame
               while (!textScrollTimer.Tick(speed))
               {
-                // MatrixOS::KEYPAD::Scan(true);
+                // MatrixOS::KEYPAD::Scan();
                 MatrixOS::KEYPAD::ClearList();  // Keypad will scan itself after list is cleared
                 // MLOGD("Text Scroll", "FN Velocity %d",
                 // (uint16_t)MatrixOS::KEYPAD::GetKey(FUNCTION_KEY).state);
                 // Let's assume we don't use FN to trigger a text scroll
+
+                MatrixOS::MIDI::CheckHoldingNote();
                 if (MatrixOS::KEYPAD::GetKey(FUNCTION_KEY)->state == PRESSED)
                 {
                   MatrixOS::KEYPAD::GetKey(FUNCTION_KEY)->Clear();

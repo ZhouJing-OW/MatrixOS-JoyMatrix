@@ -17,6 +17,7 @@ namespace V110
   const gpio_num_t KeyRead6_Pin = GPIO_NUM_3;
   const gpio_num_t KeyRead7_Pin = GPIO_NUM_9;
   const gpio_num_t KeyRead8_Pin = GPIO_NUM_10;
+  
   const gpio_num_t KeyRead9_Pin = GPIO_NUM_47;
   const gpio_num_t KeyRead10_Pin = GPIO_NUM_48;
 
@@ -46,15 +47,18 @@ void Device::LoadV110() {
   };
   memcpy(KeyPad::keypad_write_pins, _keypad_write_pins, sizeof(_keypad_write_pins));
 
-  gpio_num_t _keypad_read_pins[6] = {
-      V110::KeyRead1_Pin, V110::KeyRead2_Pin, V110::KeyRead3_Pin, V110::KeyRead4_Pin,
-      V110::KeyRead9_Pin, V110::KeyRead10_Pin, 
+  gpio_num_t _keypad_read_pins[5] = {
+      V110::KeyRead1_Pin, V110::KeyRead2_Pin, V110::KeyRead3_Pin, V110::KeyRead4_Pin, V110::KeyRead9_Pin,
   };
   memcpy(KeyPad::keypad_read_pins, _keypad_read_pins, sizeof(_keypad_read_pins));
 
+  gpio_num_t _keypad_funcRead_pins[1] = {
+      V110::KeyRead10_Pin,  
+  };
+  memcpy(KeyPad::keypad_funcRead_pins, _keypad_funcRead_pins, sizeof(_keypad_funcRead_pins));
+
   adc_channel_t _keypad_read_adc_channel[4] = {
       V110::KeyRead1_ADC_CHANNEL, V110::KeyRead2_ADC_CHANNEL, V110::KeyRead3_ADC_CHANNEL, V110::KeyRead4_ADC_CHANNEL,
-
   };
   memcpy(KeyPad::keypad_read_adc_channel, _keypad_read_adc_channel, sizeof(_keypad_read_adc_channel));
 

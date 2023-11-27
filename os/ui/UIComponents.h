@@ -14,3 +14,12 @@
 
 #include "component/UISelector.h"
 #include "component/UIItemSelector.h"
+
+#include "component/PianoPad.h"
+#include "component/NotePad.h"
+#include "component/MidiButton.h"
+#include "component/ChannelButton.h"
+#include "component/MixerFader.h"
+#include "component/KnobButton.h"
+#include "component/MainBar.h"
+#include "component/TabBar.h"
