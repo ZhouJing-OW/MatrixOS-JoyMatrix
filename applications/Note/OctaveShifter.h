@@ -3,38 +3,43 @@
 
 class OctaveShifter : public UIComponent {
  public:
+  string name;
   uint8_t count;
   NoteLayoutConfig* configs;
   uint8_t* activeConfig;
 
-  OctaveShifter(uint8_t count, NoteLayoutConfig* configs, uint8_t* activeConfig) {
+  OctaveShifter(string name, uint8_t count, NoteLayoutConfig* configs, uint8_t* activeConfig) {
+    this->name = name;
     this->count = count;
     this->configs = configs;
     this->activeConfig = activeConfig;
   }
 
+  virtual string GetName() { return name; }
   virtual Color GetColor() { return configs[*activeConfig].color; }
-  virtual Dimension GetSize() { return Dimension(1, count); }
+  virtual Dimension GetSize() { return Dimension(count, 1); }
 
   virtual bool Render(Point origin) {
     for (uint16_t octave = 0; octave < count; octave++)
     {
       // Maybe allow different direction
-      Point xy = origin + Point(0, count - octave - 1);
+      Point xy = origin + Point(octave, 0);
       MatrixOS::LED::SetColor(xy, (octave == configs[*activeConfig].octave) ? configs[*activeConfig].rootColor : configs[*activeConfig].color);
     }
     return true;
   }
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
-    // if (keyInfo->state == HOLD)
-    // {
-    //   MatrixOS::UIInterface::TextScroll(name, GetColor());
-    //   return true;
-    // }
-    int8_t octave = count - xy.y - 1;
+    if (keyInfo->state == HOLD)
+    {
+      MatrixOS::UIInterface::TextScroll(name, GetColor());
+      return true;
+    }
+    int8_t octave = xy.x;
     if (keyInfo->state == PRESSED)
     { configs[*activeConfig].octave = octave; }
     return true;
+
+    
   }
 };

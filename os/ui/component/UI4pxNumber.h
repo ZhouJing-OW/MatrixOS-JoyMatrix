@@ -12,12 +12,12 @@ class UI4pxNumber : public UIComponent {
   int32_t* value;
   uint8_t spacing;
 
-  UI4pxNumber(Color color, uint8_t digits, int32_t* value, Color alternative_color = Color(0xFFFFFF), uint8_t spacing = 0) {
+  UI4pxNumber(Color color, uint8_t digits, int32_t* value, Color alternative_color = Color(0xFFFFFF), uint8_t spacing = 1) {
     this->color = color;
     this->digits = digits;
     this->value = value;
     this->spacing = spacing;
-    this->alternative_color = alternative_color;
+    this->alternative_color = color;
   }
 
   virtual Dimension GetSize() { return Dimension(digits * 3 + (digits - 1) * (digits > 0) * spacing, 4); }

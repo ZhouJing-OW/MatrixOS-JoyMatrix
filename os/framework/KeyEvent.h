@@ -106,8 +106,6 @@ struct KeyInfo {
   bool update(Fract16 velocity, bool applyCurve = true) {
     if (config == nullptr)
     { return false; }
-
-    if (applyCurve && config->velocity_sensitive)
     { velocity = applyVelocityCurve(velocity); }
 
     // Reset back to normal keys
@@ -115,10 +113,11 @@ struct KeyInfo {
     { state = ACTIVATED; }
 
     // Check aftertouch before previous velocity get overwritten
-    if (config->velocity_sensitive && state == ACTIVATED && (uint16_t)velocity != 0 &&  // Keypad must support FSR AND Velocity must be above 0 (So no aftertouch will triggered when key released)
-    (DIFFERENCE((uint16_t)velocity, (uint16_t)this->velocity) > KEY_INFO_THRESHOLD ||  // AND Change Must larger than info threshold Or ...
-                               ((velocity != this->velocity) && (uint16_t)velocity == UINT16_MAX)                // Value changed and max value is reached
-                               ))
+    // if (config->velocity_sensitive && state == ACTIVATED && (uint16_t)velocity != 0 &&  // Keypad must support FSR AND Velocity must be above 0 (So no aftertouch will triggered when key released)
+    // (DIFFERENCE((uint16_t)velocity, (uint16_t)this->velocity) > KEY_INFO_THRESHOLD ||  // AND Change Must larger than info threshold Or ...
+    //                            ((velocity != this->velocity) && (uint16_t)velocity == UINT16_MAX)                // Value changed and max value is reached
+    //                           ))
+    if (config->velocity_sensitive && state == ACTIVATED)
     {
       // Update current velocity
       this->velocity = velocity;

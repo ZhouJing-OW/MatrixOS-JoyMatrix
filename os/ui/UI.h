@@ -9,7 +9,8 @@
 #include "UIComponents.h"
 #include "UIInterfaces.h"
 
-#define UI_DEFAULT_FPS 100
+#define UI_DEFAULT_FPS 30
+#define FADE_INOUT_TIME 200 //ms
 
 class UI {
  public:
@@ -73,11 +74,14 @@ class UI {
   void AddUIComponent(UIComponent* uiComponent, Point xy);
   void AddUIComponent(UIComponent* uiComponent, uint16_t count, ...);
 
+  void RemoveUIComponent(UIComponent* uiComponent, Point xy);
+
   void AllowExit(bool allow);
 
   void ClearUIComponents();
 
   void SetFPS(uint16_t fps);
+
 
  private:
   void RenderUI();

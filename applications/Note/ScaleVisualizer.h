@@ -1,3 +1,5 @@
+#pragma once
+
 #include "MatrixOS.h"
 
 class ScaleVisualizer : public UIComponent {

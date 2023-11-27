@@ -1,5 +1,6 @@
 #include "Setting.h"
-#include "applications/BrightnessControl/BrightnessControl.h"
+#include "UITwoToneSelector.h"
+// #include  "applications/BrightnessControl/BrightnessControl.h"
 
 Setting::Setting()
 {
@@ -11,13 +12,31 @@ void Setting::Start() {
   // TODO: Let's assume all dimension are even atm. (No device with odd dimension should exist. Srsly why does Samson
   // Conspiracy exists?) Also assume at least 4x4
 
-  // Brightness Control
-  UIButtonLarge brightnessBtn(
-      "Brightness", Color(0xFFFFFF), Dimension(2, 2), [&]() -> void { MatrixOS::SYS::NextBrightness(); },
-      [&]() -> void { BrightnessControl().Start(); });
-  AddUIComponent(brightnessBtn, Point(3, 3));
+  threshold = Device::brightness_level[sizeof(Device::brightness_level) / sizeof(Device::brightness_level[0]) - 1]; //Get the last element
+  map = Device::fine_brightness_level;
+  map_length = sizeof(Device::fine_brightness_level) / sizeof(Device::fine_brightness_level[0]);
 
-  // Rotation control and canvas
+  Dimension dimension = Dimension(map_length / 4 + bool(map_length % 4), 4);
+
+  float multiplier = (float)threshold / 100;
+  int32_t displayValue = ((float)MatrixOS::UserVar::brightness / multiplier);
+
+  UITwoToneSelector brightnessSelector(dimension, map_length, Color(0xFFFFFF), Color(0xFF0000), (uint8_t*)&MatrixOS::UserVar::brightness.value, threshold, map,
+                                       [&](uint8_t value) -> void {
+                                         MatrixOS::UserVar::brightness.Set(value);
+                                         MatrixOS::UserVar::currentBrightness.Set(value);
+                                         displayValue = value / multiplier;
+                                       });
+  AddUIComponent(brightnessSelector,
+                 Point(6, 0));
+
+  // Brightness Control
+  // UIButtonLarge brightnessBtn(
+  //     "Brightness", Color(0xFFFFFF), Dimension(2, 2), [&]() -> void { MatrixOS::SYS::NextBrightness(); },
+  //     [&]() -> void { BrightnessControl().Start(); });
+  // AddUIComponent(brightnessBtn, Point(7, 1));
+
+  /* Rotation control and canvas
   UIButtonLarge nothingBtn("This does nothing", Color(0x00FF00), Dimension(2, 1), []() -> void {});
   AddUIComponent(nothingBtn, origin + Point(0, -1));
 
@@ -32,16 +51,18 @@ void Setting::Start() {
   UIButtonLarge rotateLeftBtn("Rotate to this side", Color(0x00FF00), Dimension(1, 2),
                               [&]() -> void { MatrixOS::SYS::Rotate(LEFT); });
   AddUIComponent(rotateLeftBtn, origin + Point(-1, 0));
+  */
+
 
   // Device Control
   UIButton deviceIdBtn("Device ID", Color(0x00FFFF), []() -> void {
     MatrixOS::UserVar::device_id =
-        MatrixOS::UIInterface::NumberSelector8x8(MatrixOS::UserVar::device_id, 0x00FFFF, "Device ID", 0, 255);
+        MatrixOS::UIInterface::NumberSelector16x4(MatrixOS::UserVar::device_id, 0x00FFFF, "Device ID", 0, 255);
   });  // TODO This forces 8x8
-  AddUIComponent(deviceIdBtn, Point(Device::x_size - 1, Device::y_size - 1));
+  AddUIComponent(deviceIdBtn, Point(15, 3));
 
   UIButton enterDfuBtn("Enter DFU Mode", Color(0xFF0000), []() -> void { MatrixOS::SYS::Bootloader(); });
-  AddUIComponent(enterDfuBtn, Point(0, Device::y_size - 1));
+  AddUIComponent(enterDfuBtn, Point(0, 3));
 
   // UIButton clearConfigBtn("Clear Device Config", Color(0xFF00FF), []() -> void {})
   // AddUIComponent(clearConfigBtn, Point(0, Device::y_size - 2));
@@ -50,15 +71,15 @@ void Setting::Start() {
   UIButton osVersionBtn("Matrix OS Version", Color(0x00FF30), []() -> void {
     MatrixOS::UIInterface::TextScroll("Matrix OS " MATRIXOS_VERSION_STRING, Color(0x00FFFF));
   });
-  AddUIComponent(osVersionBtn, Point(1, Device::y_size - 1));
+  AddUIComponent(osVersionBtn, Point(1, 3));
 
   UIButton deviceNameBtn("Device Name", Color(0x00FF30),
                          []() -> void { MatrixOS::UIInterface::TextScroll(Device::name, Color(0x00FFFF)); });
-  AddUIComponent(deviceNameBtn, Point(2, Device::y_size - 1));
+  AddUIComponent(deviceNameBtn, Point(2, 3));
 
   UIButton deviceSerialBtn("Device Serial", Color(0x00FF30),
                            []() -> void { MatrixOS::UIInterface::TextScroll(Device::GetSerial(), Color(0x00FFFF)); });
-  AddUIComponent(deviceSerialBtn, Point(3, Device::y_size - 1));
+  AddUIComponent(deviceSerialBtn, Point(3, 3));
 
 #ifdef DEVICE_SETTING
 #include "DeviceSetting.h"

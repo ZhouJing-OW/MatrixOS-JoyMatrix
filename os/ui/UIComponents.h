@@ -5,6 +5,7 @@
 #include "component/UIButton.h"
 #include "component/UIButtonLarge.h"
 #include "component/UIButtonDimmable.h"
+#include "component/UIButtonDimmableLarge.h"
 #include "component/UIButtonWithColorFunc.h"
 #include "component/UIButtonLargeWithColorFunc.h"
 #include "component/UINumModifier.h"

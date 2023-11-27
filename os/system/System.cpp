@@ -8,6 +8,7 @@ extern std::unordered_map<uint32_t, Application_Info*> applications;
 
 namespace MatrixOS::SYS
 {
+
   void ApplicationFactory(void* param) {
     MLOGD("Application Factory", "App ID %X", active_app_id);
 
@@ -91,7 +92,7 @@ namespace MatrixOS::SYS
     (void)xTaskCreateStatic(Supervisor, "supervisor", configMINIMAL_STACK_SIZE * 4, NULL, 1, supervisor_stack,
                             &supervisor_taskdef);
 
-    // next_app = GenerateAPPID("203 Electronics", "Performance Mode");  // Launch Performance mode by default for now
+    // next_app = GenerateAPPID("ZhouJing", "Main Pad");  // Launch Main Pad by default for now
   }
 
   uint32_t Millis() {
@@ -163,12 +164,14 @@ namespace MatrixOS::SYS
         // ESP_LOGI("System".c_str(), "Brightness Level Selected");
         MLOGD("System", "Brightness Level Selected");
         UserVar::brightness = new_brightness;
+        UserVar::currentBrightness = new_brightness;
         return;
       }
     }
     // ESP_LOGI("System".c_str(), "Lowest Level Selected");
     MLOGD("System", "Lowest Level Selected");
     UserVar::brightness = Device::brightness_level[0];
+    UserVar::currentBrightness = Device::brightness_level[0];
   }
 
   uint32_t GenerateAPPID(string author, string app_name) {
@@ -244,4 +247,7 @@ namespace MatrixOS::SYS
   {
     return applications.size();
   }
+
+  
+
 }

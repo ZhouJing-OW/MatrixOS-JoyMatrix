@@ -15,7 +15,7 @@ class MatrixBoot : public BootAnimation {
 
   Timer timer;
 
-  Point origin = Point((Device::x_size - 1) / 2, (Device::y_size - 1) / 2);
+  Point origin = Point(7, 1);
   uint8_t counter;
 
   uint8_t boot_phase;

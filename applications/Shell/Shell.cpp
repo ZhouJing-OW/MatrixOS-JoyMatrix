@@ -45,7 +45,7 @@ void Shell::AddCommonBarInUI(UI* ui) {
           }
         }
       }));
-  ui->AddUIComponent(commonBarBtns.back(), Point(0, 7));
+  ui->AddUIComponent(commonBarBtns.back(), Point(0, 3));
 
 #if MATRIXOS_LOG_LEVEL == LOG_LEVEL_DEBUG  // Logging Mode Indicator
 #define SHELL_SYSTEM_SETTING_COLOR Color(0xFFBF00)
@@ -57,7 +57,7 @@ void Shell::AddCommonBarInUI(UI* ui) {
 
   commonBarBtns.push_back(UIButton("System Setting", SHELL_SYSTEM_SETTING_COLOR,
                                    [&]() -> void { MatrixOS::SYS::OpenSetting(); }));
-  ui->AddUIComponent(commonBarBtns.back(), Point(7, 7));
+  ui->AddUIComponent(commonBarBtns.back(), Point(15, 0));
   ui->AllowExit(false);  // So nothing happens
 }
 
@@ -72,6 +72,11 @@ void Shell::ApplicationLauncher() {
 
   applicationLauncher.disableExit = true;
   AddCommonBarInUI(&applicationLauncher);
+
+  applicationLauncher.SetLoopFunc([&]() -> void {
+    if (MatrixOS::SYS::FNExit == true)
+      MatrixOS::SYS::FNExit = false;
+  });
 
   uint16_t app_count = MatrixOS::SYS::GetApplicationCount();
   MLOGD("Shell", "%d apps detected", app_count);

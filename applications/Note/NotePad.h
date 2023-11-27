@@ -1,9 +1,8 @@
-
 #pragma once
 
 #include "MatrixOS.h"
 #include "Scales.h"
-#include "ui/UI.h"
+#include "UI/UI.h"
 
 struct NoteLayoutConfig {
   uint8_t rootKey = 0;
@@ -13,7 +12,7 @@ struct NoteLayoutConfig {
   int8_t octave = 0;
   uint8_t channel = 0;
   uint8_t overlap = 0;
-  bool velocitySensitive = true;
+  bool velocitySensitive = false;
   Color color = Color(0x00FFFF);
   Color rootColor = Color(0x0040FF);
 };

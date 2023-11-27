@@ -118,7 +118,7 @@ namespace MatrixOS::UIInterface
     });
 
     // Phase 1 - Hue selection
-    UIHueSelector hueSelector(Dimension(8, 8), [&](float selected_hue) -> void {
+    UIHueSelector hueSelector(Dimension(16, 4), [&](float selected_hue) -> void {
       hue = selected_hue;
       colorPicker.Exit();
     });
@@ -131,7 +131,7 @@ namespace MatrixOS::UIInterface
     colorPicker.ClearUIComponents();
 
     // Phase 2 - Satuation + Value
-    UIShadeSelector shadeSelector(Dimension(8, 8), hue, [&](Color selectedColor) -> void {
+    UIShadeSelector shadeSelector(Dimension(16, 4), hue, [&](Color selectedColor) -> void {
       color = selectedColor;
       colorPicker.Exit();
     });

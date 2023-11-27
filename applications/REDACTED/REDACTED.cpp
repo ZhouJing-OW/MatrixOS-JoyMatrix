@@ -27,11 +27,11 @@ void REDACTED::Task1() {
       return;
     }
     uint8_t bufferOffset = 1;
-    for (uint8_t x = 0; x < 8; x++)
+    for (uint8_t x = 0; x < 16; x++)
     {
       if ((data[offset] >> x) & 0x01)
       {
-        for (uint8_t y = 0; y < 8; y++)
+        for (uint8_t y = 0; y < 4; y++)
         {
           MatrixOS::LED::SetColor(Point(x + x_offset, y + y_offset),
                                   Color(((data[offset + bufferOffset] >> y) & 0x01) * 0xFFFFFF));

@@ -1,7 +1,7 @@
 #include "MatrixOS.h"
-#include "../data/font.h"
+#include "../data/4pxfont.h"
 
-#define TEXT_SCROLL_SPACING 2
+#define TEXT_SCROLL_SPACING 1
 
 namespace MatrixOS::UIInterface
 {
@@ -11,7 +11,7 @@ namespace MatrixOS::UIInterface
     // Log the text we're about to scroll
     MLOGD("Text Scroll", "Printing %s", text.c_str());
 
-    if(Device::y_size < 8)
+    if(Device::y_size < 4)
     {
       MLOGE("Text Scroll", "Not enough vertical space, abort");
       return;
@@ -35,7 +35,7 @@ namespace MatrixOS::UIInterface
     }
 
     // Convert the scroll speed from frames per second to milliseconds per frame
-    speed = 1000 / speed;
+    speed = 500 / speed;
 
     // Main loop (if loop == true)
     do
@@ -64,32 +64,32 @@ namespace MatrixOS::UIInterface
           {
             // Iterate through each column in the character
             for (uint8_t current_char_progress = 0;
-                 current_char_progress < font8[current_char - 32][0] + TEXT_SCROLL_SPACING; current_char_progress++)
+                 current_char_progress < font4[current_char - 32][0] + TEXT_SCROLL_SPACING; current_char_progress++)
             {
               // Shift the buffer to the left
               for (uint8_t x = 1; x < Device::x_size; x++)
               { memcpy(buffer[x - 1], buffer[x], 8); }
 
-              if (current_char_progress < font8[current_char - 32][0])  // Render Text colume
+              if (current_char_progress < font4[current_char - 32][0])  // Render Text colume
               {
                 // Iterate through each row in the character
-                for (uint8_t y = 0; y < 8; y++)
+                for (uint8_t y = 0; y < 4; y++)
                 {
                   // Set the state of the LED at the end of the buffer to the corresponding bit in the character's
                   // column
-                  buffer[Device::x_size - 1][y] = bitRead(font8[current_char - 32][current_char_progress + 1], 7 - y);
+                  buffer[Device::x_size - 1][y] = bitRead(font4[current_char - 32][current_char_progress + 1], 3 - y);
                 }
               }
               else  // Render Spacing
               {
-                for (uint8_t y = 0; y < 8; y++)
+                for (uint8_t y = 0; y < 4; y++)
                 { buffer[Device::x_size - 1][y] = 0; }
               }
 
               // Render the buffer to the LED screen
               for (uint8_t x = 0; x < Device::x_size; x++)
               {
-                for (uint8_t y = 0; y < 8; y++)
+                for (uint8_t y = 0; y < 4; y++)
                 { MatrixOS::LED::SetColor(Point(x, y), buffer[x][y] ? color : Color(0)); }
               }
               MatrixOS::LED::Update();
