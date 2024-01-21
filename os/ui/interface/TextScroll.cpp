@@ -8,6 +8,7 @@ namespace MatrixOS::UIInterface
   // This function displays a given string on the LED screen in a given color, at a given scroll speed, optionally
   // looping
   void TextScroll(string text, Color color, uint16_t speed, bool loop) {
+    text = text + "   ";
     // Log the text we're about to scroll
     MLOGD("Text Scroll", "Printing %s", text.c_str());
 
@@ -103,7 +104,7 @@ namespace MatrixOS::UIInterface
                 // (uint16_t)MatrixOS::KEYPAD::GetKey(FUNCTION_KEY).state);
                 // Let's assume we don't use FN to trigger a text scroll
 
-                MatrixOS::MIDI::CheckHoldingNote();
+                MatrixOS::MIDI::CheckHold();
                 if (MatrixOS::KEYPAD::GetKey(FUNCTION_KEY)->state == PRESSED)
                 {
                   MatrixOS::KEYPAD::GetKey(FUNCTION_KEY)->Clear();

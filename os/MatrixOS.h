@@ -8,6 +8,7 @@
 #include "system/Parameters.h"
 #include "system/SystemVariables.h"
 #include "system/UserVariables.h"
+#include "system/MIDIHold.h"
 #include "task.h"
 #include "timers.h"
 #include "tusb.h"
@@ -113,17 +114,25 @@ namespace MatrixOS
     noexpose void Init(void);
 
     bool Get(MidiPacket* midiPacketDest, uint16_t timeout_ms = 0);
-    bool Send(MidiPacket midiPacket, uint16_t timeout_ms); // In os\framwork\ComponentVariable.h header file
+    bool Send(MidiPacket midiPacket, uint16_t timeout_ms = 0);
     bool SendSysEx(uint16_t port, uint16_t length, uint8_t* data, bool includeMeta = true);  // If include meta, it will send the correct header and ending;
-    void HoldNote(uint8_t channel, uint8_t note, Point xy);
-    bool CheckHoldingNote(uint8_t channel, uint8_t note);
-    bool CheckHoldingNote(Point xy);
-    bool CheckHoldingNote();
+    void Hold(Point xy, int8_t type, int8_t channel, int8_t byte1, int8_t byte2 = 127);
+    bool CheckHold(int8_t type, int8_t channel, int8_t byte1);
+    bool CheckHold(Point xy);
+    bool CheckHold();
 
     // Those APIs are only for MidiPort to use
     noexpose bool RegisterMidiPort(uint16_t port_id, MidiPort* midiPort);
     noexpose void UnregisterMidiPort(uint16_t port_id);
     noexpose bool Recive(MidiPacket midipacket_prt, uint32_t timeout_ms = 0);
+  }
+
+  namespace Component
+  {
+    void Tab_ToggleSub(TabConfig* con);
+    void Knob_Function(KnobConfig* con, int16_t* value);
+    void Channel_Setting(ChannelConfig* con, uint8_t n);
+    void Pad_Setting(NotePadConfig* con);
   }
 
   namespace HID

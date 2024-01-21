@@ -1,15 +1,16 @@
 #include "MatrixOS.h"
 
+template <class T>
 class UISelector : public UIComponent {
  public:
   Color color;
   string name;
   Dimension dimension;
-  uint16_t* value;
+  T* value;
   uint16_t count;
-  std::function<void(uint16_t)> callback;
+  std::function<void(T)> callback;
 
-  UISelector(Dimension dimension, string name, Color color, uint16_t count, uint16_t* value, std::function<void(uint16_t)> callback = nullptr) {
+  UISelector(Dimension dimension, string name, Color color, uint16_t count, T* value, std::function<void(T)> callback = nullptr) {
     this->dimension = dimension;
     this->name = name;
     this->color = color;
@@ -24,7 +25,7 @@ class UISelector : public UIComponent {
   void SetColor(Color color) { this->color = color; }
 
   virtual bool Render(Point origin) {
-    for (uint16_t item = 0; item < dimension.Area(); item++)
+    for (T item = 0; item < dimension.Area(); item++)
     {
       // Maybe allow different direction
       Point xy = origin + Point(item % dimension.x, item / dimension.x);
@@ -37,9 +38,11 @@ class UISelector : public UIComponent {
   }
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
+    T num = xy.y * dimension.x + xy.x;
+    string text = name + " : " + std::to_string(num);
     if (keyInfo->state == HOLD)
     {
-      MatrixOS::UIInterface::TextScroll(name, GetColor());
+      MatrixOS::UIInterface::TextScroll(text, GetColor());
       return true;
     }
     uint16_t id = xy.x + xy.y * dimension.x;

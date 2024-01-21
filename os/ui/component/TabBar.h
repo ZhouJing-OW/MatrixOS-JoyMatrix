@@ -11,7 +11,6 @@ class TabBar : public UIComponent {
   int8_t* toggle;
 
   TabBar(){}
-
   TabBar(TabConfig* config, uint8_t count, int8_t& activeTab, int8_t& toggle) {
     this->config = config;
     this->count = count;
@@ -34,33 +33,34 @@ class TabBar : public UIComponent {
     for (uint8_t x = 0; x < count; x++)
     {        
       Point xy = origin + Point(x, 0);
+      TabConfig* con = config + x;
 
-      if (x == *activeTab)  MatrixOS::LED::SetColor(xy, (config + x)->color);
-      else MatrixOS::LED::SetColor(xy, (config + x)->color.ToLowBrightness());
+      if (x == *activeTab)  MatrixOS::LED::SetColor(xy, con->color);
+      else MatrixOS::LED::SetColor(xy, con->color.ToLowBrightness());
     }
     return true;
   }
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
-
+    TabConfig* con = config + xy.x;
     if (keyInfo->state == RELEASED){
       if (xy.x == *activeTab) {
-        (config + xy.x)->ToggleSub();
-        MLOGD("Tab", "tab: %d, sub: %d", *activeTab, (config + xy.x)->subTab);
+        MatrixOS::Component::Tab_ToggleSub(con);
+        MLOGD("Tab", "tab: %d, sub: %d", *activeTab, con->subTab);
         *toggle = xy.x;
         return true;
       }
       else
       {
         *activeTab = xy.x;
-        MLOGD("Tab", "tab: %d, sub: %d", *activeTab, (config + xy.x)->subTab);
+        MLOGD("Tab", "tab: %d, sub: %d", *activeTab, con->subTab);
         *toggle = xy.x;
         return true; 
       }
     }
 
     if (keyInfo->state == HOLD){
-      MatrixOS::UIInterface::TextScroll((config + xy.x)->name, (config + xy.x)->color);
+      MatrixOS::UIInterface::TextScroll(con->name, con->color);
       return true;
     }
 

@@ -30,6 +30,7 @@ class UI {
   std::function<void()>* render_func = nullptr;
   std::function<void()>* end_func = nullptr;
   std::function<bool(KeyEvent*)>* key_event_handler = nullptr;
+  std::map<Point, UIComponent*> uiComponentMap;
 
   UI(){};
   UI(string name, Color color = Color(0xFFFFFF), bool newLedLayer = true);
@@ -54,7 +55,6 @@ class UI {
   };
 
   void Exit();
-
   void LoopTask();
 
   void GetKey();
@@ -69,23 +69,17 @@ class UI {
   void SetEndFunc(std::function<void()> end_func);
   void SetKeyEventHandler(std::function<bool(KeyEvent*)> key_event_handler);
 
-  std::map<Point, UIComponent*> uiComponentMap;
-
   void AddUIComponent(UIComponent* uiComponent, Point xy);
   void AddUIComponent(UIComponent* uiComponent, uint16_t count, ...);
-
   void RemoveUIComponent(UIComponent* uiComponent, Point xy);
 
   void AllowExit(bool allow);
-
   void ClearUIComponents();
-
   void SetFPS(uint16_t fps);
-
 
  private:
   void RenderUI();
   void UIEnd();
   void UIKeyEvent(KeyEvent* keyEvent);
-  void PostCallbackCleanUp();
+  // void PostCallbackCleanUp();
 };

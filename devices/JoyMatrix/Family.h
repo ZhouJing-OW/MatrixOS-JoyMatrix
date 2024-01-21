@@ -110,7 +110,7 @@ namespace Device
   namespace Encoder
   {
     void Init();
-    void Setup(KnobConfig *config, uint8_t n);
+    void Setup(int16_t *val, KnobConfig *config, uint8_t n);
     void Disable(uint8_t n);
     void DisableAll();
     KnobConfig* GetConfig(uint8_t n);
@@ -119,6 +119,12 @@ namespace Device
   namespace NVS
   {
     void Init();
+  }
+
+  namespace FATFS
+  {
+    void Init();
+    void Format();
   }
 
   namespace WIFI

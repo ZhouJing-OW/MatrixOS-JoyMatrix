@@ -6,8 +6,8 @@
 #include "Point.h"
 #include "Direction.h"
 #include "Dimension.h"
-#include "Color.h"
 #include "LogLevel.h"
+#include "Color.h"
 #include "Scales.h"
 
 //Custom Data Struct

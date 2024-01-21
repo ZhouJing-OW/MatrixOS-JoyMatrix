@@ -57,8 +57,6 @@ namespace Device::AnalogInput
 
   adc_oneshot_unit_handle_t adc_handle[2];
 
-  
-
   inline AnalogConfig LX = {
     .name = "LX",
     .max = 2900,
@@ -89,14 +87,23 @@ namespace Device::AnalogInput
 
   inline AnalogConfig LP = {
     .name = "LP",
+    .max = 2950,
+    .min = 1050,
+    .middle = 1880,
   };
 
   inline AnalogConfig RP = {
     .name = "RP",
+    .max = 2950,
+    .min = 1050,
+    .middle = 1880,
   };
 
   inline AnalogConfig BF = {
     .name = "BF",
+    .max = 2950,
+    .min = 1050,
+    .middle = 1880,
   };
 
   void Init() {

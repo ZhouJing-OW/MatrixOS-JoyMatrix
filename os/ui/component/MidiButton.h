@@ -1,24 +1,31 @@
 #pragma once
-
 #include "UIComponent.h"
 #include "MatrixOS.h"
-
 
 class MidiButton : public UIComponent {
  public:
   Dimension dimension;
   MidiButtonConfig* config;
   uint16_t count;
-  uint8_t* activeButton;
-  bool lowBrightness;
+  int8_t* active = nullptr;
+  bool upward = false;
+  bool toLowBrightness = false;
   Point position = Point(0, 0);
 
-  MidiButton(Dimension dimension, MidiButtonConfig* config, uint16_t count, uint8_t* activeButtonm, bool lowBrightness) {
+  MidiButton(Dimension dimension, MidiButtonConfig* config, uint16_t count , bool upward) {
     this->dimension = dimension;
     this->config = config;
     this->count = count;
-    this->activeButton = activeButton;
-    this->lowBrightness = lowBrightness;
+    this->upward = upward;
+  }
+
+  MidiButton(Dimension dimension, MidiButtonConfig* config, uint16_t count, int8_t* active, bool upward, bool toLowBrightness) {
+    this->dimension = dimension;
+    this->config = config;
+    this->count = count;
+    this->active = active;
+    this->upward = upward;
+    this->toLowBrightness = toLowBrightness;
   }
 
   virtual Color GetColor() { return config->color; }
@@ -32,15 +39,19 @@ class MidiButton : public UIComponent {
       for (uint8_t x = 0; x < dimension.x; x++)
       { 
         Point xy = origin + Point(x, y);
-        uint8_t i = y * dimension.x + x;
+        uint8_t i;
+        if (upward) i = (dimension.y - y - 1)* dimension.x + x;
+        else i = y * dimension.x + x;
+        MidiButtonConfig* con = config + i;
+        int8_t channel = con->globalChannel ? MatrixOS::UserVar::global_MIDI_CH : con->channel;
 
         if (i < count){
-          if ((config + i)->pressed == true){
-            MatrixOS::LED::SetColor(xy, COLOR_BLANK);
-          }else if ((i != *activeButton) || lowBrightness) {
-            MatrixOS::LED::SetColor(xy, (config + i)->color.ToLowBrightness());
+          if (MatrixOS::MIDI::CheckHold(con->type, channel, con->byte1)){
+            MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+          } else if ((active != nullptr) && toLowBrightness && (i != *active)) {
+            MatrixOS::LED::SetColor(xy, con->color.ToLowBrightness());
           } else {
-            MatrixOS::LED::SetColor(xy, (config + i)->color);
+            MatrixOS::LED::SetColor(xy, con->color);
           }
         }
       }
@@ -49,31 +60,18 @@ class MidiButton : public UIComponent {
   }
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
+    uint8_t i;
+    if (upward) i = (dimension.y - xy.y - 1)* dimension.x + xy.x;
+    else i = xy.y * dimension.x + xy.x;
+    MidiButtonConfig* con = config + i;
+    int8_t channel = con->globalChannel ? MatrixOS::UserVar::global_MIDI_CH : con->channel;
 
-    int8_t i = xy.y * dimension.x + xy.x;
     if(i < count){
-      if (keyInfo->state == PRESSED)  
-      { 
-        *activeButton = i;
-        (config + i)->pressed = true;
-
-        switch ((config + i)->type){
-          case 0: // Command Change
-            MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, (config + i)->channel, (config + i)->value1, (config + i)->value2));
-            break;
-          case 1: // Program Change
-            MatrixOS::MIDI::Send(MidiPacket(0, ProgramChange, (config + i)->channel, (config + i)->value1, (config + i)->value2));
-            break;
-          case 2: // Note On
-            MatrixOS::MIDI::HoldNote((config + i)->channel, (config + i)->value1, xy + position);
-            break;
-        }
+      if (keyInfo->state == PRESSED) { 
+        if (active!= nullptr) *active = i;
+        MatrixOS::MIDI::Hold(xy + position, con->type, channel, con->byte1, con->byte2);
         return true;
-
-      } else if (keyInfo->state == CLEARED){
-        (config + i)->pressed = false;
-        return false;
-      }
+      } 
     }
     return false;
   }

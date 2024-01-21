@@ -4,22 +4,20 @@
 namespace MatrixOS::UIInterface
 {
   // Three digit max
-  int32_t NumberSelector16x4(int32_t value, Color color, string name, int32_t lower_limit = INT_MIN,
-                            int32_t upper_limit = INT_MAX) {
+  int32_t NumberSelector16x4(int16_t value, Color color, string name, int16_t lower_limit = INT16_MIN,
+                            int16_t upper_limit = INT16_MAX) {
     // Point origin = Point((Device::x_size - 1) / 2, (Device::y_size - 1));
 
     UI numberSelector(name, color);
 
     KnobConfig knobConfig = {
-        .name = name,
-        .color = color,
-        .value2 = value,
         .min = lower_limit,
         .max = upper_limit,
+        .color = color,
     };
 
     Device::Encoder::DisableAll();
-    Device::Encoder::Setup(&knobConfig, 0);
+    Device::Encoder::Setup(&value, &knobConfig, 0);
 
     UIButtonWithColorFunc knobColor(
     "", [&]() -> Color { return color.Scale(value * 239 / upper_limit  + 16); }, [&]() -> void {}, [&]() -> void {});

@@ -15,3 +15,4 @@ if(IDF_TARGET MATCHES "^esp32s[2-3]")
 else()
   message(FATAL_ERROR "Invalid target specified: ${IDF_TARGET}")
 endif()
+

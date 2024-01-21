@@ -15,8 +15,8 @@ void UI::Start() {
   Setup();
   while (status != -1)
   {
-    LoopTask();
     Loop();
+    LoopTask();
     RenderUI();
   }
   End();
@@ -30,7 +30,7 @@ void UI::Exit() {
 
 void UI::LoopTask() {
   GetKey();
-  MatrixOS::MIDI::CheckHoldingNote();
+  MatrixOS::MIDI::CheckHold();
   if (!disableExit && MatrixOS::SYS::FNExit == true) Exit();
 }
 
@@ -66,19 +66,19 @@ void UI::UIKeyEvent(KeyEvent* keyEvent) {
   // MLOGD("UI Key Event", "%d - %d", keyID, keyInfo->state);
   if (keyEvent->id == FUNCTION_KEY)
   {
-    if (!disableExit && keyEvent->info.state == RELEASED)
+    if (!disableExit && keyEvent->info.state == RELEASED && Device::KeyPad::fnState.hold == false)
     {
       MLOGD("UI", "Function Key Exit");
       Exit();
       return;
     }
-    if (!disableExit && keyEvent->info.state == HOLD)
-    {
-      MLOGD("UI", "Function Key ExitAPP");
-      MatrixOS::SYS::FNExit = true;
-      Exit();
-      return;
-    }
+    // if (!disableExit && keyEvent->info.state == HOLD)
+    // {
+    //   MLOGD("UI", "Function Key ExitAPP");
+    //   MatrixOS::SYS::FNExit = true;
+    //   Exit();
+    //   return;
+    // }
   }
   Point xy = MatrixOS::KEYPAD::ID2XY(keyEvent->id);
   if (xy)
@@ -153,7 +153,6 @@ void UI::ClearUIComponents() {
 
 void UI::UIEnd() {
   MLOGD("UI", "UI Exited");
-  
   if (newLedLayer)
   { 
     MatrixOS::LED::DestoryLayer(); 
@@ -162,7 +161,7 @@ void UI::UIEnd() {
   { MatrixOS::LED::Fill(0); }
 
   // MatrixOS::KEYPAD::Clear();
-  // MatrixOS::LED::Update();
+  MatrixOS::LED::Update();
 }
 
 void UI::SetFPS(uint16_t fps)

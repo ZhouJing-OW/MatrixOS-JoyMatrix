@@ -8,9 +8,8 @@ bool Timer::Tick(uint32_t ms, bool continuous_mode) {
 
   if(ms == UINT32_MAX)
     return false;
-  if (MatrixOS::SYS::Millis() < previous)
+  if ((MatrixOS::SYS::Millis()) < previous)
     previous = 0;
-
   if (Timer::IsLonger(ms))
   {
     if (continuous_mode)
@@ -33,6 +32,7 @@ uint32_t Timer::SinceLastTick() {
 void Timer::RecordCurrent() {
   previous = MatrixOS::SYS::Millis();
 }
+
 
 // MicroTimer::MicroTimer()
 // {

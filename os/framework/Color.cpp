@@ -1,3 +1,4 @@
+#include "MatrixOS.h"
 #include "Color.h"
 #include <cmath>
 
@@ -49,6 +50,35 @@ Color Color::Scale(uint8_t brightness) {
 Color Color::ToLowBrightness(bool cancel, uint8_t scale) {
   if (!cancel)
   { return Scale(scale); }
+  return Color(R, G, B, W);
+}
+
+Color Color::Blink(bool active, uint32_t startTime, uint16_t timeLength, uint8_t pwm_high, uint8_t pwm_low){
+  if(active) {
+    uint8_t pwm_full = (pwm_high + pwm_low);
+    bool cancel = ((((MatrixOS::SYS::Millis() - startTime)) / (timeLength / pwm_full)) % pwm_full) < pwm_high;
+    return ToLowBrightness(cancel);
+  }
+  return Color(R, G, B, W);
+}
+Color Color::Blink(KeyInfo key){
+  if (key == ACTIVATED || key == HOLD){
+    uint32_t startime = key.lastEventTime - BLINK_TIME * 3 / 4;
+    bool cancel = ((MatrixOS::SYS::Millis() - startime) / (BLINK_TIME / 2)) % 2;
+    return ToLowBrightness(cancel);
+  }
+  return Color(R, G, B, W);
+}
+
+Color Color::Breathe(bool active, uint32_t startTime, uint16_t timeLength){
+  if(active) {
+    int16_t breathe = (MatrixOS::SYS::Millis() - startTime) % timeLength;
+    bool invert = (breathe >= timeLength / 2);
+    breathe = invert ? timeLength - breathe : breathe;
+    breathe = (int16_t)((((255 - COLOR_LOW_STATE_SCALE) / (float)timeLength) * breathe) + COLOR_LOW_STATE_SCALE);
+    breathe = (breathe > 255) ? 255 : breathe;
+    return Scale(breathe);
+  }
   return Color(R, G, B, W);
 }
 

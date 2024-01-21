@@ -1,5 +1,4 @@
 #include "Setting.h"
-#include "UITwoToneSelector.h"
 // #include  "applications/BrightnessControl/BrightnessControl.h"
 
 Setting::Setting()

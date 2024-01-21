@@ -1,6 +1,4 @@
 #include "BrightnessControl.h"
-#include "UITwoToneSelector.h"
-#include "UI4pxNumberWithColorFunc.h"
 
 void BrightnessControl::Start() {
   name = "Brightness Control";

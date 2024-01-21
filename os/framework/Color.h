@@ -1,8 +1,11 @@
 #pragma once
 
 #include <stdint.h>
+#include "KeyEvent.h"
 
-#define COLOR_LOW_STATE_SCALE 56
+#define COLOR_LOW_STATE_SCALE 32
+#define BLINK_TIME 1000
+#define BREATHE_TIME 1000
 
 class Color {
  public:
@@ -24,6 +27,9 @@ class Color {
                                                                                       // as parameter so the output
                                                                                       // dynamiclly change based on the
                                                                                       // variable
+  Color Blink(bool active = true, uint32_t startTime = 0, uint16_t timeLength = BLINK_TIME, uint8_t pwm_high = 1, uint8_t pwm_low = 1);
+  Color Blink(KeyInfo keyInfo);
+  Color Breathe(bool active = true, uint32_t startTime = 0, uint16_t timeLength = BREATHE_TIME);
 
   static uint8_t scale8(uint8_t i, uint8_t scale);
 
@@ -53,17 +59,17 @@ const uint8_t led_gamma[256] = {
     169, 171, 173, 175, 177, 180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213, 215, 218,
     220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255};
 
-const Color COLOR_RED = Color(0xFF0000); //#FF0000
-const Color COLOR_PINK = Color(0xFF0080); //#FF0080
-const Color COLOR_ORANGE = Color(0xFF8000); //#FF8000
-const Color COLOR_YELLOW = Color(0xFFFF00); //#FFFF00
-const Color COLOR_GREEN = Color(0x80FF00); //#80FF00
-const Color COLOR_LIME = Color(0x00FF00); //#00FF00
-const Color COLOR_GUPPIE = Color(0x00FF80); //#00FF80
-const Color COLOR_CYAN = Color(0x00FFFF); //#00FFFF
-const Color COLOR_AZURE = Color(0x0080FF); //#0080FF
-const Color COLOR_BLUE = Color(0x0000FF); //#0000FF
-const Color COLOR_VIOLET = Color(0x8000FF); //#8000FF
-const Color COLOR_FUCHSIA = Color(0xFF00FF); //#FF00FF
-const Color COLOR_WHITE = Color(0xFFFFFF); //#FFFFFF
-const Color COLOR_BLANK = Color(0x000000); //#000000
+const Color COLOR_RED = Color(0xFF0000); //Color(0xFF0000)
+const Color COLOR_PINK = Color(0xFF0080); //Color(0xFF0080)
+const Color COLOR_ORANGE = Color(0xFF8000); //Color(0xFF8000)
+const Color COLOR_YELLOW = Color(0xFFFF00); //Color(0xFFFF00)
+const Color COLOR_GREEN = Color(0x80FF00); //Color(0x80FF00)
+const Color COLOR_LIME = Color(0x00FF00); //Color(0x00FF00)
+const Color COLOR_GUPPIE = Color(0x00FF80); //Color(0x00FF80)
+const Color COLOR_CYAN = Color(0x00FFFF); //Color(0x00FFFF)
+const Color COLOR_AZURE = Color(0x0080FF); //Color(0x0080FF)
+const Color COLOR_BLUE = Color(0x0000FF); //Color(0x0000FF)
+const Color COLOR_VIOLET = Color(0x8000FF); //Color(0x8000FF)
+const Color COLOR_FUCHSIA = Color(0xFF00FF); //Color(0xFF00FF)
+const Color COLOR_WHITE = Color(0xFFFFFF); //Color(0xFFFFFF)
+const Color COLOR_BLANK = Color(0x000000); //Color(0x000000)

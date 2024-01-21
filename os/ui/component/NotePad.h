@@ -9,10 +9,15 @@ class NotePad : public UIComponent {
   NotePadConfig* config;
   std::vector<uint8_t> noteMap;
   Point position = Point(0, 0);
+  bool octaveView;
+  uint32_t octaveTimer;
+  int8_t lastOctave;
 
   NotePad(Dimension dimension, NotePadConfig* config) {
     this->dimension = dimension;
     this->config = config;
+    this->lastOctave = config->octave;
+    octaveView = false;
     GenerateKeymap();
   }
 
@@ -85,28 +90,65 @@ class NotePad : public UIComponent {
 
   virtual bool Render(Point origin) {
     position = origin;
-    uint8_t index = 0;
-    for (int8_t y = 0; y < dimension.y; y++)
-    {
-      for (int8_t x = 0; x < dimension.x; x++)
-      {
-        uint8_t note = noteMap[index];
-        Point globalPos = origin + Point(x, y);
-        if (note == 255)
-        { MatrixOS::LED::SetColor(globalPos, COLOR_BLANK); }
-        else if (MatrixOS::MIDI::CheckHoldingNote(config->channel, note))  // If find the note is currently active. Show it as white
-        { MatrixOS::LED::SetColor(globalPos, COLOR_WHITE); }
-        else
+
+    if (dimension.x > 9){
+      if (lastOctave != config->octave) {
+        octaveTimer = MatrixOS::SYS::Millis() + 200; 
+        lastOctave = config->octave;
+        octaveView = true;
+      }
+      if (octaveTimer < MatrixOS::SYS::Millis()) {
+        octaveView = false; octaveTimer = 0; 
+      }
+    }
+
+    if(octaveView) {
+        uint16_t octaveX = (dimension.x) / 2 - 4;
+        for (int8_t y = 0; y < dimension.y; y++)
         {
-          uint8_t inScale = InScale(note);  // Check if the note is in scale.
-          if (inScale == 0)
-          { MatrixOS::LED::SetColor(globalPos, COLOR_BLANK); }
-          else if (inScale == 1)
-          { MatrixOS::LED::SetColor(globalPos, config->color); }
-          else if (inScale == 2)
-          { MatrixOS::LED::SetColor(globalPos, config->rootColor); }
+          for (int8_t x = 0; x < dimension.x; x++)
+          {
+            Point xy = origin + Point(x, y);
+            if (x >= octaveX && x < octaveX + 9 && y == dimension.y - 1) {
+              if (x == octaveX + config->octave) {
+                MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+              } else {
+                MatrixOS::LED::SetColor(xy, config->color.ToLowBrightness());
+              }
+            } else {
+              MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+            }
+          }
         }
-        index++;
+        return true;
+      }
+
+    if(!octaveView) {
+      uint8_t index = 0;
+      for (int8_t y = 0; y < dimension.y; y++)
+      {
+        for (int8_t x = 0; x < dimension.x; x++)
+        {
+          uint8_t note = noteMap[index];
+          Point globalPos = origin + Point(x, y);
+          uint8_t channel = config->globalChannel ? MatrixOS::UserVar::global_MIDI_CH : config->channel;
+
+          if (note == 255)
+          { MatrixOS::LED::SetColor(globalPos, COLOR_BLANK); }
+          else if (MatrixOS::MIDI::CheckHold(SEND_NOTE, channel, note))  // If find the note is currently active. Show it as white
+          { MatrixOS::LED::SetColor(globalPos, COLOR_WHITE); }
+          else
+          {
+            uint8_t inScale = InScale(note);  // Check if the note is in scale.
+            if (inScale == 0)
+            { MatrixOS::LED::SetColor(globalPos, config->color.ToLowBrightness().Blink(Device::KeyPad::fnState)); }
+            else if (inScale == 1)
+            { MatrixOS::LED::SetColor(globalPos, config->color.Blink(Device::KeyPad::fnState)); }
+            else if (inScale == 2)
+            { MatrixOS::LED::SetColor(globalPos, config->rootColor.Blink(Device::KeyPad::fnState)); }
+          }
+          index++;
+        }
       }
     }
     return true;
@@ -115,13 +157,22 @@ class NotePad : public UIComponent {
   
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
     uint8_t note = noteMap[xy.y * dimension.x + xy.x];
-    if (note == 255)
-    { return false; }
-    if (keyInfo->state == PRESSED) {
-      MatrixOS::MIDI::HoldNote(config->channel, note, xy + position);
-    }
-    return true;
-  }
+    uint8_t channel = config->globalChannel ? MatrixOS::UserVar::global_MIDI_CH : config->channel;
 
+    if(!octaveView){
+      if (note == 255)
+      { return false; }
+      if (keyInfo->state == PRESSED) {
+        if(Device::KeyPad::fnState == ACTIVATED || Device::KeyPad::fnState == HOLD) {
+          MatrixOS::Component::Pad_Setting(config);
+          GenerateKeymap();
+          return true;
+        }
+        MatrixOS::MIDI::Hold(xy + position, SEND_NOTE, channel, note);
+      }
+      return true;
+    }
+    return false;
+  }
   
 };

@@ -1,18 +1,18 @@
 #pragma once
-
 #include "MatrixOS.h"
-
 
 class MixerFader : public UIComponent {
  public:
   Dimension dimension;
   KnobConfig* config;
+  int16_t* value;
   uint8_t count;
   bool active[16];
 
-  MixerFader(Dimension dimension, KnobConfig* config, uint8_t count) {
+  MixerFader(Dimension dimension, KnobConfig* config, int16_t* value, uint8_t count) {
     this->dimension = dimension;
     this->config = config;
+    this->value = value;
     this->count = count;
   }
 
@@ -26,18 +26,19 @@ class MixerFader : public UIComponent {
     for (uint8_t y = 0; y < dimension.y; y++){ 
       for (uint8_t x = 0; x < dimension.x; x++){
         Point xy = origin + Point(x, y);
-
+        KnobConfig* con = config + x;
+        
         if(x < count){        
-          int32_t value = (config + x)->value2;
-          Color color = (config + x)->color;
+          int16_t* val = value + x;
+          Color color = con->color;
 
-          if (value >= piece * (dimension.y - y)){
+          if (*val >= piece * (dimension.y - y)){
             if (active[x] == !*active) 
               MatrixOS::LED::SetColor(xy, color.ToLowBrightness());
             else 
               MatrixOS::LED::SetColor(xy, color);
-          } else if (value + piece >= piece * (dimension.y - y)) {
-            MatrixOS::LED::SetColor(xy, color.Scale(256 * (value % piece) / piece ));
+          } else if (*val + piece >= piece * (dimension.y - y)) {
+            MatrixOS::LED::SetColor(xy, color.Scale(256 * (*val % piece) / piece ));
           } else {
             MatrixOS::LED::SetColor(xy, COLOR_BLANK);
           }
@@ -50,18 +51,14 @@ class MixerFader : public UIComponent {
   }
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
-
+    KnobConfig* con = config + xy.x;
+    int16_t* val = value + xy.x;
     if (keyInfo->state == PRESSED)  
     { 
       if (active[xy.x] == true) {
-        (config + xy.x)->value2 = piece * (dimension.y - xy.y - 0.5);
-        if (Device::KeyPad::ShiftActived()) {
-          (config + xy.x)->shiftCallback();
-        } else {
-          (config + xy.x)->callback();
-        }
-      } 
-
+        con->byte2 = piece * (dimension.y - xy.y - 0.5);
+        MatrixOS::Component::Knob_Function(con, val);
+      }
     } else if (keyInfo->state == RELEASED) {
       if (active[xy.x] != true) {
         bool c = xy.x > 7;

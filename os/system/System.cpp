@@ -8,6 +8,7 @@ extern std::unordered_map<uint32_t, Application_Info*> applications;
 
 namespace MatrixOS::SYS
 {
+  
   void ApplicationFactory(void* param) {
     MLOGD("Application Factory", "App ID %X", active_app_id);
 
@@ -67,11 +68,9 @@ namespace MatrixOS::SYS
 
   void Init() {
     Device::DeviceInit();
-
     USB::Init();
     KEYPAD::Init();
     LED::Init();
-
     MIDI::Init();
 
     inited = true;

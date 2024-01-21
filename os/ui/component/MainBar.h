@@ -1,10 +1,10 @@
 #pragma once
-
 #include "UIComponent.h"
 #include "MatrixOS.h"
 
 class MainBar : public UIComponent {
 public:
+    Point position= Point(0,0);
 
     struct Transport {
         string name;
@@ -25,12 +25,13 @@ public:
     virtual Dimension GetSize() { return Dimension(3, 1); }
 
     virtual bool Render(Point origin) {
+      position = origin;
       for (int x = 0; x < 3; x++)
       {
         bool shift = Device::KeyPad::ShiftActived();
         Color color;
         if (*transport[shift][x].state == true){
-            color = transport[shift][x].color;
+            color = transport[shift][x].color.Blink(true, 0, 1000, 3, 1);
         } else {
             color = transport[shift][x].color.ToLowBrightness();
         }
@@ -44,7 +45,8 @@ public:
         bool shift = Device::KeyPad::ShiftActived();
         if (keyInfo->state == PRESSED){
             *transport[shift][xy.x].state = !*transport[shift][xy.x].state;
-            MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, 0, transport[shift][xy.x].midiCC, *transport[shift][xy.x].state ? 127 : 0));
+            // MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, 0, transport[shift][xy.x].midiCC, *transport[shift][xy.x].state ? 127 : 0));
+            MatrixOS::MIDI::Hold(position, SEND_CC, 0, transport[shift][xy.x].midiCC);
             return true;
         }
 

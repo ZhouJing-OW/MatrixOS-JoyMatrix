@@ -16,6 +16,7 @@ namespace Device
 
     USB::Init();
     NVS::Init();
+    FATFS::Init();
     LED::Init();
     KeyPad::Init();
 

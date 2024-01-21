@@ -82,7 +82,7 @@ class UIButton : public UIComponent {
       }
       else
       {
-        MatrixOS::UIInterface::TextScroll(GetName(), GetColor());
+        MatrixOS::UIInterface::TextScroll(GetName(), color);
         return true;
       }
     }
@@ -94,7 +94,7 @@ class UIButton : public UIComponent {
         return true;
       }
     }
-    else if (keyInfo->state == RELEASED)
+    else if (keyInfo->state == RELEASED || keyInfo->hold == false)
     {
       if (ReleaseCallback())
       {

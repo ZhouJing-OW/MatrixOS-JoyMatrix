@@ -9,11 +9,17 @@
 #include "component/UIButtonWithColorFunc.h"
 #include "component/UIButtonLargeWithColorFunc.h"
 #include "component/UINumModifier.h"
+#include "component/UICross.h"
+#include "component/UICircle.h"
+#include "component/UIUpDown.h"
 
 #include "component/UI4pxNumber.h"
+#include "component/UI4pxNumberWithColorFunc.h"
 
 #include "component/UISelector.h"
+#include "component/UITwoToneSelector.h"
 #include "component/UIItemSelector.h"
+#include "component/UIColorSelector.h"
 
 #include "component/PianoPad.h"
 #include "component/NotePad.h"

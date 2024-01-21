@@ -6,18 +6,21 @@
 class KnobButton : public UIComponent {
  public:
   KnobConfig* config;
+  int16_t* value;
   uint8_t count;
 
 
   KnobButton(){}
 
-  KnobButton(KnobConfig* config, uint8_t count ) {
+  KnobButton(KnobConfig* config, int16_t* value, uint8_t count ) {
     this->config = config;
+    this->value = value;
     this->count = count;
   }
 
-  void Setup(KnobConfig* config, uint8_t count ) {
+  void Setup(KnobConfig* config, int16_t* value, uint8_t count ) {
     this->config = config;
+    this->value = value;
     this->count = count;
   }
 
@@ -27,42 +30,42 @@ class KnobButton : public UIComponent {
   virtual bool Render(Point origin) {
 
     for (uint8_t x = 0; x < count; x++)
-    {        
-      int8_t i = x;
+    {
+      KnobConfig* con = config + x;
+      int16_t* val = value + x;
       Point xy = origin + Point(x, 0);
 
-      if ((config + i)->enable){
-        int32_t value = (config + i)->value2;
+      if (con->enable){
 
-        if ((config + i)->def > 62 && (config + i)->def <65)
+        if (con->def > 62 && con->def <65)
         {
             float hue;
             float s;
             float v;
-          if (value > 64)
+          if (*val > 64)
           {
-            MatrixOS::LED::SetColor(xy, (config + i)->color.Scale((value - 63) * 3.74 + 16));
+            MatrixOS::LED::SetColor(xy, con->color.Scale((*val - 63) * 3.74 + 16));
           }
-          else if (value > 62 && value < 65)
+          else if (*val > 62 && *val < 65)
           {
-            Color::RgbToHsv((config + i)->color, &hue, &s, &v);
+            Color::RgbToHsv(con->color, &hue, &s, &v);
             Color color = Color::HsvToRgb(hue, 0.5, 1);
             MatrixOS::LED::SetColor(xy, color.Scale(16));
           }
-          else if (value < 63)
+          else if (*val < 63)
           {
-            Color::RgbToHsv((config + i)->color, &hue, &s, &v);
+            Color::RgbToHsv(con->color, &hue, &s, &v);
             if(0.5 - hue > 0)
               hue = 0.5 - hue;
             else
               hue = 1.5 - hue;
             Color color = Color::HsvToRgb(hue, s, v);
-            MatrixOS::LED::SetColor(xy, color.Scale((63 - value) * 3.74 + 16));
+            MatrixOS::LED::SetColor(xy, color.Scale((63 - *val) * 3.74 + 16));
           }
         }
         else
         {
-          MatrixOS::LED::SetColor(xy, (config + i)->color.Scale(value * 1.87 + 16));
+          MatrixOS::LED::SetColor(xy, con->color.Scale(*val * 1.87 + 16));
         }
       } else {
         MatrixOS::LED::SetColor(xy, COLOR_BLANK);
@@ -73,16 +76,13 @@ class KnobButton : public UIComponent {
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
 
-    int8_t i = xy.x;
+    KnobConfig* con = config + xy.x;
+    int16_t* val = value + xy.x;
 
-    if (keyInfo->state == HOLD && (config + i)->enable)
+    if (keyInfo->state == HOLD && con->enable)
     {
-      (config + i)->value2 = (config + i)->def;
-      if(Device::KeyPad::ShiftActived()){
-        (config + i)->shiftCallback();
-      } else {
-        (config + i)->callback();
-      }
+      *val = con->def;
+      if (con->enable) MatrixOS::Component::Knob_Function(con, val);
     };
 
     return true;

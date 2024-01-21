@@ -4,15 +4,16 @@
 #include "UIComponent.h"
 
 // TODO add negative support?
+template<typename T>
 class UI4pxNumber : public UIComponent {
  public:
   Color color;
   Color alternative_color;
   uint8_t digits;
-  int32_t* value;
+  T* value;
   uint8_t spacing;
 
-  UI4pxNumber(Color color, uint8_t digits, int32_t* value, Color alternative_color = COLOR_WHITE, uint8_t spacing = 1) {
+  UI4pxNumber(Color color, uint8_t digits, T* value, Color alternative_color = COLOR_WHITE, uint8_t spacing = 1) {
     this->color = color;
     this->digits = digits;
     this->value = value;

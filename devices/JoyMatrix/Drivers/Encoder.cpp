@@ -19,21 +19,25 @@ namespace Device::Encoder
     {
     public:
         std::queue<uint8_t> pin;
-        KnobConfig *knob;
+        KnobConfig *knob = nullptr;
+        int16_t* val;
         uint8_t state;
 
-        void setup(KnobConfig *config){
+        void setup(int16_t *val, KnobConfig *config){
             this->knob = config;
+            this->val = val;
             if (knob->min < knob->max){
-              if (knob->value2 < knob->min) { knob->value2 = knob->min; }
-              if (knob->value2 > knob->max) { knob->value2 = knob->max; }
+              if (*val < knob->min) { *val = knob->min; }
+              if (*val > knob->max) { *val = knob->max; }
               knob->enable = true;
             } else
               knob->enable = false;
         }
 
         void disable(){
-            knob->enable = false;
+            if (knob != nullptr) {
+              knob->enable = false;
+            }
         }
 
         void push(uint8_t pin) {
@@ -46,10 +50,11 @@ namespace Device::Encoder
           if (pin.size() > 0)
           {
             uint8_t m = pin.front();
-            int32_t *val = &knob->value2;
-            int32_t min = knob->min;
-            int32_t max = knob->max;
+            int16_t min = knob->min;
+            int16_t max = knob->max;
             bool shift = Device::KeyPad::ShiftActived();
+            bool wide = max - min > 24;
+            const uint8_t hs = 4;
             switch (state)
             {
               case 0:  // 00 filter
@@ -61,9 +66,12 @@ namespace Device::Encoder
                 if (m != 1){
                   if (m == 0){
                     state = 0;
-                    if (pin.size() > 4 && *val < max && max - min > 32){
-                      if (shift && *val + 3 < max) *val = *val + 3;
-                      else *val = *val + 1;
+                    if (*val + hs < max && wide && !shift) {
+                      *val = *val + hs;
+                      Callback();
+                    }
+                    if (pin.size() > hs && shift) {
+                      *val = *val + 1;
                       Callback();
                     }
                   } else
@@ -74,9 +82,12 @@ namespace Device::Encoder
                 if (m != 2){
                   if (m == 0){
                     state = 0;
-                    if (pin.size() > 4 && *val > min && max - min > 32){
-                      if (shift && *val - 3 >= min) *val = *val - 3;
-                      else *val = *val - 1;
+                    if (*val - hs >= min && wide && !shift) {
+                      *val = *val - hs;
+                      Callback();
+                    }
+                    if (pin.size() > hs && shift) {
+                      *val = *val - 1;
                       Callback();
                     }
                   } else
@@ -86,9 +97,9 @@ namespace Device::Encoder
               case 3:  // 11
                 if (m != 3){
                   if (m == 1){
-                    state = 1;  // 读入信息为01，表示反转
+                    state = 1;  // 读入信息为01，表示正转
                     if (*val < max){
-                      if (shift && *val + 3 <= max && max - min > 32) *val = *val + 3;
+                      if (*val + hs <= max && wide && !shift) *val = *val + hs;
                       else *val = *val + 1;
                       Callback();
                     }
@@ -96,7 +107,7 @@ namespace Device::Encoder
                   if (m == 2){
                     state = 2;  // 读入信息为10，表示反转
                     if (*val > min){
-                      if (shift && *val - 3 >= min && max - min > 32) *val = *val - 3;
+                      if (*val - hs >= min && wide && !shift) *val = *val - hs;
                       else *val = *val - 1;
                       Callback();
                     }
@@ -114,18 +125,14 @@ namespace Device::Encoder
         }
 
         void Callback() {
-            if (Device::KeyPad::ShiftActived() && knob->shiftCallback != nullptr){
-                knob->shiftCallback();
-            }
-            else if (knob->callback != nullptr)
-                knob->callback();
+            MatrixOS::Component::Knob_Function(knob, val);
         }
     };
 
     EncoderEvent encoder[8];
 
-    void Setup(KnobConfig *config, uint8_t n){
-        if(n < 8) encoder[n].setup(config);
+    void Setup(int16_t *val, KnobConfig *config, uint8_t n){
+        if(n < 8) encoder[n].setup(val, config);
     }
 
     void Disable(uint8_t n){
@@ -145,7 +152,7 @@ namespace Device::Encoder
     void ReadBuff() {
         while(encoderBuff.size()){
             for(int i = 0; i < 8; i++){
-                if (encoder[i].knob->enable){
+                if (encoder[i].knob != nullptr && encoder[i].knob->enable){
                     encoder[i].push(encoderBuff.front() >> i * 2 & 0x03);
                 }
             }
