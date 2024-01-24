@@ -8,18 +8,18 @@ class MidiButton : public UIComponent {
   MidiButtonConfig* config;
   uint16_t count;
   int8_t* active = nullptr;
-  bool upward = false;
-  bool toLowBrightness = false;
+  bool upward;
+  bool toLowBrightness;
   Point position = Point(0, 0);
 
-  MidiButton(Dimension dimension, MidiButtonConfig* config, uint16_t count , bool upward) {
+  MidiButton(Dimension dimension, MidiButtonConfig* config, uint16_t count , bool upward = false) {
     this->dimension = dimension;
     this->config = config;
     this->count = count;
     this->upward = upward;
   }
 
-  MidiButton(Dimension dimension, MidiButtonConfig* config, uint16_t count, int8_t* active, bool upward, bool toLowBrightness) {
+  MidiButton(Dimension dimension, MidiButtonConfig* config, uint16_t count, int8_t* active, bool upward = true, bool toLowBrightness = false) {
     this->dimension = dimension;
     this->config = config;
     this->count = count;
@@ -40,8 +40,9 @@ class MidiButton : public UIComponent {
       { 
         Point xy = origin + Point(x, y);
         uint8_t i;
-        if (upward) i = (dimension.y - y - 1)* dimension.x + x;
-        else i = y * dimension.x + x;
+        uint8_t shift = (Device::KeyPad::ShiftActived() && count > dimension.Area()) * dimension.Area();
+        if (upward) i = (dimension.y - y - 1)* dimension.x + x + shift;
+        else i = y * dimension.x + x + shift;
         MidiButtonConfig* con = config + i;
         int8_t channel = con->globalChannel ? MatrixOS::UserVar::global_MIDI_CH : con->channel;
 
@@ -49,9 +50,9 @@ class MidiButton : public UIComponent {
           if (MatrixOS::MIDI::CheckHold(con->type, channel, con->byte1)){
             MatrixOS::LED::SetColor(xy, COLOR_WHITE);
           } else if ((active != nullptr) && toLowBrightness && (i != *active)) {
-            MatrixOS::LED::SetColor(xy, con->color.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, con->color.ToLowBrightness().Blink(Device::KeyPad::fnState));
           } else {
-            MatrixOS::LED::SetColor(xy, con->color);
+            MatrixOS::LED::SetColor(xy, con->color.Blink(Device::KeyPad::fnState));
           }
         }
       }
@@ -61,13 +62,18 @@ class MidiButton : public UIComponent {
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
     uint8_t i;
-    if (upward) i = (dimension.y - xy.y - 1)* dimension.x + xy.x;
-    else i = xy.y * dimension.x + xy.x;
+    uint8_t shift = (Device::KeyPad::ShiftActived() && count > dimension.Area()) * dimension.Area();
+    if (upward) i = (dimension.y - xy.y - 1)* dimension.x + xy.x + shift;
+    else i = xy.y * dimension.x + xy.x + shift;
     MidiButtonConfig* con = config + i;
     int8_t channel = con->globalChannel ? MatrixOS::UserVar::global_MIDI_CH : con->channel;
 
     if(i < count){
-      if (keyInfo->state == PRESSED) { 
+      if (keyInfo->state == PRESSED) {
+        if((Device::KeyPad::fnState == ACTIVATED || Device::KeyPad::fnState == HOLD)) {
+          MatrixOS::Component::Button_Setting(con);
+          return true;
+        } 
         if (active!= nullptr) *active = i;
         MatrixOS::MIDI::Hold(xy + position, con->type, channel, con->byte1, con->byte2);
         return true;

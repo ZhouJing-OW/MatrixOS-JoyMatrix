@@ -69,6 +69,13 @@ Color Color::Blink(KeyInfo key){
   }
   return Color(R, G, B, W);
 }
+Color Color::Blink(bool active, Color color){
+  if(active) {
+    bool cancel = ((MatrixOS::SYS::Millis()) / (BLINK_TIME / 2)) % 2;
+    if (cancel) return color;
+  }
+  return Color(R, G, B, W);
+}
 
 Color Color::Breathe(bool active, uint32_t startTime, uint16_t timeLength){
   if(active) {

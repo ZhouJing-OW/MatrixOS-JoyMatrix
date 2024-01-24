@@ -62,14 +62,6 @@ namespace Device
 
   inline int8_t pressure = 1;
 
-  inline bool playState = false;
-  inline bool metronomeState = false;
-  inline bool recordState = false;
-  inline bool muteState = false;
-  inline bool autoGrouthState = false;
-  inline bool undoState = false;
-  inline bool soloState = false;
-
   namespace KeyPad
   {
     inline gpio_num_t fn_pin;
@@ -150,6 +142,11 @@ namespace Device
         keypad_debounce = keypad_config.debounce;
       }
     }
+  }
+  namespace encoder
+  {
+    #define ENCODER_INT_PIN GPIO_NUM_36
+    #define ENCODER_NUM 8
   }
 
   namespace HWMidi

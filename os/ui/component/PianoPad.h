@@ -8,13 +8,15 @@ class PianoPad : public UIComponent {
   int8_t octaveOffset;
   Dimension dimension;
   NotePadConfig* config;
-  bool changeRoot = false;
   Point position = Point(0, 0);
-  bool octaveView;
+  
   uint32_t octaveTimer;
   int8_t lastOctave;
+  bool octaveView;
+  bool changeRoot = false;
+  
 
-  PianoPad(Dimension dimension, int8_t octaveOffset, NotePadConfig* config, bool changeRoot = false) {
+  PianoPad(Dimension dimension, NotePadConfig* config, bool changeRoot = false, int8_t octaveOffset = 0) {
     this->dimension = dimension;
     this->octaveOffset = octaveOffset;
     this->config = config;
@@ -34,7 +36,7 @@ class PianoPad : public UIComponent {
     uint16_t c_aligned_scale_map = ((config->scale << config->rootKey) + ((config->scale & 0xFFF) >> (12 - config->rootKey % 12))) & 0xFFF;  // Rootkey should always < 12,
                                                                                                                                              // might add an assert later
 
-    if (dimension.x > 9){
+    if (dimension.x >= 10){
       if (lastOctave != config->octave) {
         octaveTimer = MatrixOS::SYS::Millis() + 200; 
         lastOctave = config->octave;
@@ -46,13 +48,13 @@ class PianoPad : public UIComponent {
     }
 
     if(octaveView) {
-      uint16_t octaveX = (dimension.x) / 2 - 4;
+      uint16_t octaveX = (dimension.x) / 2 - 5;
       for (int8_t y = 0; y < dimension.y; y++)
       {
         for (int8_t x = 0; x < dimension.x; x++)
         {
           Point xy = origin + Point(x, y);
-          if (x >= octaveX && x < octaveX + 9 && y == dimension.y - 1) {
+          if (x >= octaveX && x < octaveX + 10 && y == dimension.y - 1) {
             if (x == octaveX + config->octave) {
               MatrixOS::LED::SetColor(xy, COLOR_WHITE);
             } else {
@@ -78,11 +80,11 @@ class PianoPad : public UIComponent {
             if (MatrixOS::MIDI::CheckHold(SEND_NOTE, channel, note)) {  // If find the note is currently active. Show it as white
               MatrixOS::LED::SetColor(xy, COLOR_WHITE); 
             } else if (note % 12 == config->rootKey) {
-              MatrixOS::LED::SetColor(xy, config->rootColor.Blink(Device::KeyPad::fnState));
+              MatrixOS::LED::SetColor(xy, changeRoot ? config->rootColor : config->rootColor.Blink(Device::KeyPad::fnState));
             } else if (bitRead(c_aligned_scale_map, pianoNote[(dimension.y + y) % 2][x % 7])) {
-              MatrixOS::LED::SetColor(xy, config->color.Blink(Device::KeyPad::fnState));
+              MatrixOS::LED::SetColor(xy, changeRoot ? config->color : config->color.Blink(Device::KeyPad::fnState));
             } else {
-              MatrixOS::LED::SetColor(xy, config->color.ToLowBrightness().Blink(Device::KeyPad::fnState));
+              MatrixOS::LED::SetColor(xy, changeRoot ? config->color.ToLowBrightness() : config->color.ToLowBrightness().Blink(Device::KeyPad::fnState));
             }
           } else 
             MatrixOS::LED::SetColor(xy, COLOR_BLANK);

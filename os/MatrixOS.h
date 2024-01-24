@@ -130,8 +130,10 @@ namespace MatrixOS
   namespace Component
   {
     void Tab_ToggleSub(TabConfig* con);
-    void Knob_Function(KnobConfig* con, int16_t* value);
+    void Knob_Function(KnobConfig* con);
     void Channel_Setting(ChannelConfig* con, uint8_t n);
+    void Knob_Setting(KnobConfig* con, bool channelSetting);
+    void Button_Setting(MidiButtonConfig* con);
     void Pad_Setting(NotePadConfig* con);
   }
 

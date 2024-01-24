@@ -7,9 +7,8 @@ template <typename T>
 class UI4pxNumberWithColorFunc : public UI4pxNumber<T>{
  public:
   std::function<Color()> color_func;
-  UI4pxNumberWithColorFunc(std::function<Color()> color_func, uint8_t digits, T* value,
-                           Color alternative_color = Color(0xFFFFFF), uint8_t spacing = 1)
-      : UI4pxNumber<T>(color_func(), digits, value, alternative_color, spacing) {
+  UI4pxNumberWithColorFunc(std::function<Color()> color_func, uint8_t digits, T* value, bool add1 = false, uint8_t spacing = 1)
+      : UI4pxNumber<T>(color_func(), digits, value, add1, spacing) {
     this->color_func = color_func;
   }
 

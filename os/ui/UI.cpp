@@ -153,13 +153,12 @@ void UI::ClearUIComponents() {
 
 void UI::UIEnd() {
   MLOGD("UI", "UI Exited");
-  if (newLedLayer)
-  { 
-    MatrixOS::LED::DestoryLayer(); 
-  }
-  else
-  { MatrixOS::LED::Fill(0); }
 
+  if (newLedLayer) { 
+    MatrixOS::LED::DestoryLayer(); 
+  } else { 
+    MatrixOS::LED::Fill(0); 
+  }
   // MatrixOS::KEYPAD::Clear();
   MatrixOS::LED::Update();
 }

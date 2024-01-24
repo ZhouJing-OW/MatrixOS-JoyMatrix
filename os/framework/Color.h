@@ -29,6 +29,7 @@ class Color {
                                                                                       // variable
   Color Blink(bool active = true, uint32_t startTime = 0, uint16_t timeLength = BLINK_TIME, uint8_t pwm_high = 1, uint8_t pwm_low = 1);
   Color Blink(KeyInfo keyInfo);
+  Color Blink(bool active, Color color);
   Color Breathe(bool active = true, uint32_t startTime = 0, uint16_t timeLength = BREATHE_TIME);
 
   static uint8_t scale8(uint8_t i, uint8_t scale);
@@ -60,16 +61,16 @@ const uint8_t led_gamma[256] = {
     220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255};
 
 const Color COLOR_RED = Color(0xFF0000); //Color(0xFF0000)
-const Color COLOR_PINK = Color(0xFF0080); //Color(0xFF0080)
-const Color COLOR_ORANGE = Color(0xFF8000); //Color(0xFF8000)
+const Color COLOR_ORANGE = Color(0xFF5500); //Color(0xFF5500)
+const Color COLOR_GOLD = Color(0xFFAA00); //Color(0xFFAA00)
 const Color COLOR_YELLOW = Color(0xFFFF00); //Color(0xFFFF00)
 const Color COLOR_GREEN = Color(0x80FF00); //Color(0x80FF00)
 const Color COLOR_LIME = Color(0x00FF00); //Color(0x00FF00)
-const Color COLOR_GUPPIE = Color(0x00FF80); //Color(0x00FF80)
-const Color COLOR_CYAN = Color(0x00FFFF); //Color(0x00FFFF)
-const Color COLOR_AZURE = Color(0x0080FF); //Color(0x0080FF)
+const Color COLOR_CYAN = Color(0x00FF55); //Color(0x00FF66)
+const Color COLOR_AZURE = Color(0x00FFFF); //Color(0x0066FF)
 const Color COLOR_BLUE = Color(0x0000FF); //Color(0x0000FF)
-const Color COLOR_VIOLET = Color(0x8000FF); //Color(0x8000FF)
-const Color COLOR_FUCHSIA = Color(0xFF00FF); //Color(0xFF00FF)
+const Color COLOR_PURPLE = Color(0x5500FF); //Color(0x5500FF) 
+const Color COLOR_VIOLET  = Color(0xAA00FF); //Color(0xAA00FF)
+const Color COLOR_PINK = Color(0xFF00AA); //Color(0xFF00AA)
 const Color COLOR_WHITE = Color(0xFFFFFF); //Color(0xFFFFFF)
 const Color COLOR_BLANK = Color(0x000000); //Color(0x000000)

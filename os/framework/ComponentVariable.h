@@ -1,6 +1,19 @@
 #pragma once
 #include "system/MIDIHold.h"
 
+struct TransportState {
+    bool play = false;
+    bool record = false;
+    bool mute = false;
+    bool solo = false;
+    bool loop = false;
+    bool autoGrouth = false;
+    bool metronome = false;
+    bool undo = false;
+    bool channelMute[16];
+    bool channelSolo[16];
+};
+
 struct AnalogConfig {
     string name;
     uint16_t max;
@@ -17,9 +30,9 @@ struct TabConfig{
 };
 
 struct ChannelConfig {
-    int8_t SelectCC = 120;
-    int8_t MuteCC = 119;
-    int8_t SoloCC = 118;
+    int8_t selectCC = 120;
+    int8_t muteCC = 119;
+    int8_t soloCC = 118;
     int8_t type[16];
     Color color[16];
 };
@@ -31,8 +44,8 @@ enum PadType : int8_t {
 };
 
 struct NotePadConfig {
-    Color color = COLOR_VIOLET;
-    Color rootColor = COLOR_FUCHSIA;
+    Color color = COLOR_PURPLE;
+    Color rootColor = COLOR_PINK;
     bool enfourceScale = true;
     bool alignRoot = true; // Only works when overlap is set to 0
     bool globalChannel = true;
@@ -49,20 +62,21 @@ struct MidiButtonConfig {
     bool globalChannel = false;
     int8_t type = SEND_CC; // 0：Sys, 1：CC, 2：PC, 3：Note
     int8_t channel = 0 ;   // channel
-    int8_t byte1 = 0;    // CC\PC\Note number
-    int8_t byte2 = 127;  // value
+    int8_t byte1 = 0;    // CC \ PC bank \ Note number
+    int8_t byte2 = 127;  // CC value \ PC \ velocity
     Color color = COLOR_CYAN;
 };
 
 struct KnobConfig {
     bool enable = false;
-    bool globalChannel = false;
-    int8_t type = SEND_CC;// 0：Sys, 1：CC, 2：PC, 3：Note
+    bool changed = false;
+    bool lock = false;
+    int8_t type = SEND_CC;// 0：Sys, 1：CC, 2：PC,
     int8_t channel = 0;
-    int8_t byte1 = 0; // CC/PC/Note number
-    int16_t byte2 = 0; // value
-    int16_t min = 0;
-    int16_t max = 127;
-    int16_t def = 0;
+    int8_t byte1 = 0; // CC \ PC bank
+    int8_t byte2 = 0; // CC value \ PC
+    int8_t min = 0;
+    int8_t max = 127;
+    int8_t def = 0;
     Color color = COLOR_RED;
 }; 

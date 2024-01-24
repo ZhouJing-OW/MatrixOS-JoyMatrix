@@ -10,8 +10,10 @@ void Drambo::Setup() {
   }
 
   Variable_Load(DRAMBO_ALL);
+
+  transBar.Setup(&transState);
+  knobBar.Setup(Dimension(8, 1), 8);
   tabBar.Setup(TAB, 5, activeTab, toggle);
-  knobBar.Setup(activeKnob, activeKnobVal, 8);
 
   UI setup("", COLOR_BLUE);
   setup.SetLoopFunc([&]() -> void {
@@ -36,16 +38,15 @@ void Drambo::TabS(){
   //   [&](uint8_t value) -> void { MatrixOS::UserVar::brightness.Set(value); }
   //   );
   UICross exitBtn("Exit", [&]() -> void { MatrixOS::SYS::FNExit = true;});
+  // UIButtonLarge exitBtn("Exit", COLOR_RED, Dimension(2, 2), [&]() -> void { MatrixOS::SYS::FNExit = true;});
   UIButton formatBtn("Format", COLOR_RED, [&]() -> void { Device::FATFS::Format(); });
   UIButton KnobInitBtn("Knob Init", COLOR_ORANGE, [&]() -> void { KnobInit(); });
-  UIButton configInitBtn("Config Init", COLOR_BLUE, [&]() -> void { ConfigInit(); });
 
   tabS.AddUIComponent(systemSettingBtn,Point(15, 0));
   // setting.AddUIComponent(brightnessSelector,Point(2, 1));
   tabS.AddUIComponent(exitBtn,Point(0, 0));
-  tabS.AddUIComponent(formatBtn,Point(8, 1));
-  tabS.AddUIComponent(KnobInitBtn,Point(9, 1));
-  tabS.AddUIComponent(configInitBtn,Point(10, 1));
+  tabS.AddUIComponent(formatBtn,Point(15, 3));
+  tabS.AddUIComponent(KnobInitBtn,Point(14, 3));
 
   CommonUI(tabS);
   tabS.SetLoopFunc([&]() -> void { if (toggle >= 0) tabS.Exit(); });
@@ -55,49 +56,48 @@ void Drambo::TabS(){
 
 void Drambo::Tab0(){ // Main
   Knob_TogglePage(activeKnobPage);
-
-  CH.type[MatrixOS::UserVar::global_MIDI_CH] = TAB[0].subTab;
+  activePad = CH.type[MatrixOS::UserVar::global_MIDI_CH];
   Variable_Save(DRAMBO_CH); Variable_Save(DRAMBO_TAB);
 
-  ChannelButton channel(Dimension(16, 1), &CH, 16, true, [&]() -> void {
-    TAB[0].subTab = CH.type[MatrixOS::UserVar::global_MIDI_CH];
-    toggle = 0;
-  });
-  PianoPad piano(Dimension(15, 2), 0, &PAD[0]);
+  ChannelButton channel(Dimension(16, 1), &CH, &transState, true, 
+    [&]() -> void { if(CH.type[MatrixOS::UserVar::global_MIDI_CH] != activePad)  toggle = 0;});
+  MidiButton ccBtn(Dimension(8, 1), CC, 16);
+  PianoPad piano(Dimension(15, 2), &PAD[0]);
   NotePad note(Dimension(15, 2), &PAD[1]);
   UIUpDown octave1(&PAD[0].octave , 9, 0, COLOR_WHITE, true, false);
   UIUpDown octave2(&PAD[1].octave , 9, 0, COLOR_WHITE, true, false);
   MidiButton drum1(Dimension(8, 2), DRUM, 16, &activeDrum, true , false);
   MidiButton drum2(Dimension(8, 2), DRUM, 16, &activeDrum, true , true);
   UIButtonWithColorFunc knobPage1("Page 1", 
-    [&]()->Color{ Color color = COLOR_RED; return activeKnobPage == 0 ? color : color.ToLowBrightness(); },
+    [&]()->Color{ Color color = COLOR_RED;    return activeKnobPage == 0 ? color : color.ToLowBrightness(); },
     [&]()->void{Knob_TogglePage(0);});
   UIButtonWithColorFunc knobPage2("Page 2", 
-    [&]()->Color{ Color color = COLOR_ORANGE; return activeKnobPage == 1 ? color : color.ToLowBrightness(); },
+    [&]()->Color{ Color color = COLOR_PINK;   return activeKnobPage == 1 ? color : color.ToLowBrightness(); },
     [&]()->void{Knob_TogglePage(1);});
   UIButtonWithColorFunc knobPage3("Page 3", 
     [&]()->Color{ Color color = COLOR_VIOLET; return activeKnobPage == 2 ? color : color.ToLowBrightness(); },
     [&]()->void{Knob_TogglePage(2);});
   UIButtonWithColorFunc knobPage4("Page 4", 
-    [&]()->Color{ Color color = COLOR_FUCHSIA; return activeKnobPage == 3 ? color : color.ToLowBrightness(); },
+    [&]()->Color{ Color color = COLOR_PURPLE; return activeKnobPage == 3 ? color : color.ToLowBrightness(); },
     [&]()->void{Knob_TogglePage(3);});
 
       UI tab0("");
-  switch (CH.type[MatrixOS::UserVar::global_MIDI_CH]){
-    case 0:
+  switch (activePad){
+    case 0: // piano pad
       tab0.AddUIComponent(piano, Point(1, 2));
       tab0.AddUIComponent(octave1, Point(0, 2));
       break;
-    case 1:
+    case 1: // note pad
       tab0.AddUIComponent(note, Point(1, 2));
       tab0.AddUIComponent(octave2, Point(0, 2));
       break;
-    case 2:
+    case 2: // drum pad
       tab0.AddUIComponent(drum1, Point(0, 2));
       tab0.AddUIComponent(drum2, Point(8, 2));
       break;
   }
   tab0.AddUIComponent(channel, Point(0, 0));
+  tab0.AddUIComponent(ccBtn, Point(4, 1));
   tab0.AddUIComponent(knobPage1, Point(12, 1));
   tab0.AddUIComponent(knobPage2, Point(13, 1));
   tab0.AddUIComponent(knobPage3, Point(14, 1));
@@ -105,14 +105,14 @@ void Drambo::Tab0(){ // Main
 
   CommonUI(tab0);
   tab0.SetLoopFunc([&]() -> void { if (toggle >= 0) tab0.Exit(); });
-  tab0.SetEndFunc([&]() -> void {Device::Encoder::DisableAll(); });
+  tab0.SetEndFunc([&]() -> void { Device::Encoder::DisableAll(); });
   tab0.Start();
 }
 
 void Drambo::Tab1(){ // Note
   Knob_TogglePage(activeKnobPage);
 
-  PianoPad piano(Dimension(15, 4), 0, &PAD[0]);
+  PianoPad piano(Dimension(15, 4), &PAD[0]);
   NotePad note(Dimension(15, 4), &PAD[1]);
   UIUpDown octave1(&PAD[0].octave , 9, 0, COLOR_WHITE);
   UIUpDown octave2(&PAD[1].octave , 9, 0, COLOR_WHITE);
@@ -131,7 +131,7 @@ void Drambo::Tab1(){ // Note
 
   CommonUI(tab1);
   tab1.SetLoopFunc([&]() -> void { if (toggle >= 0) tab1.Exit(); });
-  tab1.SetEndFunc([&]() -> void {Device::Encoder::DisableAll(); });
+  tab1.SetEndFunc([&]() -> void { Device::Encoder::DisableAll(); });
   tab1.Start();
 }
 
@@ -139,7 +139,7 @@ void Drambo::Tab2(){ // Sequncer
   UI tab2("");
 
   tab2.SetLoopFunc([&]() -> void { if (toggle >= 0) tab2.Exit(); });
-  tab2.SetEndFunc([&]() -> void {Device::Encoder::DisableAll(); });
+  tab2.SetEndFunc([&]() -> void { Device::Encoder::DisableAll(); });
 
   CommonUI(tab2);
   tab2.Start();
@@ -149,7 +149,7 @@ void Drambo::Tab3(){ // Clips
   UI tab3("");
 
   tab3.SetLoopFunc([&]() -> void { if (toggle >= 0) tab3.Exit(); });
-  tab3.SetEndFunc([&]() -> void {Device::Encoder::DisableAll(); });
+  tab3.SetEndFunc([&]() -> void { Device::Encoder::DisableAll(); });
 
   CommonUI(tab3);
   tab3.Start();
@@ -159,7 +159,7 @@ void Drambo::Tab4(){ // Mixer
   UI tab4("");
 
   tab4.SetLoopFunc([&]() -> void { if (toggle >= 0) tab4.Exit(); });
-  tab4.SetEndFunc([&]() -> void {Device::Encoder::DisableAll(); });
+  tab4.SetEndFunc([&]() -> void { Device::Encoder::DisableAll(); });
 
   CommonUI(tab4);
   tab4.Start();
@@ -169,7 +169,6 @@ void Drambo::Pop(){
   UI pop("");
 
   pop.AddUIComponent(knobBar, Point(8, 4));
-  pop.SetEndFunc([&]() -> void {Device::Encoder::DisableAll(); });
   pop.Start();
 }
 
@@ -186,7 +185,7 @@ void Drambo::toggleTab(){
 }
 
 void Drambo::CommonUI(UI &ui){
-  ui.AddUIComponent(mainBar, Point(0, 4));
+  ui.AddUIComponent(transBar, Point(0, 4));
   ui.AddUIComponent(tabBar, Point(3, 4));
   ui.AddUIComponent(knobBar, Point(8, 4));
 }
@@ -220,7 +219,7 @@ bool Drambo::Variable_Save(uint8_t dataID){
   return false;
 }
 
-void Drambo::Knob_SwitchActive(uint16_t ID[8]){ //if ID == 0xFFFF , it will be blocked
+void Drambo::Knob_Switch(uint16_t ID[ENCODER_NUM]){ //if ID == 0xFFFF , it will be blocked
   std::fstream fio;
   fio.open(DRAMBO_KNOB_PATH, std::ios::in | std::ios:: out | std::ios::binary);
   if (!fio.is_open()) {
@@ -228,42 +227,36 @@ void Drambo::Knob_SwitchActive(uint16_t ID[8]){ //if ID == 0xFFFF , it will be b
     return;
   } // MLOGD("FatFs", "Succeeded to open Knobs configuration.");
 
-  for (uint8_t i = 0; i < 8; i++) {
-    if(activeKnobID[i] != 0xFFFF && knobValAtLoad[i] != activeKnobVal[i]) {
-      activeKnob[i].enable = true;
-      activeKnob[i].byte2 = activeKnobVal[i];
-      uint8_t ch = activeKnobID[i] >> 8;
-      uint8_t n = activeKnobID[i] & 0xFF;
+  for (uint8_t i = 0; i < ENCODER_NUM; i++) {
+    if((knobBar.knobID[i] != 0xFFFF) && (knobBar.knob[i].changed == true)) {
+      knobBar.knob[i].changed = false;
+      uint8_t ch = knobBar.knobID[i] >> 8;
+      uint8_t n = knobBar.knobID[i] & 0xFF;
       fio.seekp((ch * DRAMBO_NUM_OF_KNOB + n) * sizeof(KnobConfig), std::ios::beg);
-      fio.write((char*)&activeKnob[i], sizeof(KnobConfig)); 
+      fio.write((char*)&knobBar.knob[i], sizeof(KnobConfig)); 
     }
   } 
 
-  for (uint8_t i = 0; i < 8; i++) {
-    if (ID[i] == 0xFFFF) {
-      activeKnob[i].enable = false;
-    } else {
-      uint8_t ch = ID[i] >> 8;
-      uint8_t n = ID[i] & 0xFF;
-      fio.seekg((ch * DRAMBO_NUM_OF_KNOB + n) * sizeof(KnobConfig), std::ios::beg);
-      fio.read((char*)&activeKnob[i], sizeof(KnobConfig));
-      knobValAtLoad[i] = activeKnob[i].byte2;
-      activeKnobVal[i] = activeKnob[i].byte2;
-      Device::Encoder::Setup(&activeKnobVal[i], &activeKnob[i], n);
-    }
-    activeKnobID[i] = ID[i];
+  for (uint8_t i = 0; i < ENCODER_NUM; i++) {
+    uint8_t ch = ID[i] >> 8;
+    uint8_t n = ID[i] & 0xFF;
+    fio.seekg((ch * DRAMBO_NUM_OF_KNOB + n) * sizeof(KnobConfig), std::ios::beg);
+    fio.read((char*)&knobBar.knob[i], sizeof(KnobConfig));
+    Device::Encoder::Setup(&knobBar.knob[i], i);
+    if (ID[i] == 0xFFFF) Device::Encoder::Disable(i);
+    knobBar.knobID[i] = ID[i];
   }
   fio.close();
 }
 
 void Drambo::Knob_TogglePage(uint8_t page){
-  uint16_t loadKnob[8];
-  for (uint8_t i = 0; i < 8; i++) {
+  uint16_t loadKnob[ENCODER_NUM];
+  for (uint8_t i = 0; i < ENCODER_NUM; i++) {
     uint8_t ch = MatrixOS::UserVar::global_MIDI_CH;
-    uint8_t n = page * 8 + i;
+    uint8_t n = page * ENCODER_NUM + i;
     loadKnob[i] = ch << 8 | n;
   }
-  Knob_SwitchActive(loadKnob);
+  Knob_Switch(loadKnob);
   activeKnobPage = page;
 }
 
@@ -273,31 +266,40 @@ bool Drambo::ConfigInit(){
     CH.color[ch] = COLOR_LIME;
     CH.type[ch] = 0;
   }
-  CH.color[0]  = COLOR_RED;
+  CH.type[1]  = 2;
+  CH.type[2]  = 2;
+  CH.color[0]  = COLOR_PURPLE;
   CH.color[1]  = COLOR_ORANGE;
   CH.color[2]  = COLOR_ORANGE;
   CH.color[13] = COLOR_AZURE;
   CH.color[14] = COLOR_AZURE;
-  CH.color[15] = COLOR_RED;
+  CH.color[15] = COLOR_PURPLE;
 
   TAB[0] = TabConfig{"MAIN", COLOR_LIME, 0, 3};
-  TAB[1] = TabConfig{"NOTE", COLOR_FUCHSIA, 0, 2};
+  TAB[1] = TabConfig{"NOTE", COLOR_PURPLE, 0, 2};
   TAB[2] = TabConfig{"SEQ", COLOR_CYAN, 0, 1};
   TAB[3] = TabConfig{"CLIP", COLOR_VIOLET, 0, 1};
   TAB[4] = TabConfig{"MIXER", COLOR_YELLOW,0, 2};
 
   PAD[0] = {.color = COLOR_AZURE, .rootColor = COLOR_BLUE, .type = PIANO_PAD, .scale = CHROMATIC};
-  PAD[1] = {.color = COLOR_FUCHSIA, .rootColor = COLOR_VIOLET , .type = NOTE_PAD, .overlap = 2, .scale = NATURAL_MINOR};
+  PAD[1] = {.color = COLOR_PURPLE, .rootColor = COLOR_PINK , .type = NOTE_PAD, .overlap = 2, .scale = NATURAL_MINOR};
 
   for (uint8_t n = 0; n < 16; n++) {
     DRUM[n].byte1 = n + 36;
-    DRUM[n].channel = 2;
+    DRUM[n].channel = 9;
     DRUM[n].color = COLOR_ORANGE;
     DRUM[n].type = SEND_NOTE;
     DRUM[n].globalChannel = true;
   }
   DRUM[0].color = COLOR_RED;
   DRUM[12].color = COLOR_RED;
+
+  for (uint8_t n = 0; n < 16; n++) {
+    CC[n].byte1 = 2;
+    CC[n].channel = n;
+    if (n < 8 ) CC[n].color = COLOR_YELLOW; else CC[n].color = COLOR_ORANGE;
+    CC[n].globalChannel = false;
+  }
 
   Variable_Save(DRAMBO_ALL);
   return true;
@@ -320,16 +322,16 @@ bool Drambo::KnobInit(){
       tempKnob.type = SEND_CC;
       tempKnob.enable = true;
       switch (n) {
-        case 4: tempKnob.byte1 = 10; tempKnob.byte2 = 63; tempKnob.def = 63; break;
-        case 5: tempKnob.byte1 = 9; break;
-        case 6: tempKnob.byte1 = 8; break;
-        case 7: tempKnob.byte1 = 7, tempKnob.byte2 = 78, tempKnob.def = 78; break;
+        case 4: tempKnob.lock = true,  tempKnob.byte1 = 8; break;
+        case 5: tempKnob.lock = true, tempKnob.byte1 = 9; break;
+        case 6: tempKnob.lock = true, tempKnob.byte1 = 10; tempKnob.byte2 = 63; tempKnob.def = 63; break;
+        case 7: tempKnob.lock = true, tempKnob.byte1 = 7, tempKnob.byte2 = 78, tempKnob.def = 78; break;
       }
-      switch (n / 8) {
+      switch (n / ENCODER_NUM) {
         case 0: tempKnob.color = COLOR_RED; break;
-        case 1: tempKnob.color = COLOR_ORANGE; break;
+        case 1: tempKnob.color = COLOR_PINK; break;
         case 2: tempKnob.color = COLOR_VIOLET; break;
-        case 3: tempKnob.color = COLOR_FUCHSIA; break;
+        case 3: tempKnob.color = COLOR_PURPLE; break;
       }
       fout.write((char*)&tempKnob, sizeof(KnobConfig));
     }

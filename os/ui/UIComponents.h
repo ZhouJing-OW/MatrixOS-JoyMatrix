@@ -27,5 +27,5 @@
 #include "component/ChannelButton.h"
 #include "component/MixerFader.h"
 #include "component/KnobButton.h"
-#include "component/MainBar.h"
+#include "component/TransBar.h"
 #include "component/TabBar.h"

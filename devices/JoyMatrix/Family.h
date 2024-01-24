@@ -110,8 +110,8 @@ namespace Device
   namespace Encoder
   {
     void Init();
-    void Setup(int16_t *val, KnobConfig *config, uint8_t n);
-    void Disable(uint8_t n);
+    bool Setup(KnobConfig *config, uint8_t n);
+    bool Disable(uint8_t n);
     void DisableAll();
     KnobConfig* GetConfig(uint8_t n);
   }

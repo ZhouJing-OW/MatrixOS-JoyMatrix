@@ -4,14 +4,11 @@
 #include "Device.h"
 #include "timers.h"
 
-
 namespace Device::Encoder
 {
     StaticTimer_t encoder_timer_def;
     TimerHandle_t encoder_timer;
     QueueHandle_t encoder_evt_queue = NULL;
-
-    #define ENCODER_INT_PIN GPIO_NUM_36
 
     std::queue<uint16_t> encoderBuff;
 
@@ -19,25 +16,21 @@ namespace Device::Encoder
     {
     public:
         std::queue<uint8_t> pin;
-        KnobConfig *knob = nullptr;
-        int16_t* val;
+        KnobConfig* knob = nullptr;
+        int8_t* val;
         uint8_t state;
 
-        void setup(int16_t *val, KnobConfig *config){
+        void setup(KnobConfig* config){
             this->knob = config;
-            this->val = val;
-            if (knob->min < knob->max){
-              if (*val < knob->min) { *val = knob->min; }
-              if (*val > knob->max) { *val = knob->max; }
+            if (knob->min <= knob->max){
+              val = &knob->byte2;
+              if (*val < knob->min) *val = knob->min;
+              if (*val > knob->max) *val = knob->max;
+              if (knob->def < knob->min) knob->def = knob->min;
+              if (knob->def > knob->max) knob->def = knob->max;
               knob->enable = true;
             } else
               knob->enable = false;
-        }
-
-        void disable(){
-            if (knob != nullptr) {
-              knob->enable = false;
-            }
         }
 
         void push(uint8_t pin) {
@@ -50,8 +43,8 @@ namespace Device::Encoder
           if (pin.size() > 0)
           {
             uint8_t m = pin.front();
-            int16_t min = knob->min;
-            int16_t max = knob->max;
+            int8_t min = knob->min;
+            int8_t max = knob->max;
             bool shift = Device::KeyPad::ShiftActived();
             bool wide = max - min > 24;
             const uint8_t hs = 4;
@@ -70,7 +63,7 @@ namespace Device::Encoder
                       *val = *val + hs;
                       Callback();
                     }
-                    if (pin.size() > hs && shift) {
+                    if (pin.size() > 16 && *val + 1 < max && shift) {
                       *val = *val + 1;
                       Callback();
                     }
@@ -86,7 +79,7 @@ namespace Device::Encoder
                       *val = *val - hs;
                       Callback();
                     }
-                    if (pin.size() > hs && shift) {
+                    if (pin.size() > 16 && *val - 1 >= min && shift) {
                       *val = *val - 1;
                       Callback();
                     }
@@ -100,7 +93,7 @@ namespace Device::Encoder
                     state = 1;  // 读入信息为01，表示正转
                     if (*val < max){
                       if (*val + hs <= max && wide && !shift) *val = *val + hs;
-                      else *val = *val + 1;
+                      else if (*val + 1 <= max && shift) *val = *val + 1;
                       Callback();
                     }
                   }
@@ -108,7 +101,7 @@ namespace Device::Encoder
                     state = 2;  // 读入信息为10，表示反转
                     if (*val > min){
                       if (*val - hs >= min && wide && !shift) *val = *val - hs;
-                      else *val = *val - 1;
+                      else if (*val - 1 >= min && shift) *val = *val - 1;
                       Callback();
                     }
                   }
@@ -125,23 +118,31 @@ namespace Device::Encoder
         }
 
         void Callback() {
-            MatrixOS::Component::Knob_Function(knob, val);
+            MatrixOS::Component::Knob_Function(knob);
         }
     };
 
-    EncoderEvent encoder[8];
+    EncoderEvent encoder[ENCODER_NUM];
 
-    void Setup(int16_t *val, KnobConfig *config, uint8_t n){
-        if(n < 8) encoder[n].setup(val, config);
+    bool Setup(KnobConfig *config, uint8_t n){
+        if(n < ENCODER_NUM) {
+          encoder[n].setup(config);
+          return true;
+        }
+        return false;
     }
 
-    void Disable(uint8_t n){
-        if(n < 8) encoder[n].disable();
+    bool Disable(uint8_t n){
+        if(n < ENCODER_NUM) {
+          encoder[n].knob->enable = false;
+          return true;
+        }
+        return false;
     }
 
     void DisableAll(){
-        for(int i = 0; i < 8; i++){
-            encoder[i].disable();
+        for(int i = 0; i < ENCODER_NUM; i++){
+            Disable(i);
         }
     }
 
@@ -151,8 +152,8 @@ namespace Device::Encoder
 
     void ReadBuff() {
         while(encoderBuff.size()){
-            for(int i = 0; i < 8; i++){
-                if (encoder[i].knob != nullptr && encoder[i].knob->enable){
+            for(int i = 0; i < ENCODER_NUM; i++){
+                if (encoder[i].knob != nullptr && encoder[i].knob->enable == true){
                     encoder[i].push(encoderBuff.front() >> i * 2 & 0x03);
                 }
             }
@@ -162,7 +163,7 @@ namespace Device::Encoder
         uint8_t buffSize;
         do {
           buffSize = 0;
-          for(int i = 0; i < 8; i++){
+          for(int i = 0; i < ENCODER_NUM; i++){
               buffSize = buffSize + encoder[i].decode();
           }
         } while (buffSize);

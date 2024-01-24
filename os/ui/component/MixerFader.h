@@ -1,44 +1,36 @@
 #pragma once
 #include "MatrixOS.h"
+#include "KnobButton.h"
 
-class MixerFader : public UIComponent {
+class MixerFader : public KnobButton {
  public:
-  Dimension dimension;
-  KnobConfig* config;
-  int16_t* value;
-  uint8_t count;
-  bool active[16];
 
-  MixerFader(Dimension dimension, KnobConfig* config, int16_t* value, uint8_t count) {
-    this->dimension = dimension;
-    this->config = config;
-    this->value = value;
-    this->count = count;
-  }
+  bool vertical;
+  uint8_t active = 0;
 
-  uint8_t piece = (127 / dimension.y);
-
-  virtual Color GetColor() { return config->color; }
-  virtual Dimension GetSize() { return dimension; }
+  MixerFader(){};
+  MixerFader(Dimension dimension, uint8_t count, bool vertical = true) {
+    KnobButton(dimension, count);
+    this->vertical = vertical;
+  };
 
   virtual bool Render(Point origin) {
 
     for (uint8_t y = 0; y < dimension.y; y++){ 
       for (uint8_t x = 0; x < dimension.x; x++){
         Point xy = origin + Point(x, y);
-        KnobConfig* con = config + x;
+        uint8_t n;
+        if (vertical) n = x; else n = y;
         
-        if(x < count){        
-          int16_t* val = value + x;
-          Color color = con->color;
-
-          if (*val >= piece * (dimension.y - y)){
-            if (active[x] == !*active) 
-              MatrixOS::LED::SetColor(xy, color.ToLowBrightness());
+        if(n < count){
+          uint8_t piece = ((knob[n].max - knob[n].min) / vertical ? dimension.y : dimension.x);        
+          if (knob[n].byte2 >= piece * (dimension.y - y)){
+            if (n >= active && n < active + 8) 
+              MatrixOS::LED::SetColor(xy, knob[n].color.ToLowBrightness());
             else 
-              MatrixOS::LED::SetColor(xy, color);
-          } else if (*val + piece >= piece * (dimension.y - y)) {
-            MatrixOS::LED::SetColor(xy, color.Scale(256 * (*val % piece) / piece ));
+              MatrixOS::LED::SetColor(xy, knob[n].color);
+          } else if (knob[n].byte2 + piece >= piece * (dimension.y - y)) {
+            MatrixOS::LED::SetColor(xy, knob[n].color.Scale(256 * (knob[n].byte2 % piece) / piece ));
           } else {
             MatrixOS::LED::SetColor(xy, COLOR_BLANK);
           }
@@ -51,24 +43,24 @@ class MixerFader : public UIComponent {
   }
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
-    KnobConfig* con = config + xy.x;
-    int16_t* val = value + xy.x;
-    if (keyInfo->state == PRESSED)  
-    { 
-      if (active[xy.x] == true) {
-        con->byte2 = piece * (dimension.y - xy.y - 0.5);
-        MatrixOS::Component::Knob_Function(con, val);
-      }
-    } else if (keyInfo->state == RELEASED) {
-      if (active[xy.x] != true) {
-        bool c = xy.x > 7;
-        for (uint8_t n = 0; n < 8; n++){
-          active[c * 8 + n] = true;
-          active[!c * 8 + n] = false;
+    uint8_t n;
+    bool inActiveArea = (n >= active && n < active + 8);
+    if(vertical) n = xy.x; else n = xy.y;
+    if(n < count){
+      if (keyInfo->state == PRESSED)  
+      { 
+        if (inActiveArea) {
+          uint8_t piece = ((knob[n].max - knob[n].min) / vertical ? dimension.y : dimension.x);
+          knob[n].byte2 = piece * (dimension.y - xy.y - 0.5);
+          MatrixOS::Component::Knob_Function(&knob[n]);
+        }
+      } else if (keyInfo->state == RELEASED) {
+        if (!inActiveArea) {
+          active = n - n % 8;
         }
       }
+      return true;
     }
-
-    return true;
+    return false;
   }
 };

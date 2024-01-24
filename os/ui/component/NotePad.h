@@ -91,25 +91,31 @@ class NotePad : public UIComponent {
   virtual bool Render(Point origin) {
     position = origin;
 
-    if (dimension.x > 9){
+    if (dimension.x >= 10){
       if (lastOctave != config->octave) {
         octaveTimer = MatrixOS::SYS::Millis() + 200; 
         lastOctave = config->octave;
         octaveView = true;
+        GenerateKeymap();
       }
       if (octaveTimer < MatrixOS::SYS::Millis()) {
         octaveView = false; octaveTimer = 0; 
       }
+    } else {
+      if (lastOctave != config->octave){
+        lastOctave = config->octave;
+        GenerateKeymap();
+      }
     }
 
     if(octaveView) {
-        uint16_t octaveX = (dimension.x) / 2 - 4;
+        uint16_t octaveX = (dimension.x) / 2 - 5;
         for (int8_t y = 0; y < dimension.y; y++)
         {
           for (int8_t x = 0; x < dimension.x; x++)
           {
             Point xy = origin + Point(x, y);
-            if (x >= octaveX && x < octaveX + 9 && y == dimension.y - 1) {
+            if (x >= octaveX && x < octaveX + 10 && y == dimension.y - 1) {
               if (x == octaveX + config->octave) {
                 MatrixOS::LED::SetColor(xy, COLOR_WHITE);
               } else {
