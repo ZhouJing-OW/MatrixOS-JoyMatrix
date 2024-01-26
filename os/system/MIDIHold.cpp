@@ -17,7 +17,8 @@ namespace MatrixOS::MIDI
                     Send(MidiPacket(0, ControlChange, channel, byte1, byte2)); 
                     break;
                case SEND_PC: // PC
-                    Send(MidiPacket(0, ProgramChange, channel, byte1, byte2)); 
+                    Send(MidiPacket(0, ControlChange, channel, 0, byte1));
+                    Send(MidiPacket(0, ProgramChange, channel, byte2, byte2)); 
                     break;
                case SEND_NOTE: // Note
                     byte2 = Device::KeyPad::GetVelocity();
@@ -72,9 +73,7 @@ namespace MatrixOS::MIDI
                          case SEND_CC: 
                               Send(MidiPacket(0, ControlChange, channel, byte1, 0)); 
                               break;
-                         case SEND_PC:
-                              Send(MidiPacket(0, ProgramChange, channel, byte1, 0));
-                              break;
+                         case SEND_PC: break;
                          case SEND_NOTE:
                               Send(MidiPacket(0, NoteOff, channel, byte1, 0));
                               break;

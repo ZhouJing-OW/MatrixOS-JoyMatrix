@@ -9,8 +9,6 @@ class ChannelButton : public UIComponent {
   TransportState* state;
   bool lowBrightness;
   bool select = false;
-  bool toggleMute[16];
-  bool toggleSolo[16];
   std::function<void()> callback;
   Point position = Point(0, 0);
   
@@ -72,51 +70,53 @@ class ChannelButton : public UIComponent {
     int8_t i = xy.x + xy.y * dimension.x;
     if (i < 16){
       if (keyInfo->state == PRESSED) { //setting
-        if(Device::KeyPad::fnState == ACTIVATED || Device::KeyPad::fnState == HOLD) {
-          if(!(state->mute || state->solo)){
+        if(Device::KeyPad::fnState == ACTIVATED || Device::KeyPad::fnState == HOLD) 
+        {
+          if(!(state->mute == true || state->solo == true))
+          {
             MatrixOS::Component::Channel_Setting(config, i);
             return true;
           }
         } 
-        
-        if (state->solo) { //solo
-          if(!toggleSolo[i]){
-            state->channelSolo[i] = !state->channelSolo[i];
-            toggleSolo[i] = true;
-          }
-          
+
+        if (state->solo == true) 
+        { //solo
+          state->channelSolo[i] = !state->channelSolo[i];
           MatrixOS::MIDI::Hold(xy + position, SEND_CC, i, config->soloCC, 127);
-          if (i != MatrixOS::UserVar::global_MIDI_CH ){
+
+          if (i != MatrixOS::UserVar::global_MIDI_CH )
+          {
             MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, i, config->selectCC, 127));
             MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, i, config->selectCC, 0));
             MatrixOS::UserVar::global_MIDI_CH = i;
           }
-        } else if(state->mute) { //mute
-          if(!toggleMute[i]){
-            state->channelMute[i] = !state->channelMute[i];
-            toggleMute[i] = true;
-          }
-          
+        } 
+        else if(state->mute == true) //mute
+        { 
+          state->channelMute[i] = !state->channelMute[i];
           MatrixOS::MIDI::Hold(xy + position, SEND_CC, i, config->muteCC, 127);
-        } else { // default
+        } 
+        else // default
+        { 
           MatrixOS::MIDI::Hold(xy + position, SEND_CC, i, config->selectCC, 127);
-          if (i != MatrixOS::UserVar::global_MIDI_CH ){
+          if (i != MatrixOS::UserVar::global_MIDI_CH )
+          {
             MatrixOS::UserVar::global_MIDI_CH = i;
-          } else {
+          } 
+          else 
+          {
             config->type[i] += 1;
             if(config->type[i] > 2) config->type[i] = 0;
           }
         }
         return true;
       }
-    } 
 
-    if (keyInfo->state == RELEASED || keyInfo->state == IDLE) {
-      toggleMute[i] = false;
-      toggleSolo[i] = false;
-      Callback();
-    }
-    
-    return true;
+      if (keyInfo->state == RELEASED) {
+        Callback();
+      }
+      return true;
+    } 
+    return false;
   }
 };

@@ -159,6 +159,9 @@ void UI::UIEnd() {
   } else { 
     MatrixOS::LED::Fill(0); 
   }
+
+  Device::AnalogInput::SetUpDown(nullptr);
+  Device::AnalogInput::SetLeftRight(nullptr);
   // MatrixOS::KEYPAD::Clear();
   MatrixOS::LED::Update();
 }

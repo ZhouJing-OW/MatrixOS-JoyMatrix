@@ -4,7 +4,7 @@
 #include "MatrixOS.h"
 
 
-class UIUpDown : public UIComponent {
+class UIPlusMinus : public UIComponent {
  public:
   int8_t* val;
   int8_t max;
@@ -12,14 +12,25 @@ class UIUpDown : public UIComponent {
   Color color;
   bool vertical;
   bool reverse;
+  std::function<void()> callback;
 
-  UIUpDown(int8_t* val, int8_t max, int8_t min, Color color, bool vertical = true, bool reverse = false) {
+  UIPlusMinus(int8_t* val, int8_t max, int8_t min, Color color, bool vertical = true, std::function<void()> callback = nullptr) {
     this->val = val;
     this->max = max;
     this->min = min;
     this->color = color;
     this->vertical = vertical;
-    this->reverse = false;
+    if(this->vertical == false) this->reverse = true;
+    this->callback = callback;
+  }
+
+  virtual bool Callback() {
+    if (callback != nullptr)
+    {
+      callback();
+      return true;
+    }
+    return false;
   }
 
   virtual Color GetColor() { return color; }
@@ -52,19 +63,23 @@ class UIUpDown : public UIComponent {
     uint8_t i;
     if (vertical) i = xy.y;
     else i = xy.x;
+    uint8_t shift = (max - min > 32) && Device::KeyPad::ShiftActived();
+    shift = shift * 9;
 
     if (keyInfo->state == PRESSED)  
     { 
       switch (i) {
       case 0:
-        if (!reverse) *val = *val + (*val < max);
-        else *val = *val - (*val > min);
-        MLOGD("Octave", "%d", *val);
+        if (!reverse) *val = (*val + 1 + shift) < max ? (*val + 1 + shift) : max;
+        else *val = (*val - 1 - shift) > min ? (*val - 1 - shift) : min;
+        // MLOGD("Value", "%d", *val);
+        Callback();
         return true;
       case 1:
-        if (!reverse) *val = *val - (*val > min);
-        else *val = *val + (*val < max);
-        MLOGD("Octave", "%d", *val);
+        if (!reverse) *val = (*val - 1 - shift) > min ? (*val - 1 - shift) : min;
+        else *val = (*val + 1 + shift) < max ? (*val + 1 + shift) : max;
+        MLOGD("Value", "%d", *val);
+        Callback();
         return true;
       }
     } 

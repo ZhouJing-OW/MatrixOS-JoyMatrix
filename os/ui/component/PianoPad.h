@@ -12,8 +12,10 @@ class PianoPad : public UIComponent {
   
   uint32_t octaveTimer;
   int8_t lastOctave;
-  bool octaveView;
+  bool octaveDisplay;
   bool changeRoot = false;
+
+  const uint16_t octaveDisplayDuration = 200;
   
 
   PianoPad(Dimension dimension, NotePadConfig* config, bool changeRoot = false, int8_t octaveOffset = 0) {
@@ -22,7 +24,7 @@ class PianoPad : public UIComponent {
     this->config = config;
     this->changeRoot = changeRoot;
     this->lastOctave = config->octave;
-    octaveView = false;
+    octaveDisplay = false;
   }
 
   virtual Color GetColor() { return config->color; }
@@ -38,16 +40,16 @@ class PianoPad : public UIComponent {
 
     if (dimension.x >= 10){
       if (lastOctave != config->octave) {
-        octaveTimer = MatrixOS::SYS::Millis() + 200; 
+        octaveTimer = MatrixOS::SYS::Millis() + octaveDisplayDuration; 
         lastOctave = config->octave;
-        octaveView = true;
+        octaveDisplay = true;
       }
       if (octaveTimer < MatrixOS::SYS::Millis()) {
-        octaveView = false; octaveTimer = 0; 
+        octaveDisplay = false; octaveTimer = 0; 
       }
     }
 
-    if(octaveView) {
+    if(octaveDisplay) {
       uint16_t octaveX = (dimension.x) / 2 - 5;
       for (int8_t y = 0; y < dimension.y; y++)
       {
@@ -68,7 +70,7 @@ class PianoPad : public UIComponent {
       return true;
     }
 
-    if(!octaveView) {
+    if(!octaveDisplay) {
       for(uint8_t x = 0; x < dimension.x; x++){
         for(uint8_t y = 0; y < dimension.y; y++){
           uint8_t octave = config->octave + octaveOffset + (x / 7) + ((dimension.y - y - 1) / 2) * (dimension.x / 7);
@@ -100,7 +102,7 @@ class PianoPad : public UIComponent {
     uint8_t note = pianoNote[(dimension.y + xy.y) % 2][xy.x % 7] + octave * 12;
     uint8_t channel = config->globalChannel ? MatrixOS::UserVar::global_MIDI_CH : config->channel;
 
-    if(!octaveView){
+    if(!octaveDisplay){
       if (pianoNote[(dimension.y + xy.y) % 2][xy.x % 7] == -1)
         return false; 
       else if (note > 127)

@@ -47,7 +47,7 @@ namespace Device::Encoder
             int8_t max = knob->max;
             bool shift = Device::KeyPad::ShiftActived();
             bool wide = max - min > 24;
-            const uint8_t hs = 4;
+            const uint8_t hs = 2;
             switch (state)
             {
               case 0:  // 00 filter
@@ -133,7 +133,7 @@ namespace Device::Encoder
     }
 
     bool Disable(uint8_t n){
-        if(n < ENCODER_NUM) {
+        if(encoder[n].knob != nullptr && n < ENCODER_NUM) {
           encoder[n].knob->enable = false;
           return true;
         }
@@ -146,7 +146,7 @@ namespace Device::Encoder
         }
     }
 
-    KnobConfig* GetConfig(uint8_t n){
+    KnobConfig* GetKnobPt(uint8_t n){
         return encoder[n].knob;
     }
 

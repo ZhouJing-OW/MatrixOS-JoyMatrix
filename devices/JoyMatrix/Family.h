@@ -16,13 +16,12 @@
 
 #include "driver/uart.h"
 #include "driver/gpio.h"
-
 #include "nvs_flash.h"
-
 #include "esp_private/system_internal.h"
-
 #include "WS2812/WS2812.h"
 #include "framework/Color.h"
+#include <functional>
+
 
 
 #define FUNCTION_KEY 0  // Keypad Code for main function key
@@ -104,7 +103,9 @@ namespace Device
     uint16_t* GetPtr(string input);
     uint16_t GetRaw(string input);
     int8_t GetRocker(AnalogConfig config);
-    void PitchWheel();
+    void UseDial(Point xy, KnobConfig* knob, std::function<void()> callback = nullptr);
+    void SetUpDown(int8_t* up_down, int8_t max = 0, int8_t min = 0, bool loop = false, std::function<void()> callback = nullptr);
+    void SetLeftRight(int8_t* left_right, int8_t max = 0, int8_t min = 0, bool loop = false, std::function<void()> callback = nullptr);
   }
 
   namespace Encoder
@@ -113,7 +114,7 @@ namespace Device
     bool Setup(KnobConfig *config, uint8_t n);
     bool Disable(uint8_t n);
     void DisableAll();
-    KnobConfig* GetConfig(uint8_t n);
+    KnobConfig* GetKnobPt(uint8_t n);
   }
 
   namespace NVS

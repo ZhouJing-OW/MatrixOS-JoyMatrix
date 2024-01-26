@@ -11,7 +11,7 @@
 #include "component/UINumModifier.h"
 #include "component/UICross.h"
 #include "component/UICircle.h"
-#include "component/UIUpDown.h"
+#include "component/UIPlusMinus.h"
 
 #include "component/UI4pxNumber.h"
 #include "component/UI4pxNumberWithColorFunc.h"
@@ -27,5 +27,6 @@
 #include "component/ChannelButton.h"
 #include "component/MixerFader.h"
 #include "component/KnobButton.h"
+#include "component/KnobBar.h"
 #include "component/TransBar.h"
 #include "component/TabBar.h"

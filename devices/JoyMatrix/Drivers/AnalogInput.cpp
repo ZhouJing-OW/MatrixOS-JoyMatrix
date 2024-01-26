@@ -2,6 +2,9 @@
 #include "Device.h"
 #include "timers.h"
 #include "esp_adc\adc_oneshot.h"
+#include <functional>
+#include <map>
+#include <math.h>
 
 #define ANALOG_INPUT_ADC_ATTEN ADC_ATTEN_DB_11
 #define ANALOG_INPUT_ADC_WIDTH ADC_BITWIDTH_12
@@ -14,8 +17,41 @@ namespace Device::AnalogInput
   StaticTimer_t analog_input_timer_def;
   TimerHandle_t analog_input_timer;
   
-  uint16_t reading[7];
-  uint16_t readData[7];
+  uint16_t  reading[7];
+  uint16_t  readData[7];
+
+  uint16_t  lastPitch = 0x1FFE;
+  int8_t    lastMod = 0;
+
+  std::unordered_map<uint16_t, KnobConfig*> dialPtr;
+  vector<uint16_t> keyID;
+
+  int8_t    dial_max;
+  int8_t    dial_min;
+  bool      dialMode = true;
+  bool      dialActive_L = false;
+  bool      dialActive_R = false;
+  float     anglePrev_L;
+  float     anglePrev_R;  
+  std::function<void()> dial_callback;
+
+  const uint8_t dialDevide = 24;
+
+  int8_t*   upDown = nullptr;
+  int8_t    upDown_max;
+  int8_t    upDown_min;
+  bool      upDown_loop;
+  uint32_t  upDown_time = 0; 
+  std::function<void()> upDown_callback;
+
+  int8_t*   leftRight = nullptr;
+  int8_t    leftRight_max;
+  int8_t    leftRight_min;
+  bool      leftRight_loop;
+  uint32_t  leftRight_time = 0;
+  std::function<void()> leftRight_callback;
+
+  const uint16_t timeInterval = 200;
 
   // Config analog inputs
   const adc_unit_t L_rocker_x_unit = ADC_UNIT_1;
@@ -57,54 +93,19 @@ namespace Device::AnalogInput
 
   adc_oneshot_unit_handle_t adc_handle[2];
 
-  inline AnalogConfig LX = {
-    .name = "LX",
-    .max = 2900,
-    .min = 800,
-    .middle = 1870,
-  };
+  inline AnalogConfig LX = { .name = "LX",  .max = 2900,  .min = 800,   .middle = 1870, };
 
-  inline AnalogConfig LY = {
-    .name = "LY",
-    .max = 2950,
-    .min = 930,
-    .middle = 1970,
-  };
+  inline AnalogConfig LY = { .name = "LY",  .max = 2950,  .min = 930,   .middle = 1970, };
 
-  inline AnalogConfig RX = {
-    .name = "RX",
-    .max = 3250,
-    .min = 950,
-    .middle = 2150,
-  };
+  inline AnalogConfig RX = { .name = "RX",  .max = 3250,  .min = 950,   .middle = 2150, };
 
-  inline AnalogConfig RY = {
-    .name = "RY",
-    .max = 2950,
-    .min = 1050,
-    .middle = 1880,
-  };
+  inline AnalogConfig RY = { .name = "RY",  .max = 2950,  .min = 1050,  .middle = 1880, };
 
-  inline AnalogConfig LP = {
-    .name = "LP",
-    .max = 2950,
-    .min = 1050,
-    .middle = 1880,
-  };
+  inline AnalogConfig LP = { .name = "LP",  .max = 2950,  .min = 1050,  .middle = 1880, };
 
-  inline AnalogConfig RP = {
-    .name = "RP",
-    .max = 2950,
-    .min = 1050,
-    .middle = 1880,
-  };
+  inline AnalogConfig RP = { .name = "RP",  .max = 2950,  .min = 1050,  .middle = 1880, };
 
-  inline AnalogConfig BF = {
-    .name = "BF",
-    .max = 2950,
-    .min = 1050,
-    .middle = 1880,
-  };
+  inline AnalogConfig BF = { .name = "BF",  .max = 2950,  .min = 1050,  .middle = 1880, };
 
   void Init() {
     adc_oneshot_unit_init_cfg_t init_config[2];
@@ -170,13 +171,23 @@ namespace Device::AnalogInput
       else reading[i] = middleOfThree(result[0], result[1], result[2]);
     }
 
-    PitchWheel();
+    if(dialPtr.size() > 0) dialMode = true;
+    else {
+      dialMode = false;
+      dial_callback = nullptr;
+    }
+    
+    void PitchWheel();
+    void ModWheel();
+    void DirectPad();  
+    void Dial();
 
-    // MLOGD("LY", "%d", GetRaw("RY"));
+    PitchWheel();
+    ModWheel();
+    DirectPad();
+    Dial();
   }
 
-  bool pitchWheelState;
-  uint16_t lastpitch = 0x1FFE;
   void PitchWheel()
   {
     int8_t lx = GetRocker(LX);
@@ -186,10 +197,165 @@ namespace Device::AnalogInput
     if (change < - 0x1FFE) change = - 0x1FFE;
 
     uint16_t pitch = 0x1FFF + change;
-    if (pitch != lastpitch){
-      lastpitch = pitch;
-      MatrixOS::MIDI::Send(MidiPacket(0, PitchChange, MatrixOS::UserVar::global_MIDI_CH, pitch));
+    if (pitch != lastPitch){
+      int8_t channel = MatrixOS::UserVar::global_MIDI_CH;
+      //MLOGD("Pitch Wheel", "lx:%d, ly:%d, pitch:%d, ch:%d", lx, ly, pitch, channel);
+      lastPitch = pitch;
+      MatrixOS::MIDI::Send(MidiPacket(0, PitchChange, channel, pitch));
     }
+  }
+
+  void ModWheel()
+  {
+    if(!dialMode)
+    {
+      uint8_t mod = GetRaw("BF") / 32;
+      if (lastMod != mod){
+        int8_t channel = MatrixOS::UserVar::global_MIDI_CH;
+        // MLOGD("Mod Wheel", "mod:%d, ch:%d", mod, channel);
+        lastMod = mod;
+        MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, channel, 1, mod));
+      }
+    }
+  }
+
+  void DirectPad()
+  {
+    // if (GetRocker(RY) != 0) MLOGD("Rocker","ry = %d", GetRocker(RY));
+    // if (GetRocker(RX) != 0) MLOGD("Rocker","rx = %d", GetRocker(RX));
+    if(!dialMode)
+    {
+      if(upDown != nullptr && upDown_max > upDown_min)
+      {
+        if ((GetRocker(RY) > 64) && (upDown_time < MatrixOS::SYS::Millis()))
+        {
+          *upDown = (*upDown + 1 <= upDown_max) ? *upDown + 1 : (upDown_loop ? upDown_min : upDown_max);
+          upDown_time = MatrixOS::SYS::Millis() + timeInterval;
+          if(upDown_callback != nullptr) upDown_callback();
+          // MLOGD("DirectPad", "_up: %d", *upDown);
+        } else if ((GetRocker(RY) < -64) && (upDown_time < MatrixOS::SYS::Millis()))
+        {
+          *upDown = (*upDown - 1 >= upDown_min) ? *upDown - 1 : (upDown_loop ? upDown_max : upDown_min);
+          upDown_time = MatrixOS::SYS::Millis() + timeInterval;
+          // MLOGD("DirectPad", "_down: %d", *upDown);
+        } else if (GetRocker(RY) > -16 && (GetRocker(RY) < 16)) upDown_time = 0;
+      }
+
+      if(leftRight != nullptr && leftRight_max > leftRight_min)
+      {
+        if ((GetRocker(RX) > 64) && (leftRight_time < MatrixOS::SYS::Millis()))
+        {
+          *leftRight = (*leftRight + 1 <= leftRight_max) ? *leftRight + 1 : (leftRight_loop ? leftRight_min : leftRight_max);
+          leftRight_time = MatrixOS::SYS::Millis() + timeInterval;
+          if(leftRight_callback != nullptr) leftRight_callback();
+          // MLOGD("DirectPad", "_left: %d", *leftRight);
+        }else if ((GetRocker(RX) < -64) && (leftRight_time < MatrixOS::SYS::Millis()))
+        {
+          *leftRight = (*leftRight - 1 >= leftRight_min) ? *leftRight - 1 : (leftRight_loop ? leftRight_max : leftRight_min);
+          leftRight_time = MatrixOS::SYS::Millis() + timeInterval;
+          if(leftRight_callback != nullptr) leftRight_callback();
+          // MLOGD("DirectPad", "_right: %d", *leftRight);
+        } else if (GetRocker(RX) > -16 && (GetRocker(RX) < 16)) leftRight_time = 0;
+      }
+    }
+  }
+
+  void Dial()
+  {
+    if(dialMode)
+    {
+      int8_t rockerR_y = GetRocker(RY); int8_t rockerR_x = GetRocker(RX);
+      int8_t rockerL_y = GetRocker(LY); int8_t rockerL_x = GetRocker(LX);
+      uint8_t r_R = sqrt(pow(rockerR_y, 2) + pow(rockerR_x, 2));
+      uint8_t r_L = sqrt(pow(rockerL_y, 2) + pow(rockerL_x, 2));
+      float angle = 0;
+      float* anglePrev;
+      int8_t delta = 0;
+
+      if(r_R > 16 && dialActive_L == false)
+      { 
+        angle = atan2(rockerR_y, rockerR_x);
+        if(dialActive_R == false) 
+        {
+          anglePrev_R = angle;
+          anglePrev = &anglePrev_R;
+          dialActive_R = true;
+        }
+      } else if (r_R <= 16) dialActive_R = false;
+      
+      if(r_L > 16 && dialActive_R == false)
+      {
+        angle = atan2(rockerL_y, rockerL_x);
+        if(dialActive_L == false) 
+        { 
+          anglePrev_L = angle;
+          anglePrev = &anglePrev_L;
+          dialActive_L = true;
+        }
+      } else if (r_L <= 16) dialActive_L = false;
+
+      if(dialActive_R || dialActive_L){
+        float angleDelta = angle - *anglePrev;
+        if(angleDelta > M_PI) angleDelta = angleDelta - 2 * M_PI;
+        if(angleDelta < -M_PI) angleDelta = angleDelta + 2 * M_PI;
+        if ((angleDelta > M_PI / dialDevide && angleDelta < M_PI) || (angleDelta < -M_PI / dialDevide && angleDelta > -M_PI))
+        {
+          delta = angleDelta / (M_PI / dialDevide);
+          if (delta > dialDevide / 2) delta = dialDevide - delta; else if (delta < -8) delta = -dialDevide - delta;
+          *anglePrev = angle - (angleDelta - delta * (M_PI / dialDevide));
+          if (*anglePrev - M_PI > 0) *anglePrev = -(*anglePrev - M_PI);
+          else 
+          if (*anglePrev + M_PI < 0) *anglePrev = -(*anglePrev + M_PI);
+          // MLOGD("Dial", " angle = %f ,anglePrev = %f  delta = %d", angle, *anglePrev, -delta);
+        }
+      } 
+
+      
+      for (auto it = dialPtr.begin(); it != dialPtr.end(); it++){
+
+        KeyInfo* keyInfo = Device::KeyPad::GetKey(it->first);
+        if(keyInfo->state == ACTIVATED || keyInfo->state == HOLD)
+        { 
+          if(it->second->byte2 != it->second->def && Device::KeyPad::ShiftActived())
+          {
+            uint16_t ms = 200;
+            uint8_t step = 127 / (ms / (1000 / Device::analog_input_scanrate));
+            int8_t i = it->first;
+            int8_t target = it->second->def;
+            if (it->second->byte2 < target) it->second->byte2 = it->second->byte2 + step > target ? target : it->second->byte2 + step;
+            if (it->second->byte2 > target) it->second->byte2 = it->second->byte2 - step < target ? target : it->second->byte2 - step;
+            MatrixOS::Component::Knob_Function(it->second);
+          } 
+
+          if (delta != 0)
+          {
+            if (it->second->byte2 - delta > it->second->max) it->second->byte2 = it->second->max;
+            else if (it->second->byte2 - delta < it->second->min) it->second->byte2 = it->second->min;
+            else it->second->byte2 -= delta;
+            MatrixOS::Component::Knob_Function(it->second);
+          }
+        }
+
+        if(keyInfo->state == RELEASED || keyInfo->state == IDLE)
+        {
+          keyID.push_back(it->first);
+        }
+      }
+      
+      for (uint8_t i = 0; i < keyID.size(); i++)
+      {
+        auto it = dialPtr.find(keyID[i]);
+        dialPtr.erase(it);
+      }
+      
+      keyID.clear();
+    }
+  }
+
+  void UseDial (Point xy, KnobConfig* knob, std::function<void()> callback){
+    uint16_t ID = Device::KeyPad::XY2ID(xy);
+    dial_callback = callback;
+    dialPtr.emplace(ID, knob);
   }
 
   uint16_t* GetPtr(string input)
@@ -231,83 +397,20 @@ namespace Device::AnalogInput
     } else return 127;
   }
 
+  void SetUpDown(int8_t* up_down, int8_t max, int8_t min, bool loop, std::function<void()> callback){
+    upDown = up_down;
+    upDown_max = max;
+    upDown_min = min;
+    upDown_loop = loop;
+    upDown_callback = callback;
+  }
+
+  void SetLeftRight(int8_t* left_right, int8_t max, int8_t min, bool loop, std::function<void()> callback){
+    leftRight = left_right;
+    leftRight_max = max;
+    leftRight_min = min;
+    leftRight_loop = loop;
+    leftRight_callback = callback;
+  }
+
 }
-
-
-/*
-  void Scan(){
-    switch(mux){
-      case 1: { // Y
-        int8_t rx = GetX(1);
-        int8_t ry = GetY(1);
-
-        ModWheelLock();
-
-        if (ry > 0){
-          ModWheelOff(2);
-          modWheel[1] = true;
-          if (!modLock[1]) MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, *ch, 1, ry));
-        } 
-        if ( ry < 0){
-          ModWheelOff(1);
-          modWheel[2] = true;
-          if (!modLock[2]) MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, *ch, 2, -ry));
-        } 
-        if (rx > 0){
-          ModWheelOff(4);
-          modWheel[3] = true;
-          if (!modLock[3]) MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, *ch, 3, rx));
-        } 
-        if (rx < 0){
-          ModWheelOff(3);
-          modWheel[4] = true;
-          if (!modLock[4]) MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, *ch, 4, - rx));
-        } 
-        if (rx == 0 && ry == 0) {
-          ModWheelOff(1);
-          ModWheelOff(2);
-          ModWheelOff(3);
-          ModWheelOff(4);
-          for (uint8_t n = 1; n < 5;n++)
-          {
-            modLock[n] = false;
-          }
-        }
-
-        break;
-      }
-      case 3: { // Pressure
-        uint8_t lp = GetPressure(0);
-        uint8_t rp = GetPressure(1);
-        uint8_t p = lp > rp ? lp : rp;
-        uint8_t p2 = p * p / 128;
-        Device::pressure = p2 > 1 ? p2 : 1;
-        // MLOGD("Left Pressure", "Printing %d", readData[3]);
-        // MLOGD("Right Pressure", "Printing %d", readData[7]);
-      }
-    }
-  }
-
-  
-
-  void ModWheelOff(uint8_t n){
-    if (modWheel[n]){
-      if (!modLock[n]) MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, *ch, n, 0));
-      modWheel[n] = false;
-    }
-  }
-
-  void ModWheelLock(){
-    
-    if ( rightRocker ){
-        for (uint8_t n = 1; n < 5; n++)
-        {
-          if (modLock[n] == false && modWheel[n])
-            modLock[n] = true;
-        }
-    }
-    
-  }
-}
-
-*/

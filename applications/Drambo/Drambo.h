@@ -22,6 +22,7 @@ class Drambo : public Application {
   // Saved Variables
   CreateSavedVar("Drambo", nvsVersion, uint32_t, DRAMBO_APP_VERSION);
   CreateSavedVar("DramboInit", Inited, bool, false);
+  
 
   void Setup() override;
 
@@ -37,8 +38,9 @@ class Drambo : public Application {
   void CommonUI(UI& ui);
   bool Variable_Load(uint8_t dataID);
   bool Variable_Save(uint8_t dataID);
-  void Knob_Switch(uint16_t ID[8]);
-  void Knob_TogglePage(uint8_t page);
+  void Knob_SaveLoad(std::vector<KnobConfig>& knob, std::vector<uint16_t>& knobID, std::vector<uint16_t>& newID);
+  void KnobBar_Toggle(uint8_t page);
+  void SetEncoderPtr(std::vector<KnobConfig>& knob, uint8_t offset = 0);
   bool ConfigInit();
   bool KnobInit();
 
@@ -49,18 +51,19 @@ class Drambo : public Application {
   MidiButtonConfig DRUM[16];
   MidiButtonConfig CC[16];
   MidiButtonConfig PT[16];
+  PCBankConfig PC;
 
   enum configID : uint8_t {  
     DRAMBO_CH = 0,    DRAMBO_TAB = 1,   DRAMBO_PAD = 2,   DRAMBO_DRUM = 3,    DRAMBO_CC = 4,
-    DRAMBO_PT = 5,    DRAMBO_ALL = 6, };
+    DRAMBO_PT = 5,    DRAMBO_PC = 6,DRAMBO_ALL = 7, };
 
   void* configPt[DRAMBO_ALL] = {
     (void*)&CH,       (void*)&TAB,      (void*)&PAD,      (void*)&DRUM,       (void*)&CC,         
-    (void*)&PT, };
+    (void*)&PT,       (void*)&PC };
 
   size_t configSize[DRAMBO_ALL] = {
     sizeof(CH),       sizeof(TAB),      sizeof(PAD),      sizeof(DRUM),       sizeof(CC), 
-    sizeof(PT), };
+    sizeof(PT),       sizeof(PC) };
   
   uint32_t configHash[DRAMBO_ALL] = {
     StaticHash("ZhouJing-Drambo-CH"),
@@ -69,6 +72,7 @@ class Drambo : public Application {
     StaticHash("ZhouJing-Drambo-DRUM"), 
     StaticHash("ZhouJing-Drambo-CC"), 
     StaticHash("ZhouJing-Drambo-PT"),
+    StaticHash("ZhouJing-Drambo-PC"),
   };
 
   //common bar
@@ -76,7 +80,17 @@ class Drambo : public Application {
   TabBar tabBar;
   KnobButton knobBar;
   TransportState transState;
-  
+
+  MixerFader volumeMix;
+  KnobButton panMix;
+  KnobButton sendAMix;
+  KnobButton sendBMix;
+  vector<uint16_t> volumeID;
+  vector<uint16_t> panID;
+  vector<uint16_t> sendAID;
+  vector<uint16_t> sendBID;
+  vector<uint16_t> exitID; // keep empty
+
   //current state
   int8_t activeTab = 0;
   int8_t activePad = 0;
