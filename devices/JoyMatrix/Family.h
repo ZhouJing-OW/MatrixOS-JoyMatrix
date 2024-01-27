@@ -104,6 +104,7 @@ namespace Device
     uint16_t GetRaw(string input);
     int8_t GetRocker(AnalogConfig config);
     void UseDial(Point xy, KnobConfig* knob, std::function<void()> callback = nullptr);
+    KnobConfig* GetDialKnob();
     void SetUpDown(int8_t* up_down, int8_t max = 0, int8_t min = 0, bool loop = false, std::function<void()> callback = nullptr);
     void SetLeftRight(int8_t* left_right, int8_t max = 0, int8_t min = 0, bool loop = false, std::function<void()> callback = nullptr);
   }
@@ -114,7 +115,7 @@ namespace Device
     bool Setup(KnobConfig *config, uint8_t n);
     bool Disable(uint8_t n);
     void DisableAll();
-    KnobConfig* GetKnobPt(uint8_t n);
+    KnobConfig* GetEncoderKnob(uint8_t n);
   }
 
   namespace NVS

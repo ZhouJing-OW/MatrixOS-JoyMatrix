@@ -96,9 +96,11 @@ class KnobButton : public UIComponent {
         }
       }
     }
-    if(BarDisplayTimer > MatrixOS::SYS::Millis()) {
-      return BarDisplay(origin);
-    } else BarDisplayTimer = 0;
+
+    KnobConfig* dialKnob = Device::AnalogInput::GetDialKnob();
+    if (dialKnob != nullptr) return BarDisplay(origin,  dialKnob);
+    else if (BarDisplayTimer > MatrixOS::SYS::Millis()) return BarDisplay(origin,  knobPt[displayNum]);
+    else BarDisplayTimer = 0;
 
     for (uint8_t x = 0; x < dimension.x; x++) 
     { 
@@ -202,29 +204,29 @@ class KnobButton : public UIComponent {
     return false;
   }
 
-  bool BarDisplay(Point origin){
+  bool BarDisplay(Point origin , KnobConfig* displayKnob){
     for (uint8_t x = 0; x < dimension.x; x++)
     {
       Point xy = Point(x, 0) + origin;
-      uint8_t i = displayNum;
-      Color color = knobPt[i]->color;
+      Color color = displayKnob->color;
       float hue; float s; float v; Color::RgbToHsv(color, &hue, &s, &v);
       if(0.5 - hue > 0) hue = 0.5 - hue; else hue = 1.5 - hue;
       Color contColor = Color::HsvToRgb(hue, s, v);
 
-      uint8_t full = (knobPt[i]->max - knobPt[i]->min + 1);
+      uint8_t full = (displayKnob->max - displayKnob->min + 1);
       uint8_t half = (full / 2);
-      float value = knobPt[i]->byte2;
+      float value = displayKnob->byte2;
       float divide = dimension.x;
       float piece = (full / divide);
-      bool middleMode = (knobPt[i]->def >= half - 1 && knobPt[i]->def <= half);
+      bool middleMode = (displayKnob->def >= half - 1 && displayKnob->def <= half);
       uint8_t thisPoint = x + 1;
       if (middleMode) 
       {
         if(value == half - 1 || value == half) 
         {
           if (x == dimension.x / 2 - 1) MatrixOS::LED::SetColor(xy, contColor.Scale(16));
-          if (x == dimension.x / 2) MatrixOS::LED::SetColor(xy, color.Scale(16));
+          else if (x == dimension.x / 2) MatrixOS::LED::SetColor(xy, color.Scale(16));
+          else MatrixOS::LED::SetColor(xy, COLOR_BLANK);
           continue;
         } 
         else if(value > half && x < (dimension.x / 2)) 

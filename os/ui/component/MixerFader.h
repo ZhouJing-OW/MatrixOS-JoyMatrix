@@ -109,7 +109,7 @@ class MixerFader : public UIComponent {
       bool active = (i >= activePoint) && (i < activePoint + ENCODER_NUM);
       if ((enableActivePoint && active) || !enableActivePoint)
       {
-        if (keyInfo->state == HOLD && knobPt[i]->enable == true)
+        if (keyInfo->state == PRESSED && knobPt[i]->enable == true)
         {
           Device::AnalogInput::UseDial(xy + position, knobPt[i]);
         };
@@ -128,10 +128,17 @@ class MixerFader : public UIComponent {
       
       if (enableActivePoint && !active)
       {
-        if (keyInfo->state == RELEASED && keyInfo->hold == false)
+        if (keyInfo->state == PRESSED && knobPt[i]->enable == true)
         {
           activePoint = i - i % ENCODER_NUM;
           Callback();
+          
+          Device::AnalogInput::UseDial(xy + position, knobPt[i]);
+        };
+
+        if (keyInfo->state == RELEASED)
+        {
+          
         }
       }
       return true;

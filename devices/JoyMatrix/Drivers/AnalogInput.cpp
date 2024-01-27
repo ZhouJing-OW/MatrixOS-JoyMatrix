@@ -28,7 +28,7 @@ namespace Device::AnalogInput
 
   int8_t    dial_max;
   int8_t    dial_min;
-  bool      dialMode = true;
+  bool      dialMode = false;
   bool      dialActive_L = false;
   bool      dialActive_R = false;
   float     anglePrev_L;
@@ -93,13 +93,13 @@ namespace Device::AnalogInput
 
   adc_oneshot_unit_handle_t adc_handle[2];
 
-  inline AnalogConfig LX = { .name = "LX",  .max = 2900,  .min = 800,   .middle = 1870, };
+  inline AnalogConfig LX = { .name = "LX",  .max = 3120,  .min = 850,   .middle = 1990, };
 
-  inline AnalogConfig LY = { .name = "LY",  .max = 2950,  .min = 930,   .middle = 1970, };
+  inline AnalogConfig LY = { .name = "LY",  .max = 3050,  .min = 1050,   .middle = 2150, };
 
-  inline AnalogConfig RX = { .name = "RX",  .max = 3250,  .min = 950,   .middle = 2150, };
+  inline AnalogConfig RX = { .name = "RX",  .max = 3200,  .min = 980,   .middle = 2130, };
 
-  inline AnalogConfig RY = { .name = "RY",  .max = 2950,  .min = 1050,  .middle = 1880, };
+  inline AnalogConfig RY = { .name = "RY",  .max = 2950,  .min = 960,  .middle = 1770, };
 
   inline AnalogConfig LP = { .name = "LP",  .max = 2950,  .min = 1050,  .middle = 1880, };
 
@@ -176,7 +176,12 @@ namespace Device::AnalogInput
       dialMode = false;
       dial_callback = nullptr;
     }
-    
+
+    // MLOGD("LX", "LX = %d", GetRaw("LX"));
+    // MLOGD("LY", "LY = %d", GetRaw("LY"));
+    // MLOGD("RX", "RX = %d", GetRaw("RX"));
+    // MLOGD("RY", "RY = %d", GetRaw("RY"));
+
     void PitchWheel();
     void ModWheel();
     void DirectPad();  
@@ -318,9 +323,8 @@ namespace Device::AnalogInput
         { 
           if(it->second->byte2 != it->second->def && Device::KeyPad::ShiftActived())
           {
-            uint16_t ms = 200;
+            uint16_t ms = 150;
             uint8_t step = 127 / (ms / (1000 / Device::analog_input_scanrate));
-            int8_t i = it->first;
             int8_t target = it->second->def;
             if (it->second->byte2 < target) it->second->byte2 = it->second->byte2 + step > target ? target : it->second->byte2 + step;
             if (it->second->byte2 > target) it->second->byte2 = it->second->byte2 - step < target ? target : it->second->byte2 - step;
@@ -356,6 +360,12 @@ namespace Device::AnalogInput
     uint16_t ID = Device::KeyPad::XY2ID(xy);
     dial_callback = callback;
     dialPtr.emplace(ID, knob);
+  }
+
+  KnobConfig* GetDialKnob()
+  {
+    if (dialPtr.size() > 0) return dialPtr.begin()->second;
+    else return nullptr;
   }
 
   uint16_t* GetPtr(string input)

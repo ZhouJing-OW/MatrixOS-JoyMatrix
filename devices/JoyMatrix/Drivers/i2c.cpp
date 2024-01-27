@@ -86,7 +86,6 @@ namespace Device::I2C
         i2c_master_cmd_begin(I2C_MASTER_NUM, cmd2, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
         i2c_cmd_link_delete(cmd2);
 
-
         uint16_t read_data = (read_data_2 << 8) | read_data_1;
         
         return read_data;
