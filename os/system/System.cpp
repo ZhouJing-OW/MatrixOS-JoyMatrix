@@ -72,6 +72,8 @@ namespace MatrixOS::SYS
     KEYPAD::Init();
     LED::Init();
     MIDI::Init();
+    MidiCenter::Init();
+    
 
     inited = true;
 
@@ -90,7 +92,7 @@ namespace MatrixOS::SYS
     (void)xTaskCreateStatic(Supervisor, "supervisor", configMINIMAL_STACK_SIZE * 4, NULL, 1, supervisor_stack,
                             &supervisor_taskdef);
 
-    // next_app = GenerateAPPID("ZhouJing", "Main Pad");  // Launch Main Pad by default for now
+    // next_app = GenerateAPPID("ZhouJing", "Drambo");  // Launch Main Pad by default for now
   }
 
   uint32_t Millis() {
@@ -209,11 +211,11 @@ namespace MatrixOS::SYS
     // Bootloader();
     if (error.empty())
       error = "Undefined Error";
-    MLOGE("System", "Matrix OS Error: %s", error);
+    MLOGE("System : Matrix OS Error", error);
 
     // Show Blue Screen
     LED::Fill(0x00adef);
-    if (Device::x_size >= 5 && Device::y_size >= 5)
+    if (Device::x_size >= 4 && Device::y_size >= 4)
     {
       LED::SetColor(Point(1, 1), 0xFFFFFF);
       LED::SetColor(Point(1, 3), 0xFFFFFF);

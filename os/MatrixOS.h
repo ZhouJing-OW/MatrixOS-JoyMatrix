@@ -8,7 +8,6 @@
 #include "system/Parameters.h"
 #include "system/SystemVariables.h"
 #include "system/UserVariables.h"
-#include "system/MIDIHold.h"
 #include "task.h"
 #include "timers.h"
 #include "tusb.h"
@@ -19,7 +18,7 @@
 
 class Application;
 class Application_Info;
-
+class UI;
 // Matrix OS Modules and their API for Application layer or system layer
 namespace MatrixOS
 {
@@ -47,6 +46,14 @@ namespace MatrixOS
     void ExitAPP();
 
     void ErrorHandler(string error = string());
+    
+    class RandSeed{
+      public:
+      int operator()(int n){
+        srand(Millis());
+        return rand() % n;
+      }
+    };
   }
 
   namespace LED
@@ -116,10 +123,6 @@ namespace MatrixOS
     bool Get(MidiPacket* midiPacketDest, uint16_t timeout_ms = 0);
     bool Send(MidiPacket midiPacket, uint16_t timeout_ms = 0);
     bool SendSysEx(uint16_t port, uint16_t length, uint8_t* data, bool includeMeta = true);  // If include meta, it will send the correct header and ending;
-    void Hold(Point xy, int8_t type, int8_t channel, int8_t byte1, int8_t byte2 = 127);
-    bool CheckHold(int8_t type, int8_t channel, int8_t byte1);
-    bool CheckHold(Point xy);
-    bool CheckHold();
 
     // Those APIs are only for MidiPort to use
     noexpose bool RegisterMidiPort(uint16_t port_id, MidiPort* midiPort);
@@ -127,14 +130,58 @@ namespace MatrixOS
     noexpose bool Recive(MidiPacket midipacket_prt, uint32_t timeout_ms = 0);
   }
 
+  namespace MidiCenter
+  {
+    void Init();
+    
+    void Hold(Point xy, int8_t type, int8_t channel, int8_t byte1, int8_t byte2 = 127);
+    void Panic();
+    void Toggle(int8_t type, int8_t channel, int8_t byte1, int8_t byte2 = 127);
+    bool FindArp(int8_t type, int8_t channel, int8_t byte1);
+    bool FindHold(int8_t type, int8_t channel, int8_t byte1);
+    bool FindHold(Point xy);
+    void ClearHold();
+    void ClearToggle();
+    void ClockOut();
+    void ClockStart();
+    void ClockStop();
+    TransportState* GetTransportState();
+    Timer* GetBeatTimer();
+    std::vector<KnobConfig*> GetSysKnobs();
+  }
+
   namespace Component
   {
     void Tab_ToggleSub(TabConfig* con);
-    void Knob_Function(KnobConfig* con);
     void Channel_Setting(ChannelConfig* con, uint8_t n);
     void Knob_Setting(KnobConfig* con, bool channelSetting);
-    void Button_Setting(MidiButtonConfig* con);
-    void Pad_Setting(NotePadConfig* con);
+    void Button_Setting(MidiButtonConfig* firstCon, uint16_t pos);
+    void DrumNote_Setting(MidiButtonConfig* firstCon, uint16_t pos);
+    void Pad_Setting(NotePadConfig* firstCon, uint16_t pos, uint8_t padType);
+    void BPM_Setting();
+  }
+
+  namespace KnobCenter
+  {
+    bool RequestService(string name, Color* channelColor); //An Color array of 16 elements needs to be passed in.
+    void EndService();
+    bool OpenFile(string name);
+    void SaveKnobContinuous(KnobConfig& knob);
+    void CloseFile();
+
+    void GetKnobPtrs(std::vector<uint16_t>& pos, std::vector<KnobConfig*>& knobPtr);
+    void MarkChanged(uint16_t pos);
+    void SetKnobBar(std::vector<uint16_t>& pos);
+    void SetKnobBar(std::vector<KnobConfig*>& knob);
+    void SetPage(uint8_t page);
+    uint8_t GetPage();
+    void ChannelMode();
+    void AddExtraPage(std::vector<KnobConfig*>& knob);
+    void DisableExtraPage();
+    bool HaveExtraPage();
+    void DisableAll();
+    void Knob_Function(KnobConfig* knob);
+    void AddKnobBarTo(UI& ui);
   }
 
   namespace HID
@@ -265,6 +312,22 @@ namespace MatrixOS
     bool DeleteVariable(uint32_t hash);
   }
 
+  namespace FATFS
+  {
+    char* LoadFile(size_t size, uint16_t& count, string appName, string suffix);
+    bool OpenFile(string name, string suffix, std::fstream& fio, bool trunc = false);
+    bool ListSave(string name, string suffix, std::list<SaveVarInfo>& varList, bool trunc = false);
+    bool ListLoad(string name, string suffix, std::list<SaveVarInfo>& varList);
+
+    void SavePart(void* VariablePtr, size_t size, uint16_t pos, std::fstream& fio);
+    void ListSavePart(SaveVarInfo& saveVar, uint16_t pos, std::fstream& fio);
+    void SaveContinuous(void* VariablePtr, size_t size, std::fstream& fio);
+
+    void MarkChanged(void* varPtr, uint16_t pose);
+    void VarManager(string name, string suffix, std::list<SaveVarInfo>& varList);
+    void VarManageEnd();
+  }
+
   // namespace GPIO
   // {
   //   enum EMode {Input = 1, Output = 2, Pwm = 4, PullUp = 8, PullDown = 16};
@@ -299,6 +362,8 @@ namespace MatrixOS
   //     void Write(uint8_t);
   //   }
 }
+
+
 
 
 // UI/UIInterface.h have more callable UI related function

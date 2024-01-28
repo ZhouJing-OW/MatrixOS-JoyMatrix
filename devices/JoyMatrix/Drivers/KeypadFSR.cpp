@@ -55,30 +55,6 @@ namespace Device::KeyPad::FSR
     }
   }
 
-  uint16_t middleOfThree(uint16_t a, uint16_t b, uint16_t c) {
-    // Checking for a
-    if ((b <= a && a <= c) || (c <= a && a <= b))
-      return a;
-
-    // Checking for b
-    if ((a <= b && b <= c) || (c <= b && b <= a))
-      return b;
-
-    return c;
-  }
-
-  uint16_t minOfThree(uint16_t a, uint16_t b, uint16_t c) {
-    // Checking for a
-    if (a < b && a < c)
-      return a;
-
-    // Checking for b
-    if (b < a && b < c)
-      return b;
-
-    return c;
-  }
-
   void Start() {
     ulp_riscv_halt();
     ulp_riscv_load_binary(ulp_fsr_keypad_bin_start, (ulp_fsr_keypad_bin_end - ulp_fsr_keypad_bin_start));

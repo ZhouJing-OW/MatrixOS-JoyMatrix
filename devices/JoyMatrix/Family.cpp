@@ -16,10 +16,9 @@ namespace Device
 
     USB::Init();
     NVS::Init();
-    FATFS::Init();
     LED::Init();
     KeyPad::Init();
-
+    FATFS::Init();
     I2C::Init();
     Encoder::Init();
     AnalogInput::Init();
@@ -67,6 +66,7 @@ namespace Device
       MatrixOS::LED::Update();
       MatrixOS::SYS::DelayMs(1500);
       Device::NVS::Clear();
+      Device::FATFS::Format();
       MatrixOS::SYS::Reboot();
     }
   }

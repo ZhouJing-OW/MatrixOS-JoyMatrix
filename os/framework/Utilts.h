@@ -2,5 +2,9 @@
 //#define max(a,b) ((a)>(b)?(a):(b))
 
 #define bitRead(input, bit) (((input) >> (bit)) & 0b00000001)
-#define offset(structure, member) ((uint32_t)&(((structure *)0)->member)) //32-bit system
+
+#define middleOfThree(a, b, c) (((b <= a && a <= c) || (c <= a && a <= b)) ? a : (((a <= b && b <= c) || (c <= b && b <= a)) ? b : c))
+
+#define minOfThree(a, b, c) ((a < b && a < c) ? a : (b < a && b < c) ? b : c)
+
 

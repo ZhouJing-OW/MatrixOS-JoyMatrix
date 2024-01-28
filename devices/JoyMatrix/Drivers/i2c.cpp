@@ -72,16 +72,16 @@ namespace Device::I2C
 
         i2c_cmd_handle_t cmd = i2c_cmd_link_create();                                           // 新建操作I2C句柄
         i2c_master_start(cmd);                                                                  // 启动I2C
-        i2c_master_write_byte(cmd, PCF8574_SENSOR_1_ADDR | I2C_MASTER_READ, ACK_EN);              // 发送地址+读+检查ack
-        i2c_master_read_byte(cmd, &read_data_1, NACK_LA);                                        // 读字节1
+        i2c_master_write_byte(cmd, PCF8574_SENSOR_1_ADDR | I2C_MASTER_READ, ACK_EN);            // 发送地址+读+检查ack
+        i2c_master_read_byte(cmd, &read_data_1, NACK_LA);                                       // 读字节1
         i2c_master_stop(cmd);                                                                   // 关闭发送I2C
         i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
         i2c_cmd_link_delete(cmd);
 
         i2c_cmd_handle_t cmd2 = i2c_cmd_link_create();                                           // 新建操作I2C句柄
         i2c_master_start(cmd2);                                                                  // 启动I2C
-        i2c_master_write_byte(cmd2, PCF8574_SENSOR_2_ADDR | I2C_MASTER_READ, ACK_EN);              // 发送地址+读+检查ack
-        i2c_master_read_byte(cmd2, &read_data_2, NACK_LA);                                        // 读字节1
+        i2c_master_write_byte(cmd2, PCF8574_SENSOR_2_ADDR | I2C_MASTER_READ, ACK_EN);            // 发送地址+读+检查ack
+        i2c_master_read_byte(cmd2, &read_data_2, NACK_LA);                                       // 读字节1
         i2c_master_stop(cmd2);                                                                   // 关闭发送I2C
         i2c_master_cmd_begin(I2C_MASTER_NUM, cmd2, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
         i2c_cmd_link_delete(cmd2);

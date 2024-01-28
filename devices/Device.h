@@ -42,7 +42,37 @@ namespace Device
                                // ID is assigned to given XY
     Point ID2XY(uint16_t keyID);  // Locate XY for given key ID, return Point(INT16_MIN, INT16_MIN) if no XY found for
                                   // given ID;
-    uint8_t GetVelocity();
+  }
+
+    namespace Encoder
+  {
+    void Init();
+    bool Setup(KnobConfig *config, uint8_t n);
+    bool Disable(uint8_t n);
+    void DisableAll();
+    KnobConfig* GetEncoderPtr(uint8_t n);
+    KnobConfig* GetDialPtr(uint8_t n);
+    uint8_t GetActEncoder();
+  }
+
+    namespace AnalogInput
+  {
+    void Init();
+    void UseDial(Point xy, KnobConfig* knob, std::function<void()> callback = nullptr);
+    KnobConfig* GetDialPtr();
+    void SetUpDown(int8_t* up_down, int8_t max, int8_t min = 0, int8_t step = 1, bool loop = false, std::function<void()> callback = nullptr);
+    void SetLeftRight(int8_t* left_right, int8_t max, int8_t min = 0, int8_t step = 1, bool loop = false, std::function<void()> callback = nullptr);
+    void DisableDirectPad();
+    int8_t* GetUDPtr();
+    int8_t* GetLRPtr();
+    bool UDIsLonger(uint32_t ms);
+    bool LRIsLonger(uint32_t ms);
+  }
+
+    namespace FATFS
+  {
+    void Init();
+    void Format();
   }
 
   // namespace BKP  // Back up register, presistant ram after software reset.

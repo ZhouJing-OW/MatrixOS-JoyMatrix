@@ -104,7 +104,6 @@ namespace MatrixOS::UIInterface
                 // (uint16_t)MatrixOS::KEYPAD::GetKey(FUNCTION_KEY).state);
                 // Let's assume we don't use FN to trigger a text scroll
 
-                MatrixOS::MIDI::CheckHold();
                 if (MatrixOS::KEYPAD::GetKey(FUNCTION_KEY)->state == PRESSED)
                 {
                   MatrixOS::KEYPAD::GetKey(FUNCTION_KEY)->Clear();

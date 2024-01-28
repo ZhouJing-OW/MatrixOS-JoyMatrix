@@ -1,7 +1,7 @@
 #pragma once
 
 #include "UIComponent.h"
-#include "MatrixOS.h"
+//#include "MatrixOS.h"
 
 class TabBar : public UIComponent {
  public:
@@ -43,7 +43,7 @@ class TabBar : public UIComponent {
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
     TabConfig* con = config + xy.x;
-    if (keyInfo->state == RELEASED){
+    if (keyInfo->state == RELEASED && keyInfo->hold == false){
       if (xy.x == *activeTab) {
         MatrixOS::Component::Tab_ToggleSub(con);
         MLOGD("Tab", "tab: %d, sub: %d", *activeTab, con->subTab);

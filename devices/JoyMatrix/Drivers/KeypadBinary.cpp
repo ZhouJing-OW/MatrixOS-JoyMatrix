@@ -46,30 +46,15 @@ namespace Device::KeyPad::Binary
     for (uint8_t x = 0; x < 4; x++)
     { gpio_set_level(keypad_write_pins[x], 0); }
 
-    for (uint8_t x = 0; x < x_size; x++)
-    {
+    for (uint8_t x = 0; x < x_size; x++) {
       for (uint8_t y = 0; y < y_size; y++)
       { keypadState[x][y].setConfig(&keypad_config); }
-      
-      if(x<4)
-      {
-        switch (x)
-        {
-          case 0:
-            RShiftState.setConfig(&keypad_config);
-            break;
-          case 1:
-            LShiftState.setConfig(&keypad_config);
-            break;
-          case 2:
-            LAltState.setConfig(&keypad_config);
-            break;
-          case 3:
-            RAltState.setConfig(&keypad_config);
-            break;
-        }
-      }
     }
+    RShiftState.setConfig(&keypad_config);
+    LShiftState.setConfig(&keypad_config);
+    LAltState.setConfig(&keypad_config);
+    RAltState.setConfig(&keypad_config);
+
   }
 
   void Start()
@@ -116,7 +101,6 @@ namespace Device::KeyPad::Binary
         gpio_set_level(keypad_write_pins[a], (x >> a) & 1);
       }
 
-
       for(uint8_t y = 0; y < y_size; y++)
       {
         Fract16 reading = gpio_get_level(keypad_read_pins[y]) * FRACT16_MAX;
@@ -136,53 +120,33 @@ namespace Device::KeyPad::Binary
       if (x < 4) // RShift LShift RAlt LAlt
       { 
         Fract16 reading = gpio_get_level(keypad_funcRead_pins[0]) * FRACT16_MAX;
+        bool updated;
         switch (x)
         {
           case 0:
-          {
-            bool updated = RShiftState.update(reading, false);
-            if (updated){
-              if (NotifyOS(1, &RShiftState))
-              {
-                return true;
-              }
-            }
+            updated = RShiftState.update(reading, true);
+
             break;
-          }
           case 1:
-          {
-            bool updated = LShiftState.update(reading, false);
-            if (updated){
-              if (NotifyOS(2, &LShiftState))
-              {
-                return true;
-              }
+            updated = LShiftState.update(reading, true);
+            if (updated) {
+              if (NotifyOS(4, &LShiftState)) return true;
             }
             break;
-          }
           case 2:
-          {
-            bool updated = LAltState.update(reading, false);
-            if (updated){
-              if (NotifyOS(3, &LAltState))
-              {
-                return true;
-              }
+            updated = LAltState.update(reading, true);
+            if (updated) {
+              if (NotifyOS(5, &LAltState)) return true;
             }
             break;
-          }
           case 3:
-          {
-            bool updated = RAltState.update(reading, false);
-            if (updated){
-              if (NotifyOS(4, &RAltState))
-              {
-                return true;
-              }
+            updated = RAltState.update(reading, true);
+            if (updated) {
+              if (NotifyOS(6, &RAltState)) return true;
             }
             break;
-          }
         }
+        
       }
     }
     return false;

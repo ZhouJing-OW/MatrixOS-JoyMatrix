@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "driver/gptimer.h"
 
 // Avoid recuesive include
 namespace MatrixOS::SYS
@@ -15,19 +16,26 @@ class Timer {
   bool IsLonger(uint32_t ms);
   uint32_t SinceLastTick();
   void RecordCurrent();
+  void Reset();
 
  private:
   uint32_t previous = 0;
 };
 
-// class MicroTimer
-// {
-// public:
-//   MicroTimer();
-//   bool Tick(u32 ms);
-//   bool IsLonger(u32 ms);
-//   u32 SinceLastTick();
-//   void RecordCurrent();
-// private:
-//   u32 previous = 0;
-// };
+class MicroTimer {
+public:
+  MicroTimer(bool start = true);
+  uint64_t Micros();
+  bool Tick(uint64_t us);
+  bool IsLonger(uint64_t us);
+  uint64_t SinceLastTick();
+  void RecordCurrent();
+  void Start();
+  void Stop();
+
+ private:
+  gptimer_handle_t gptimer = NULL;
+  uint64_t count;
+  uint64_t previous = 0;
+};
+

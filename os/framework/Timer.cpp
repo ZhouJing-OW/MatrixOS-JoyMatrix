@@ -33,36 +33,73 @@ void Timer::RecordCurrent() {
   previous = MatrixOS::SYS::Millis();
 }
 
+void Timer::Reset() {
+  previous = 0;
+}
 
-// MicroTimer::MicroTimer()
-// {
-//   MicroTimer::RecordCurrent();
-// }
 
-// bool MicroTimer::Tick(uint32_t ms)
-// {
-//   if(micros() < previous)
-//     previous = 0;
+// namespace MatrixOS::SYS {uint64_t Micros();}
 
-//   if(MicroTimer::IsLonger(ms))
-//   {
-//     MicroTimer::RecordCurrent();
-//     return true;
-//   }
-//   return false;
-// }
+MicroTimer::MicroTimer(bool start)
+{
+  gptimer_config_t timer_config = 
+  {
+    .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+    .direction = GPTIMER_COUNT_UP,
+    .resolution_hz = 1 * 1000 * 1000, // 1MHz, 1 tick = 1us
+  };
+  gptimer_new_timer(&timer_config, &gptimer);
+  gptimer_enable(gptimer);
+  if (start) 
+  {
+    gptimer_start(gptimer);
+    MicroTimer::RecordCurrent();
+  }
+}
 
-// bool MicroTimer::IsLonger(uint32_t ms)
-// {
-//   return (previous + ms) <= micros();
-// }
+uint64_t MicroTimer::Micros()
+{
+  gptimer_get_raw_count(gptimer, &count);
+  return count;
+}
 
-// uint32_t MicroTimer::SinceLastTick()
-// {
-//   return micros() - previous;
-// }
+bool MicroTimer::Tick(uint64_t us) 
+{
+  gptimer_get_raw_count(gptimer, &count);
+  if (count < previous)
+    previous = 0;
 
-// void MicroTimer::RecordCurrent()
-// {
-//   previous = micros();
-// }
+  if (MicroTimer::IsLonger(us))
+  {
+    MicroTimer::RecordCurrent();
+    return true;
+  }
+  return false;
+}
+
+bool MicroTimer::IsLonger(uint64_t us)
+{
+  gptimer_get_raw_count(gptimer, &count);
+  return (previous + us) <= count;
+}
+
+uint64_t MicroTimer::SinceLastTick()
+{
+  gptimer_get_raw_count(gptimer, &count);
+  return count - previous;
+}
+
+void MicroTimer::RecordCurrent()
+{
+  gptimer_get_raw_count(gptimer, &previous);
+}
+
+void MicroTimer::Start()
+{
+  gptimer_start(gptimer);
+  MicroTimer::RecordCurrent();
+}
+void MicroTimer::Stop()
+{
+  gptimer_stop(gptimer);
+}

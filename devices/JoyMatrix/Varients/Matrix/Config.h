@@ -51,9 +51,9 @@ namespace Device
   const uint16_t usb_pid = 0x1040;  //(Device Class)0001 (Device Code)000001 (Reserved for Device ID (0~63))000000
 
   const uint16_t numsOfLED = 64 + 16;
-  inline uint16_t keypad_scanrate = 480;
-  inline uint16_t encoder_scanrate = 60;
-  inline uint16_t analog_input_scanrate = 60;
+  inline uint16_t keypad_scanrate = 250;
+  inline uint16_t encoder_scanrate = 50;
+  inline uint16_t analog_input_scanrate = 100;
   // inline uint16_t touchbar_scanrate = 60;
   const uint8_t x_size = 16;
   const uint8_t y_size = 5;
@@ -79,6 +79,13 @@ namespace Device
         .debounce = 0,
     };
 
+    inline KeyConfig rocker_config = {
+      .velocity_sensitive = false,
+      .low_threshold = 0,
+      .high_threshold = 65535,
+      .debounce = 5,
+    };
+
     inline KeyConfig keypad_config = {
         .velocity_sensitive = false,
         .low_threshold = 512,
@@ -96,6 +103,7 @@ namespace Device
     inline gpio_num_t keypad_write_pins[8];
     inline gpio_num_t keypad_read_pins[8];
     inline gpio_num_t keypad_funcRead_pins[1];
+    inline gpio_num_t rockerBtn_pins[2];
     inline adc_channel_t keypad_read_adc_channel[10];
 
     // inline gpio_num_t touchData_Pin;
@@ -104,6 +112,8 @@ namespace Device
                                                  // and then right touch down)
 
     inline KeyInfo fnState;
+    inline KeyInfo LRockerState;
+    inline KeyInfo RRockerState;
     inline KeyInfo RShiftState;
     inline KeyInfo LShiftState;
     inline KeyInfo LAltState;
@@ -118,7 +128,7 @@ namespace Device
     inline CreateSavedVar(DEVICE_SAVED_VAR_SCOPE, keypad_low_threshold, Fract16, KeyPad::keypad_config.low_threshold);
     inline CreateSavedVar(DEVICE_SAVED_VAR_SCOPE, keypad_high_threshold, Fract16, KeyPad::keypad_config.high_threshold);
     inline CreateSavedVar(DEVICE_SAVED_VAR_SCOPE, keypad_debounce, uint16_t, KeyPad::keypad_config.debounce);
-    inline CreateSavedVar(DEVICE_SAVED_VAR_SCOPE, pressureSensitive, bool, false);
+    inline CreateSavedVar(DEVICE_SAVED_VAR_SCOPE, pressure_sensitive, bool, false);
     inline CreateSavedVar(DEVICE_SAVED_VAR_SCOPE, velocity_max, uint8_t, 127);
     inline CreateSavedVar(DEVICE_SAVED_VAR_SCOPE, velocity_min, uint8_t, 0);
     inline CreateSavedVar(DEVICE_SAVED_VAR_SCOPE, velocity_def, uint8_t, 127);
@@ -151,12 +161,12 @@ namespace Device
 
   namespace HWMidi
   {
-    inline gpio_num_t tx_gpio = GPIO_NUM_46;
+    inline gpio_num_t tx_gpio = GPIO_NUM_NC;
     inline gpio_num_t rx_gpio = GPIO_NUM_NC;
   }
 
 // LED
-#define MAX_LED_LAYERS 5
+#define MAX_LED_LAYERS 8
   inline gpio_num_t led_pin;
   inline uint16_t fps = 30;  // Depends on the FreeRTOS tick speed
   inline uint8_t brightness_level[8] = {8, 12, 24, 40, 63, 90, 120, 142};

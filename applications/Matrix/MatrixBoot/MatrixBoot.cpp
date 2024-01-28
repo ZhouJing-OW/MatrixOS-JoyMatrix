@@ -11,7 +11,7 @@ void MatrixBoot::Setup() {
       break;
   }
 }
-
+                                                                                            
 bool MatrixBoot::Idle(bool ready) {
   uint8_t step = counter % 12;
   if (timer.Tick(60))

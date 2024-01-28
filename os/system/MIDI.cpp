@@ -161,6 +161,10 @@ namespace MatrixOS::MIDI
   vector<uint8_t> sysExBuffer;
   uint16_t activeSysExPort = MIDI_PORT_INVAILD;
   SysExState currentSysExState = SysExState::IDLE;
+
+
+
+
   bool Recive(MidiPacket midiPacket, uint32_t timeout_ms) {
     // Handle SysEx
     if (midiPacket.SysEx())
@@ -212,4 +216,5 @@ namespace MatrixOS::MIDI
     }
     return true;  //Signal that we have handled this packet
   }
-}
+
+} 

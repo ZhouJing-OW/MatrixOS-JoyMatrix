@@ -11,6 +11,7 @@ namespace Device::KeyPad
   void Init() {
     LoadCustomSettings();
     InitFN();
+    InitRocker();
     InitKeyPad();
     // InitTouchBar();
   }
@@ -37,6 +38,24 @@ namespace Device::KeyPad
     // Set up Matrix OS key config
     fnState.setConfig(&fn_config);
   }
+
+  void InitRocker()
+  {
+    for(int i = 0; i < 2; i++)
+    {
+      gpio_config_t io_conf;
+      io_conf.intr_type = GPIO_INTR_DISABLE;
+      io_conf.mode = GPIO_MODE_INPUT;
+      io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+      io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+      io_conf.pin_bit_mask = (1ULL << rockerBtn_pins[i]);
+      gpio_config(&io_conf);
+    }
+
+    LRockerState.setConfig(&rocker_config);
+    RRockerState.setConfig(&rocker_config);
+  }
+
 
   void InitKeyPad() {
     if (!velocity_sensitivity)
@@ -69,6 +88,7 @@ namespace Device::KeyPad
   void Scan() {
     ScanFN();
     ScanKeyPad();
+    ScanRocker();
   }
 
   bool ScanKeyPad() {
@@ -91,25 +111,62 @@ namespace Device::KeyPad
     return false;
   }
 
-  bool ShiftActived() {
-    bool actived = (Device::KeyPad::GetKey(RSHIFT_KEY)->active()) | (Device::KeyPad::GetKey(LSHIFT_KEY)->active());
-    return actived;
+  bool ScanRocker() {
+    Fract16 readL = gpio_get_level(rockerBtn_pins[0]) * UINT16_MAX;
+    if (LRockerState.update(readL, false))
+    {
+      if (NotifyOS(1, &LRockerState))
+      { return true; }
+    }
+    
+    Fract16 readR = gpio_get_level(rockerBtn_pins[1]) * UINT16_MAX;
+    if (RRockerState.update(readR, false))
+    {
+      if (NotifyOS(2, &RRockerState))
+      { return true; }
+    }
+    return false;
   }
 
-  bool AltActived() {
-    bool actived = (Device::KeyPad::GetKey(RALT_KEY)->active()) | (Device::KeyPad::GetKey(LALT_KEY)->active());
-    return actived;
+  bool Shift() { return RShiftState.active() | LShiftState.active(); }
+
+  bool BothShift() { return RShiftState.active() & LShiftState.active(); }
+
+  bool Alt() { return RAltState.active() | LAltState.active(); }
+
+  bool BothAlt() { return RAltState.active() & LAltState.active(); }
+
+  bool Rocker() { return RRockerState.active() | LRockerState.active(); }
+
+  bool BothRocker() { return RRockerState.active() & LRockerState.active(); }
+
+  bool blockAltExit;
+  bool AltExit() {
+    if (BothAlt() || (fnState.active() && Alt()))
+      blockAltExit = true;
+    if (blockAltExit)
+    {
+      if(LAltState.state == IDLE && RAltState.state == IDLE)
+        blockAltExit = false;
+      return false;
+    }
+    if (!blockAltExit)
+      return (RAltState.state == RELEASED || LAltState.state == RELEASED);
+    return false;
   }
 
   void Clear() {
-    fnState.Clear();
+    if(!Alt())
+      fnState.Clear();
+    LRockerState.Clear();
+    RRockerState.Clear();
     RShiftState.Clear();
     LShiftState.Clear();
-    LAltState.Clear();
-    RAltState.Clear();
+    // LAltState.Clear();
+    // RAltState.Clear();
     for (uint8_t x = 0; x < x_size; x++) {
       for (uint8_t y = 0; y < y_size; y++) { 
-        if(!MatrixOS::MIDI::CheckHold(Point(x,y))) {
+        if(!MatrixOS::MidiCenter::FindHold(Point(x,y))) {
         keypadState[x][y].Clear(); }
       }
     }
@@ -130,13 +187,18 @@ namespace Device::KeyPad
           case 0:
             return &fnState;
           case 1:
-            return &RShiftState;
+            return &LRockerState;
           case 2:
-            return &LShiftState;
+            return &RRockerState;
           case 3:
-            return &LAltState;
+            return &RShiftState;
           case 4:
+            return &LShiftState;
+          case 5:
+            return &LAltState;
+          case 6:
             return &RAltState;
+
         }
         break;
       }
@@ -212,7 +274,7 @@ namespace Device::KeyPad
 
   uint8_t GetVelocity(){
     uint8_t velocity;
-    if (Device::KeyPad::pressureSensitive == true)
+    if (Device::KeyPad::pressure_sensitive == true)
     {
       uint8_t range = Device::KeyPad::velocity_max - Device::KeyPad::velocity_min;
       uint8_t devicePressure = Device::KeyPad::LPressure >= Device::KeyPad::RPressure ? Device::KeyPad::LPressure : Device::KeyPad::RPressure;

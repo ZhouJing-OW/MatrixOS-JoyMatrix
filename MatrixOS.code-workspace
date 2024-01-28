@@ -115,7 +115,11 @@
 			"complex": "cpp",
 			"netfwd": "cpp",
 			"numbers": "cpp",
-			"semaphore": "cpp"
+			"semaphore": "cpp",
+			"executor": "cpp",
+			"io_context": "cpp",
+			"timer": "cpp",
+			"rmt_tx.h": "c"
 		}
 	}
 }

@@ -6,8 +6,8 @@ class UIButtonWithColorFunc : public UIButton {
   std::function<Color()> color_func;
 
   UIButtonWithColorFunc(string name, std::function<Color()> color_func, std::function<void()> callback = nullptr,
-                        std::function<void()> hold_callback = nullptr,std::function<void()> press_callback = nullptr,std::function<void()> release_callback = nullptr)
-      : UIButton(name, Color(0xFFFFFF), callback, hold_callback, press_callback, release_callback) {
+                        std::function<void()> hold_callback = nullptr)
+      : UIButton(name, Color(0xFFFFFF), callback, hold_callback) {
     this->color_func = color_func;
   }
 

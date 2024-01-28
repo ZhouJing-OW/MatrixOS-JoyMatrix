@@ -5,10 +5,10 @@ class UIColorSelector : public UIComponent {
  public:
   Color* color;
   std::function<void()> callback;
-  const Color colors[4][4] = {{COLOR_RED,     COLOR_ORANGE,   COLOR_GOLD,   COLOR_YELLOW},
-                              {COLOR_PINK, COLOR_BLANK,    COLOR_BLANK,    COLOR_GREEN},
-                              {COLOR_VIOLET,  COLOR_BLANK,    COLOR_BLANK,    COLOR_LIME},
-                              {COLOR_PURPLE,    COLOR_BLUE,    COLOR_AZURE,     COLOR_CYAN},};
+  const Color colors[4][4] = {{COLOR_RED,     COLOR_ORANGE,   COLOR_GOLD,     COLOR_YELLOW},
+                              {COLOR_PINK,    COLOR_WHITE,    COLOR_WHITE,    COLOR_GREEN},
+                              {COLOR_VIOLET,  COLOR_WHITE,    COLOR_WHITE,    COLOR_LIME},
+                              {COLOR_PURPLE,  COLOR_BLUE,     COLOR_AZURE,    COLOR_CYAN},};
 
   UIColorSelector(Color* color, std::function<void()> callback = nullptr) {
     this->color = color;
@@ -60,7 +60,7 @@ class UIColorSelector : public UIComponent {
     } 
     
     if (keyInfo->state == HOLD) {
-        MatrixOS::UIInterface::TextScroll("Color Selector", colors[xy.y][xy.x]);
+        MatrixOS::UIInterface::TextScroll("Color Picker", colors[xy.y][xy.x]);
         return true;
     }
     return false;

@@ -24,5 +24,6 @@
 
 //OS Component
 #include "MidiPort.h"
+#include "ComponentTypes.h"
 #include "ComponentVariable.h"
 #include "SavedVariable.h"

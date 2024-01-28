@@ -50,3 +50,4 @@ inline std::vector<uint32_t> application_ids;
     applications.insert({app_id, &APPLICATION_CLASS::info}); \
     application_ids.push_back(app_id); \
   }
+

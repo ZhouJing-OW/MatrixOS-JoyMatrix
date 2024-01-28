@@ -55,7 +55,7 @@ struct MidiPacket {
     this->status = status;
     va_list valst;
     va_start(valst, status);
-    status = (EMidiStatus)(status & 0xF0);
+    status = (EMidiStatus)(status & 0xFF);
     switch (status)
     {
       case NoteOn:
@@ -98,10 +98,13 @@ struct MidiPacket {
         data[2] = (uint8_t)va_arg(valst, int);
         break;
       case TuneRequest:
+        break;
       case Sync:
       case Start:
       case Continue:
       case Stop:
+        data[0] = status;
+        break;
       case ActiveSense:
       case Reset:
       case None:
@@ -223,10 +226,12 @@ struct MidiPacket {
           return 3;
       }
       case TuneRequest:
+        return 0;
       case Sync:
       case Start:
       case Continue:
       case Stop:
+        return 1;
       case ActiveSense:
       case Reset:
       case None:

@@ -9,9 +9,11 @@ UI::UI(string name, Color color, bool newLedLayer) {
 void UI::Start() {
   status = 0;
   
-  if (newLedLayer)    
+  if (newLedLayer)
+  {    
     MatrixOS::LED::CreateLayer();
-    //MatrixOS::KEYPAD::Clear();
+    MatrixOS::KEYPAD::Clear();
+  }
   Setup();
   while (status != -1)
   {
@@ -30,7 +32,6 @@ void UI::Exit() {
 
 void UI::LoopTask() {
   GetKey();
-  MatrixOS::MIDI::CheckHold();
   if (!disableExit && MatrixOS::SYS::FNExit == true) Exit();
 }
 
@@ -38,6 +39,16 @@ void UI::RenderUI() {
   if (uiTimer.Tick(uiUpdateMS) || needRender)
   {
     needRender = false;
+    if (scrollBar.num != nullptr && (!Device::AnalogInput::UDIsLonger(UI_POP_DELAY) || Device::KeyPad::Rocker()))
+      displayScrollBar = true;
+    else if (displayScrollBar == true)
+    {
+      displayScrollBar = false;
+      for(uint8_t x = 0; x < scrollBar.dimension.x; x++)
+        for(uint8_t y = 0; y < scrollBar.dimension.y; y++)
+          MatrixOS::LED::SetColor(Point(x, y) + scrollBar.position, COLOR_BLANK);
+    }
+
     // MatrixOS::LED::Fill(0);
     for (auto const& uiComponentPair : uiComponentMap)
     {
@@ -45,6 +56,8 @@ void UI::RenderUI() {
       UIComponent* uiComponent = uiComponentPair.second;
       uiComponent->Render(xy);
     }
+    if (displayScrollBar)
+      scrollBar.Render(scrollBar.position);
     Render();
     MatrixOS::LED::Update();
   }
@@ -89,7 +102,9 @@ void UI::UIKeyEvent(KeyEvent* keyEvent) {
     {
       Point relative_xy = xy - uiComponentPair.first;
       UIComponent* uiComponent = uiComponentPair.second;
-      if (uiComponent->GetSize().Contains(relative_xy))  // Key Found
+      if (displayScrollBar && scrollBar.GetSize().Contains(xy - scrollBar.position))
+        { hasAction |= scrollBar.KeyEvent(xy - scrollBar.position, &keyEvent->info); }
+      else if (uiComponent->GetSize().Contains(relative_xy))  // Key Found
       { hasAction |= uiComponent->KeyEvent(relative_xy, &keyEvent->info); }
     }
 
@@ -112,19 +127,22 @@ void UI::AddUIComponent(UIComponent* uiComponent, uint16_t count, ...) {
   va_list valst;
   va_start(valst, count);
   for (uint8_t i = 0; i < count; i++)
-  { uiComponentMap[(Point)va_arg(valst, Point)] = uiComponent;
+  { 
+    uiComponentMap[(Point)va_arg(valst, Point)] = uiComponent;
   }
 }
 
-void UI::RemoveUIComponent(UIComponent* uiComponent, Point xy){
-  Dimension dimension = uiComponent->GetSize();
-  for (uint16_t x = 0; x < dimension.x; x++)
+void UI::RemoveUIComponent(Point xy) {
+  Dimension dimension;
+  auto it = uiComponentMap.find(xy);
+  if (it != uiComponentMap.end())
   {
-    for (uint16_t y = 0; y < dimension.y; y++)
-    { MatrixOS::LED::SetColor(xy + Point(x, y), 0x000000);
-    }
+    dimension = it->second->GetSize();
+      for(uint8_t x = 0; x < dimension.x; x++)
+        for(uint8_t y = 0; y < dimension.y; y++)
+          MatrixOS::LED::SetColor(xy + Point(x, y), COLOR_BLANK);  
+    uiComponentMap.erase(xy);
   }
-  uiComponentMap.erase(xy);
 }
 
 void UI::AllowExit(bool allow) {
@@ -147,6 +165,12 @@ void UI::SetKeyEventHandler(std::function<bool(KeyEvent*)> key_event_handler){
   UI::key_event_handler = &key_event_handler;
 }
 
+void UI::SetScrollBar(int8_t* num, uint8_t count, const Color* color, uint8_t sliderLength, Point position)
+{
+  scrollBar.Setup(num, count, color, sliderLength, position);
+  Device::AnalogInput::SetUpDown(scrollBar.num, count - 1);
+}
+
 void UI::ClearUIComponents() {
   uiComponentMap.clear();
 }
@@ -160,8 +184,6 @@ void UI::UIEnd() {
     MatrixOS::LED::Fill(0); 
   }
 
-  Device::AnalogInput::SetUpDown(nullptr);
-  Device::AnalogInput::SetLeftRight(nullptr);
   // MatrixOS::KEYPAD::Clear();
   MatrixOS::LED::Update();
 }

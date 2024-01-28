@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MatrixOS.h"
 #include <string>
 #include <functional>
 #include <list>
@@ -8,15 +7,17 @@
 #include <stdarg.h>
 #include "UIComponents.h"
 #include "UIInterfaces.h"
+#include "component/ScrollBar.h"
 
 #define UI_DEFAULT_FPS 30
-#define FADE_INOUT_TIME 200 //ms
+#define UI_POP_DELAY 400
 
 class UI {
  public:
   string name;
   Color nameColor;
   int8_t status = 0;
+  bool displayScrollBar;
 
   bool newLedLayer = true;
   bool disableExit = false;
@@ -31,6 +32,7 @@ class UI {
   std::function<void()>* end_func = nullptr;
   std::function<bool(KeyEvent*)>* key_event_handler = nullptr;
   std::map<Point, UIComponent*> uiComponentMap;
+  ScrollBar scrollBar;
 
   UI(){};
   UI(string name, Color color = Color(0xFFFFFF), bool newLedLayer = true);
@@ -68,10 +70,11 @@ class UI {
   void SetLoopFunc(std::function<void()> loop_func);
   void SetEndFunc(std::function<void()> end_func);
   void SetKeyEventHandler(std::function<bool(KeyEvent*)> key_event_handler);
+  void SetScrollBar(int8_t* num, uint8_t count, const Color* color, uint8_t sliderLength = 1, Point position = Point(0, 0));
 
   void AddUIComponent(UIComponent* uiComponent, Point xy);
   void AddUIComponent(UIComponent* uiComponent, uint16_t count, ...);
-  void RemoveUIComponent(UIComponent* uiComponent, Point xy);
+  void RemoveUIComponent(Point xy);
 
   void AllowExit(bool allow);
   void ClearUIComponents();

@@ -20,12 +20,13 @@
 #define MATRIXOS_LOG_USBCDC
 #define MATRIXOS_LOG_COLOR
 
-#define APPLICATION_STACK_SIZE (configMINIMAL_STACK_SIZE * 32)
+#define APPLICATION_STACK_SIZE (configMINIMAL_STACK_SIZE * 8)
 
 #define MATRIXOS_FLASHVERSION 0  // Each Flash data strcture change will cause this to increase
 
 #define KEYEVENT_QUEUE_SIZE 16
 #define MIDI_QUEUE_SIZE 128
+#define MIDI_TICKUS_SIZE 16
 
 #define USB_CDC_COUNT 0  // There will be one extra  used by the system, actual count is USB_CDC_COUNT + 1
 #define USB_MIDI_COUNT 1

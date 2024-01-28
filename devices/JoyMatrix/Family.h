@@ -19,16 +19,16 @@
 #include "nvs_flash.h"
 #include "esp_private/system_internal.h"
 #include "WS2812/WS2812.h"
-#include "framework/Color.h"
+#include "framework/Framework.h"
 #include <functional>
 
-
-
 #define FUNCTION_KEY 0  // Keypad Code for main function key
-#define RSHIFT_KEY   1
-#define LSHIFT_KEY   2
-#define LALT_KEY     3
-#define RALT_KEY     4
+#define LROCKER_KEY  1  
+#define RROCKER_KEY  2
+#define RSHIFT_KEY   3
+#define LSHIFT_KEY   4
+#define LALT_KEY     5
+#define RALT_KEY     6
 #define DEVICE_SETTING
 
 #define DEVICE_SAVED_VAR_SCOPE "Device"
@@ -56,6 +56,7 @@ namespace Device
   {
     void Init();
     void InitFN();
+    void InitRocker();
     void InitKeyPad();
     // void InitTouchBar();
 
@@ -67,9 +68,17 @@ namespace Device
     void Scan();
     bool ScanKeyPad();
     bool ScanFN();
-    bool ShiftActived();
-    bool AltActived();
+    bool ScanRocker();
+
     uint8_t GetVelocity();
+    bool Shift();
+    bool BothShift();
+    bool Alt();
+    bool BothAlt();
+    bool AltExit();
+    bool Rocker();
+    bool BothRocker();
+
     // bool ScanTouchBar();
 
     namespace Binary
@@ -96,39 +105,11 @@ namespace Device
     uint16_t PCF8574_Read();
   }
 
-  namespace AnalogInput
-  {
-    void Init();
-    void Scan();
-    uint16_t* GetPtr(string input);
-    uint16_t GetRaw(string input);
-    int8_t GetRocker(AnalogConfig config);
-    void UseDial(Point xy, KnobConfig* knob, std::function<void()> callback = nullptr);
-    KnobConfig* GetDialKnob();
-    void SetUpDown(int8_t* up_down, int8_t max = 0, int8_t min = 0, bool loop = false, std::function<void()> callback = nullptr);
-    void SetLeftRight(int8_t* left_right, int8_t max = 0, int8_t min = 0, bool loop = false, std::function<void()> callback = nullptr);
-  }
-
-  namespace Encoder
-  {
-    void Init();
-    bool Setup(KnobConfig *config, uint8_t n);
-    bool Disable(uint8_t n);
-    void DisableAll();
-    KnobConfig* GetEncoderKnob(uint8_t n);
-  }
-
   namespace NVS
   {
     void Init();
   }
-
-  namespace FATFS
-  {
-    void Init();
-    void Format();
-  }
-
+  
   namespace WIFI
   {
     void Init();

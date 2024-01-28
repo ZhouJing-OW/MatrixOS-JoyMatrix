@@ -21,6 +21,9 @@ namespace V110
   const gpio_num_t KeyRead9_Pin = GPIO_NUM_47;
   const gpio_num_t KeyRead10_Pin = GPIO_NUM_48;
 
+  const gpio_num_t LRockerBtn_Pin = GPIO_NUM_21;
+  const gpio_num_t RRockerBtn_Pin = GPIO_NUM_46;
+
   const adc_channel_t KeyRead1_ADC_CHANNEL = ADC_CHANNEL_4;
   const adc_channel_t KeyRead2_ADC_CHANNEL = ADC_CHANNEL_5;
   const adc_channel_t KeyRead3_ADC_CHANNEL = ADC_CHANNEL_6;
@@ -56,6 +59,11 @@ void Device::LoadV110() {
       V110::KeyRead10_Pin,  
   };
   memcpy(KeyPad::keypad_funcRead_pins, _keypad_funcRead_pins, sizeof(_keypad_funcRead_pins));
+
+  gpio_num_t _rockerBtn_pins[2] = {
+      V110::LRockerBtn_Pin, V110::RRockerBtn_Pin,
+  };
+  memcpy(KeyPad::rockerBtn_pins, _rockerBtn_pins, sizeof(_rockerBtn_pins));
 
   adc_channel_t _keypad_read_adc_channel[4] = {
       V110::KeyRead1_ADC_CHANNEL, V110::KeyRead2_ADC_CHANNEL, V110::KeyRead3_ADC_CHANNEL, V110::KeyRead4_ADC_CHANNEL,

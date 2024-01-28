@@ -8,6 +8,7 @@ float mix(float a, float b, float t) { return a + (b - a) * t; }
 
 float step(float e, float x) { return x < e ? 0.0 : 1.0; }
 
+
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 
 Color::Color() {
@@ -47,37 +48,75 @@ Color Color::Scale(uint8_t brightness) {
   return Color(scale8_video(R, brightness), scale8_video(G, brightness), scale8_video(B, brightness)); // Use scale_video to ensure it doesn't get completely removed
 }
 
+Color Color::Scale(uint8_t value, uint8_t lowest, uint8_t highest, uint8_t brightness) {
+  uint16_t scale = (255 - brightness) * (float)(value - lowest) / (float)(highest - lowest) + brightness;
+  scale = scale > 255 ? 255 : scale;
+  return Color(scale8_video(R, scale), scale8_video(G, scale), scale8_video(B, scale)); // Use scale_video to ensure it doesn't get completely removed
+}
+
 Color Color::ToLowBrightness(bool cancel, uint8_t scale) {
   if (!cancel)
   { return Scale(scale); }
   return Color(R, G, B, W);
 }
 
-Color Color::Blink(bool active, uint32_t startTime, uint16_t timeLength, uint8_t pwm_high, uint8_t pwm_low){
-  if(active) {
-    uint8_t pwm_full = (pwm_high + pwm_low);
-    bool cancel = ((((MatrixOS::SYS::Millis() - startTime)) / (timeLength / pwm_full)) % pwm_full) < pwm_high;
-    return ToLowBrightness(cancel);
-  }
-  return Color(R, G, B, W);
+Color Color::Mix(Color color2, float ratio) {
+  return Color((uint8_t)mix((float)R , color2.R, ratio), (uint8_t)mix((float)G , color2.G, ratio), (uint8_t)mix((float)B , color2.B, ratio));
 }
-Color Color::Blink(KeyInfo key){
-  if (key == ACTIVATED || key == HOLD){
-    uint32_t startime = key.lastEventTime - BLINK_TIME * 3 / 4;
-    bool cancel = ((MatrixOS::SYS::Millis() - startime) / (BLINK_TIME / 2)) % 2;
-    return ToLowBrightness(cancel);
-  }
-  return Color(R, G, B, W);
+
+Color Color::Invert() {
+  return Color(255 - R, 255 - G, 255 - B);
 }
-Color Color::Blink(bool active, Color color){
-  if(active) {
+
+Color Color::Contrast(bool clockwise) {
+  return clockwise? Color(B, R, G) : Color(G, B, R);
+}
+
+Color Color::Rotate(float angle) {
+  float h = 0; float s = 0; float v = 0;
+  RgbToHsv(Color (R, G, B, W), &h, &s, &v);
+  angle = fract(angle / 360);
+  h = fract(h + angle);
+  return Color::HsvToRgb(h, s, v);
+}
+
+Color Color::Blink_Timer(Timer* timer, uint32_t ms)
+{
+  bool cancel = timer->IsLonger(100);
+  if (!cancel)
+    return COLOR_WHITE;
+  else
+    return Color(R, G, B, W);
+}
+
+Color Color::Blink_Interval(uint32_t ms, Color color, uint32_t start)
+{
+  bool cancel = ((MatrixOS::SYS::Millis() - start) / (ms / 2)) % 2;
+  if (!cancel)
+    return color;
+  else
+    return Color(R, G, B, W);
+}
+
+Color Color::Blink_Key(KeyInfo key) {
+  if (key == ACTIVATED || key == HOLD)
+  {
     bool cancel = ((MatrixOS::SYS::Millis()) / (BLINK_TIME / 2)) % 2;
-    if (cancel) return color;
+    if (!cancel)
+      return Color(scale8(R, COLOR_LOW_STATE_SCALE), scale8(G, COLOR_LOW_STATE_SCALE), scale8(B, COLOR_LOW_STATE_SCALE));
   }
   return Color(R, G, B, W);
 }
 
-Color Color::Breathe(bool active, uint32_t startTime, uint16_t timeLength){
+Color Color::Blink_Color(bool active, Color color) {
+  if(active) {
+    bool cancel = ((MatrixOS::SYS::Millis()) / (BLINK_TIME / 2)) % 2;
+    if (!cancel) return color;
+  }
+  return Color(R, G, B, W);
+}
+
+Color Color::Breathe(bool active, uint32_t startTime, uint16_t timeLength) {
   if(active) {
     int16_t breathe = (MatrixOS::SYS::Millis() - startTime) % timeLength;
     bool invert = (breathe >= timeLength / 2);
