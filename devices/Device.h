@@ -3,6 +3,7 @@
 #include "framework/Framework.h"
 #include "tusb.h"
 #include "Config.h"
+#include <functional>
 
 namespace Device
 {
@@ -72,6 +73,7 @@ namespace Device
     namespace FATFS
   {
     void Init();
+    uint64_t GetFreeSpace();
     void Format();
   }
 

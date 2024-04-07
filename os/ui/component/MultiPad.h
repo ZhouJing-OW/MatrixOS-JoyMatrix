@@ -8,6 +8,7 @@
 class MultiPad : public UIComponent {
  public:
   Dimension dimension;
+  Dimension dimensionPrv;
   uint8_t configCount;
   ChannelConfig* channelConfig;
   NotePadConfig* padConfig;
@@ -26,7 +27,7 @@ class MultiPad : public UIComponent {
   // uint8_t noteNameView = false;
   Timer octaveTimer;
   uint8_t channel = MatrixOS::UserVar::global_channel;
-  uint8_t channelPrev;
+  uint8_t channelPrv;
   int8_t* padType;
 
   // Piano Pad
@@ -56,7 +57,8 @@ class MultiPad : public UIComponent {
     this->drumConfig = drumConfig;
     this->configCount = configCount;
     channel = MatrixOS::UserVar::global_channel;
-    channelPrev = channel;
+    channelPrv = channel;
+    dimensionPrv = dimension;
     padType = &channelConfig->padType[channel];
     GenerateNoteMap();
     GeneratePianoMap();
@@ -75,11 +77,12 @@ class MultiPad : public UIComponent {
     channel = MatrixOS::UserVar::global_channel;
     padType = &channelConfig->padType[channel];
 
-    if (channel != channelPrev)
+    if (channel != channelPrv || dimension != dimensionPrv)
     {
       GenerateNoteMap();
       GeneratePianoMap();
-      channelPrev = channel;
+      channelPrv = channel;
+      dimensionPrv = dimension;
     }
 
     if(octaveViewMode && octaveTimer.IsLonger(400))

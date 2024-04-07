@@ -44,7 +44,10 @@ namespace Device::Encoder
 
   KnobConfig* GetEncoderPtr(uint8_t n) 
   {
-    return encoder[n].knob;
+    if (n < ENCODER_NUM)
+      return encoder[n].knob;
+    else
+      return nullptr;
   }
 
   uint8_t GetActEncoder()  // if return 255 == no Encoder Active;

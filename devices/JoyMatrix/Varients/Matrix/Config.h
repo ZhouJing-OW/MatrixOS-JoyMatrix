@@ -16,20 +16,23 @@
 
 // #define FACTORY_CONFIG //Global switch for using factory config
 
-#define FACTORY_DEVICE_VERSION 'S' // Standard
+// #define FACTORY_DEVICE_VERSION 'S' // Standard
 // #define FACTORY_DEVICE_VERSION 'P' // Pro
+#define FACTORY_DEVICE_VERSION 'J' // Joy Matrix
 
 #if FACTORY_DEVICE_VERSION == 'S'
 #define FACTORY_DEVICE_MODEL {'M', 'X', '1', 'S'}
 #elif FACTORY_DEVICE_VERSION == 'P'
 #define FACTORY_DEVICE_MODEL {'M', 'X', '1', 'P'}
+#elif FACTORY_DEVICE_VERSION == 'J'
+#define FACTORY_DEVICE_MODEL {'M', 'X', '1', 'J'}
 #else 
 #error "FACTORY_DEVICE_VERSION is not correct"
 #endif
 
-#define FACTORY_DEVICE_REVISION {'R', 'E', 'V', 'C'}
+#define FACTORY_DEVICE_REVISION {'V', '1', '1', '0'}
 
-#define FACTORY_MFG_YEAR 23
+#define FACTORY_MFG_YEAR 24
 #define FACTORY_MFG_MONTH 03
 
 struct DeviceInfo {

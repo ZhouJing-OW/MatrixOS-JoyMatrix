@@ -1,4 +1,5 @@
 #include "Device.h"
+#include "MatrixOS.h"
 
 #ifdef FACTORY_CONFIG
 #include "esp_efuse.h"
@@ -34,13 +35,11 @@ void BurnEFuse() {
 
   // Write protection for SPI_BOOT_CRYPT_CNT
   status = esp_efuse_write_field_bit(ESP_EFUSE_WR_DIS_SPI_BOOT_CRYPT_CNT);
-  MLOGD("BurnEFuse", "Buriing EFUSE_WR_DIS_SPI_BOOT_CRYPT_CNT - Status: %s",
-                              esp_err_to_name(status));
+  MLOGD("BurnEFuse", "Buriing EFUSE_WR_DIS_SPI_BOOT_CRYPT_CNT - Status: %s", esp_err_to_name(status));
 
   // Write protection for USB_EXCHG_PINS,
   status = esp_efuse_write_field_bit(ESP_EFUSE_WR_DIS_USB_EXCHG_PINS);
-  MLOGD("BurnEFuse", "Buriing ESP_EFUSE_WR_DIS_USB_EXCHG_PINS - Status: %s",
-                              esp_err_to_name(status));
+  MLOGD("BurnEFuse", "Buriing ESP_EFUSE_WR_DIS_USB_EXCHG_PINS - Status: %s", esp_err_to_name(status));
 
   // Write protection for Matrix Info
   status = esp_efuse_set_write_protect(EFUSE_BLK3);

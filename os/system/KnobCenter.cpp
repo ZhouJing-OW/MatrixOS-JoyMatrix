@@ -11,7 +11,7 @@ namespace MatrixOS::KnobCenter
   {
     for (;;)
     {
-      for (uint8_t ch = 0; ch < 16; ch++)  // set Knob color
+      for (uint8_t ch = 0; ch < 16 && colorSetted; ch++)  // set Knob color
       {
         if (knobAll[ch * knobsPerChannel].color != *color[ch])
         {
@@ -37,14 +37,20 @@ namespace MatrixOS::KnobCenter
     }
   }
 
-  bool RequestService(string name ,Color *channelColor) 
+  void SetColor(Color* channelColor) 
+  { 
+    if (channelColor == nullptr) colorSetted = false;
+    else colorSetted = true;
+    for (uint8_t ch = 0; ch < 16; ch++)
+      color[ch] = channelColor == nullptr ? nullptr : channelColor + ch;
+  }
+
+  bool RequestService(string name, Color* channelColor) 
   {
     appName = name;
     MLOGD( appName , "Knob Center Service Requested.");
-    for (uint8_t ch = 0; ch < 16; ch++)
-    {
-      color[ch] = channelColor + ch;
-    }
+
+    if(!colorSetted) SetColor(channelColor);
     if(LoadKnobFiles(name))
     {
       xTaskCreate(KnobCenterTask, "KnobCenter", configMINIMAL_STACK_SIZE * 2, NULL, 3, &knobCenterTaskHandle);
@@ -66,6 +72,8 @@ namespace MatrixOS::KnobCenter
     knobsPerChannel = 0;
     pageMax = 0;
     extraPage = 0;
+    for(uint8_t i = 0; i < 16; i++) color[i] = nullptr;
+    colorSetted = false;
     MLOGD("Knob Center", "Service ended.");
   }
 

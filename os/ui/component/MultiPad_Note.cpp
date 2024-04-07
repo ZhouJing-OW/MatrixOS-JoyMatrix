@@ -1,32 +1,43 @@
 #include "MultiPad.h"
+#include "system/MIDIAPP/MidiCenter.h"
 
 bool MultiPad::NoteRender(Point origin)
 {
   uint8_t index = 0;
   Color color = COLOR_NOTE_PAD[0];
   Color rootColor = COLOR_NOTE_PAD[1];
+  Color colorRotate = color.Rotate(-10);
+  Color rootColorRotate = rootColor.Rotate(-30);
   for (int8_t y = 0; y < dimension.y; y++)
   {
     for (int8_t x = 0; x < dimension.x - 1; x++)
     {
-      if(!(settingMode && (x >= padSettingArea.x || y >= padSettingArea.y))){
+      if(!(settingMode && (x >= padSettingArea.x || y >= padSettingArea.y)))
+      {
         uint8_t note = noteMap[index];
         Point xy = origin + Point(x, y);
+
+        Color thisColor, thisRootColor;
+        switch(MatrixOS::MidiCenter::GetPadCheck(note))
+        {
+          case IN_NONE:   thisColor = color;        thisRootColor = rootColor;       break;
+          case IN_INPUT:  thisColor = COLOR_WHITE;  thisRootColor = COLOR_WHITE;     break;
+          case IN_ARP:    thisColor = COLOR_ORANGE; thisRootColor = COLOR_ORANGE;    break;
+          case IN_CHORD:  thisColor = COLOR_GOLD;   thisRootColor = COLOR_GOLD;      break;
+          case IN_VOICE:  thisColor = colorRotate;  thisRootColor = rootColorRotate; break;
+        }
+
         if (note == 255)
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);  
-        else if (MatrixOS::MidiCenter::FindArp(SEND_NOTE, channel, note))
-          MatrixOS::LED::SetColor(xy, COLOR_ORANGE);
-        else if (MatrixOS::MidiCenter::FindHold(SEND_NOTE, channel, note))  // If find the note is currently active. Show it as white
-          MatrixOS::LED::SetColor(xy, COLOR_WHITE);  
+          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
         else
         {
           uint8_t inScale = InScale(note);  // Check if the note is in scale.
           if (inScale == 0)
-            MatrixOS::LED::SetColor(xy, color.ToLowBrightness().Blink_Key(Device::KeyPad::fnState)); 
+            MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness().Blink_Key(Device::KeyPad::fnState)); 
           else if (inScale == 1)
-            MatrixOS::LED::SetColor(xy, color.Blink_Key(Device::KeyPad::fnState)); 
+            MatrixOS::LED::SetColor(xy, thisColor.Blink_Key(Device::KeyPad::fnState)); 
           else if (inScale == 2)
-            MatrixOS::LED::SetColor(xy, rootColor.Blink_Key(Device::KeyPad::fnState));
+            MatrixOS::LED::SetColor(xy, thisRootColor.Blink_Key(Device::KeyPad::fnState));
         }
       }
       index++;

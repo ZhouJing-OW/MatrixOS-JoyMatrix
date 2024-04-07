@@ -2,13 +2,13 @@
 
 #include "Device.h"
 #include "FreeRTOS.h"
+#include "task.h"
 #include "framework/Framework.h"
 #include "queue.h"
 #include "semphr.h"
 #include "system/Parameters.h"
 #include "system/SystemVariables.h"
 #include "system/UserVariables.h"
-#include "task.h"
 #include "timers.h"
 #include "tusb.h"
 
@@ -137,7 +137,8 @@ namespace MatrixOS
     void Hold(Point xy, int8_t type, int8_t channel, int8_t byte1, int8_t byte2 = 127);
     void Panic();
     void Toggle(int8_t type, int8_t channel, int8_t byte1, int8_t byte2 = 127);
-    bool FindArp(int8_t type, int8_t channel, int8_t byte1);
+    bool FindChord(int8_t channel, int8_t byte1);
+    bool FindArp(int8_t channel, int8_t byte1);
     bool FindHold(int8_t type, int8_t channel, int8_t byte1);
     bool FindHold(Point xy);
     void ClearHold();
@@ -145,9 +146,11 @@ namespace MatrixOS
     void ClockOut();
     void ClockStart();
     void ClockStop();
-    TransportState* GetTransportState();
+    TransportState* TransState();
     Timer* GetBeatTimer();
+    ChannelConfig* GetChannelConfig();
     std::vector<KnobConfig*> GetSysKnobs();
+    void AddMidiAppTo(UI &ui, Point point = Point(0,0));
   }
 
   namespace Component
@@ -163,7 +166,7 @@ namespace MatrixOS
 
   namespace KnobCenter
   {
-    bool RequestService(string name, Color* channelColor); //An Color array of 16 elements needs to be passed in.
+    bool RequestService(string name, Color* channelColor = nullptr); //An Color array of 16 elements needs to be passed in.
     void EndService();
     bool OpenFile(string name);
     void SaveKnobContinuous(KnobConfig& knob);
@@ -171,6 +174,7 @@ namespace MatrixOS
 
     void GetKnobPtrs(std::vector<uint16_t>& pos, std::vector<KnobConfig*>& knobPtr);
     void MarkChanged(uint16_t pos);
+    void SetColor(Color* channelColor);
     void SetKnobBar(std::vector<uint16_t>& pos);
     void SetKnobBar(std::vector<KnobConfig*>& knob);
     void SetPage(uint8_t page);
@@ -324,8 +328,8 @@ namespace MatrixOS
     void SaveContinuous(void* VariablePtr, size_t size, std::fstream& fio);
 
     void MarkChanged(void* varPtr, uint16_t pose);
-    void VarManager(string name, string suffix, std::list<SaveVarInfo>& varList);
-    void VarManageEnd();
+    bool VarManager(string name, string suffix, std::list<SaveVarInfo>& varList);
+    void VarManageEnd(string suffix);
   }
 
   // namespace GPIO

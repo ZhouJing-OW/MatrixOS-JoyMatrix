@@ -2,12 +2,12 @@
 
 bool MultiPad::DrumRender(Point origin)
 {
-  uint8_t width = 16 / dimension.y + (16 % dimension.y > 0);
+  uint8_t width = 8 ; // 16 / dimension.y + (16 % dimension.y > 0)
   uint16_t pos = channelConfig->activePadConfig[channel][DRUM_PAD] * 16;
   MidiButtonConfig* con = drumConfig + pos;
   for (uint8_t x = 0; x < dimension.x; x++)
   {
-    for (uint8_t y = 0; y < dimension.y; y++)
+    for (uint8_t y = dimension.y - 2; y < dimension.y; y++)
     {
       Point xy = origin + Point(x, y);
       if (x < width)
@@ -42,13 +42,14 @@ bool MultiPad::DrumRender(Point origin)
     }
   }
 
-  // if(dimension.x >= 16 && dimension.y >= 4 && noteNameView)
-  // {
-  //   uint8_t i = channelConfig->activeDrumNote[channel];
-  //   int8_t activeNote = (con + i)->byte1;
-  //   noteName.note = &activeNote;
-  //   noteName.Render(origin + Point(4, 0));
-  // }
+  if (dimension.y == 2) return true;
+
+  for (uint8_t x = 1; x < 16; x++) {
+    for (uint8_t y = 0; y < 2; y++) {
+      MatrixOS::LED::SetColor(origin + Point(x, y), COLOR_BLANK);
+    }
+  }
+ 
   return true;
 }
 
@@ -56,7 +57,9 @@ bool MultiPad::DrumKeyEvent(Point xy, KeyInfo* keyInfo)
 {
   if (keyInfo->state == PRESSED)
   {
-    uint8_t width = 16 / dimension.y + (16 % dimension.y > 0);
+    if(dimension.y == 4 && xy.y < 2) return false;
+    
+    uint8_t width = 8; // 16 / dimension.y + (16 % dimension.y > 0);
     uint16_t pos = channelConfig->activePadConfig[channel][DRUM_PAD] * 16;
     MidiButtonConfig* con = drumConfig + pos;
     uint8_t i;

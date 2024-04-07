@@ -119,7 +119,9 @@
 			"executor": "cpp",
 			"io_context": "cpp",
 			"timer": "cpp",
-			"rmt_tx.h": "c"
+			"rmt_tx.h": "c",
+			"esp_system.h": "c",
+			"unordered_set": "cpp"
 		}
 	}
 }

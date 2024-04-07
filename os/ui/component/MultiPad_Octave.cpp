@@ -34,14 +34,13 @@ void MultiPad::OctaveShiftRender(Point origin)
     Point xy = origin + Point(0, y);
     if (y == dimension.y - 2 ) MatrixOS::LED::SetColor(xy, color1);
     else if (y == dimension.y - 1 ) MatrixOS::LED::SetColor(xy, color2);
-    else MatrixOS::LED::SetColor(xy, COLOR_BLANK);
   }
 
 }
 
 bool MultiPad::OctaveShiftKeyEvent(Point xy, KeyInfo* keyInfo)
 {
-    if (keyInfo->state == PRESSED)
+    if (keyInfo->state == PRESSED && xy.y >= dimension.y - 2)
     { 
       NotePadConfig* config = padConfig + channelConfig->activePadConfig[channel][*padType];
       int8_t *octave = &config->octave;

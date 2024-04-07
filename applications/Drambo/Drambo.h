@@ -6,7 +6,7 @@
 #include "framework/Scales.h"
 #include "framework/ComponentVariable.h"
 #include "system/MIDIAPP/MidiCenter.h"
-#include "system/MIDIAPP/MidiAppInterface.h"
+#include "system/MIDIAPP/MidiAppUI.h"
 #include <fstream>
 
 // #define DRAMBO_CONFIG_HASH  StaticHash("ZhouJing-Drambo-Config")
@@ -23,36 +23,26 @@ class Drambo : public Application {
   CreateSavedVar("Drambo", nvsVersion, uint32_t, DRAMBO_APP_VERSION);
   CreateSavedVar("DramboInit", Inited, bool, false);
 
-  ChannelConfig* CH;
-  TabConfig* TAB;
-  NotePadConfig* PAD;
-  MidiButtonConfig* DRUM;
+  ChannelConfig*    CH;
+  TabConfig*        TAB;
+  // NotePadConfig*    PAD;
+  // MidiButtonConfig* DRUM;
   MidiButtonConfig* CC;
   MidiButtonConfig* PT;
-  RouterNode* nodesIndex;
-  ArpConfig* ARP;
 
   std::list<SaveVarInfo> saveVarList = 
   {
-    SaveVarInfo {(void**)&CH,   sizeof(ChannelConfig),    1},
+    // SaveVarInfo {(void**)&CH,   sizeof(ChannelConfig),    1},
     SaveVarInfo {(void**)&TAB,  sizeof(TabConfig),        5},
-    SaveVarInfo {(void**)&PAD,  sizeof(NotePadConfig),    4},
-    SaveVarInfo {(void**)&DRUM, sizeof(MidiButtonConfig), 4 * 16},
+    // SaveVarInfo {(void**)&PAD,  sizeof(NotePadConfig),    4},
+    // SaveVarInfo {(void**)&DRUM, sizeof(MidiButtonConfig), 4 * 16},
     SaveVarInfo {(void**)&CC,   sizeof(MidiButtonConfig), 16},
     SaveVarInfo {(void**)&PT,   sizeof(MidiButtonConfig), 16},
-    SaveVarInfo {(void**)&nodesIndex, sizeof(RouterNode), 16 * NODES_PER_CHANNEL},
-    SaveVarInfo {(void**)&ARP,  sizeof(ArpConfig),        16},
   };
-
-  std::map<RouterNode, void*> nodeConfigs = {{NODE_ARP, (void*)ARP}};
 
   //common bar
   TransBar transBar;
   TabBar tabBar;
-  TransportState* transState;
-
-  //midiApp interface
-  ArpInterface arpInterface;
 
   MixerFader volumeMixer;
   KnobButton mixer;
@@ -74,7 +64,6 @@ class Drambo : public Application {
   void Pop();
 
   void toggleTab();
-  void SwitchPad();
   void CommonUI(UI& ui);
   void CommonLoop(UI& ui);
   void CommonEnd(UI& ui);

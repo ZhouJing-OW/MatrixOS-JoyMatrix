@@ -4,7 +4,7 @@ struct SaveVarInfo {
   void** ptr;
   size_t size;
   uint16_t count;
-  uint32_t tellp = 0; // The position of the file pointer,written by FATFS::ListLoad
+  uint32_t filePos = 0; // The position of the file pointer,written by FATFS::ListLoad
 };
 
 struct TransportState {

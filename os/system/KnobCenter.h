@@ -26,6 +26,7 @@ namespace MatrixOS::KnobCenter
   int8_t pageMax;
   int8_t extraPage;
 
+  bool colorSetted;
   Color* color[16];
   Timer pageTimer;
 
@@ -192,6 +193,20 @@ namespace MatrixOS::KnobCenter
   
   private:
     bool BarDisplay(Point origin, KnobConfig* displayKnob) {
+      if(displayKnob->max - displayKnob->min + 1 <= ENCODER_NUM)
+      { 
+        for (uint8_t x = 0; x < ENCODER_NUM; x++) {
+          Point xy = Point(x, 0) + origin;
+          if (x <= displayKnob->byte2 - displayKnob->min)
+            MatrixOS::LED::SetColor(xy, displayKnob->color);
+          else if (x <= displayKnob->max - displayKnob->min)
+            MatrixOS::LED::SetColor(xy, displayKnob->color.Scale(16));
+          else
+            MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+        }
+        return true;
+      }
+
       for (uint8_t x = 0; x < ENCODER_NUM; x++)
       {
         Point xy = Point(x, 0) + origin;

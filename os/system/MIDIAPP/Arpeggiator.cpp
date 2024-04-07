@@ -2,62 +2,68 @@
 
 namespace MatrixOS::MidiCenter
 {
-  std::map<uint8_t, Arpeggiator*> arpeggiators; // channel, arpConfig
-  std::map<uint16_t, uint32_t> arp; // midiID, length
+  std::unordered_map<uint16_t, uint32_t> CNTR_Arp; // midiID, length
 
   void Arpeggiator::Scan()
   {
     arpInterval = rateToRatio[config->rate] * tickInterval * 24;
-    if(!SyncBeat()) return;
-    CheckVarChange();
-    gateLength = arpInterval * gateToRatio[config->gate];
-    gateLength = gateLength < 10 ? 10 : gateLength;
+
+    if(!StratCheck()) {
+      if (configPrv != *config) {
+        configPrv = *config;
+        MatrixOS::FATFS::MarkChanged(configRoot, configNum);
+      }
+      return;
+    }
+
     uint32_t currentTime = MatrixOS::SYS::Millis();
     if(currentTime >= arpTimer + arpInterval - intervalDelta)
     {
+      CheckVarChange();
+      gateLength = arpInterval * gateToRatio[config->gate];
+      gateLength = gateLength < 10 ? 10 : gateLength;
       if(currentArpNote >= arpArrange.size())
       currentArpNote = 0;
-      intervalDelta =  currentTime - (arpTimer + arpInterval - intervalDelta);
+      currentOctave = (arpArrange[currentArpNote] - inputList.begin()->first) / 12;
+      intervalDelta = currentTime - (arpTimer + arpInterval - intervalDelta);
       // MLOGD("Arpeggiator", "Time Interval : %f, Interval Delta: %f", arpInterval, intervalDelta);
       arpTimer = currentTime;
       Trigger();
     }
   }
 
+  void Arpeggiator::SetActiveConfig(uint8_t num)
+  {
+    if (num >= NODES_MAX_CONFIGS) num = NODES_MAX_CONFIGS - 1;
+    configNum = num;
+    config = &configRoot[num];
+    configPtr = { &config->type,           &config->rate,           
+                  &config->octaveRange,    &config->noteRepeat,        
+                  &config->patternLength,  &config->chance,         
+                  &config->gate,           &config->velDecay};
+    configPrv = *config;
+    nodesConfigNum[channel].insert({NODE_ARP, num});
+  }
+
   void Arpeggiator::CheckVarChange()
   {
-    // monitor knob change. if changed, restart arp, do not restart step
-    bool needChange = false; 
-    bool needReset = false;
-    if (syncBeatPrev != config->syncBeat) { syncBeatPrev = config->syncBeat; needChange = true;}
-    if (skipPrev != config->skip) { skipPrev = config->skip; needChange = true;}
-    if (forBackwardPrev != config->forBackward) { forBackwardPrev = config->forBackward; needChange = true; needReset = true;}
-    if (repeatEndsPrev != config->repeatEnds) { repeatEndsPrev = config->repeatEnds; needChange = true; needReset = true;}
-    for (uint8_t i = 0; i < 8; i++) 
-    { 
-      if(configPrv[i] != *configPtr[i])
-      {
-        configPrv[i] = *configPtr[i];
-        activeLabel = i;
-        needChange = true;
-        if(i == 4 || i == 5 || i == 6) // type, repeat, octaveRange
-          needReset = true;
-      }
-    }
-    if (needChange) 
-    {
-      ArpStart(needReset);
-      // MLOGD("Arpeggiator", "Arp Config %d Changed.", activeLabel);
-    }
-
-    // monitor inputList change. if changed, restart arp, do not restart step
+    // monitor inputList change. 
     if (inputList != inputListPrv) 
     { 
-      if(inputList.size() > inputListPrv.size())
+      if(inputList.size() >= inputListPrv.size())
         decayNow = 0;
       inputListPrv = inputList;
       ArpStart(true);
     }
+    
+    // monitor config change. 
+    if (configPrv != *config) {
+      bool needReset = configPrv.NeedReset(*config);
+      configPrv = *config;
+      MatrixOS::FATFS::MarkChanged(configRoot, configNum);
+      ArpStart(needReset);
+    }
+
   };
 
   void Arpeggiator::Trigger()
@@ -65,6 +71,7 @@ namespace MatrixOS::MidiCenter
     if(GetStep())
     {
       uint8_t velocity = config->velocity[currentStep] > decayNow ? config->velocity[currentStep] - decayNow : 0;
+      
       if (velocity > 0)
       {
         auto it = arpArrange.begin() + currentArpNote;
@@ -72,7 +79,7 @@ namespace MatrixOS::MidiCenter
         float velRatio = inputVelocity / 127.0;
         velocity = (uint8_t)(velocity * velRatio);
         uint16_t noteID = SEND_NOTE << 12 | channel << 8 | note;
-        arp.insert({noteID, MatrixOS::SYS::Millis() + gateLength});
+        CNTR_Arp.insert({noteID, MatrixOS::SYS::Millis() + gateLength});
         MidiRouter(NODE_ARP, SEND_NOTE, channel, note, velocity);
       }
       if(currentRepeat >= config->noteRepeat - 1)
@@ -101,11 +108,6 @@ namespace MatrixOS::MidiCenter
     currentRepeat++;
     if(currentRepeat >= config->noteRepeat)
       currentRepeat = 0;
-
-    if (currentArpNote < config->octaveRange * inputList.size())
-      currentOctave = currentArpNote / inputList.size();
-    else
-      currentOctave = config->octaveRange - 1 - (currentArpNote + config->forBackward * !config->repeatEnds - config->octaveRange * inputList.size()) / inputList.size();
   }
 
   void Arpeggiator::ArpEnd(bool reset)
@@ -119,6 +121,7 @@ namespace MatrixOS::MidiCenter
     arpList.clear();
     arpArrange.clear();
     intervalDelta = 0;
+    inputVelocity = 0;
   }
 
   void Arpeggiator::ArpStart(bool reset)
@@ -126,34 +129,58 @@ namespace MatrixOS::MidiCenter
     ArpEnd(reset);
     GenerateNoteList();
     NoteArrange();
-    OctaveExpansion();
+    Reverse();
     if (config->forBackward)
       forBackward();
+    
+    if(inputVelocity == 0) {
+      uint32_t time = 0xFFFFFFFF;
+      for(auto it = inputList.begin(); it != inputList.end(); it++) {
+        if ( it ->second.time < time) {
+          time = it->second.time;
+          inputVelocity = it->second.velocity;
+        }
+      }
+    }
   }
 
-  bool Arpeggiator::SyncBeat()
+  bool Arpeggiator::StratCheck()
   {
+    
     if(inputList.empty())
     {
+      if(empty) return false;
       currentArpNote = 0;
       decayNow = 0;
       synced = false;
+      empty = true;
       ArpEnd(true);
       return false;
+    } else empty = false;
+
+    if(synced) return true;
+
+    bool syncNow = false;
+    uint32_t timeForSync;
+    switch(config->timeSync & timeReceived)
+    {
+      case 0: 
+        syncNow = true; 
+        timeForSync = MatrixOS::SYS::Millis();
+        break;
+      case 1:
+        syncNow = !stepTimer.IsLonger(20);
+        timeForSync = MatrixOS::SYS::Millis() - stepTimer.SinceLastTick();
+        break;
+      // case 2:
+      //   syncNow = !beatTimer.IsLonger(20);
+      //   timeForSync = MatrixOS::SYS::Millis() - beatTimer.SinceLastTick();
+      //   break;
     }
 
-    if (synced) return true;
-
-    if(!config->syncBeat || !transportState.play)
+    if(syncNow)
     {
-      arpTimer = MatrixOS::SYS::Millis() - arpInterval;
-      synced = true;
-      ArpStart(true);
-      return true;
-    }
-    else if(!beatTimer.IsLonger(20))
-    {
-      arpTimer = MatrixOS::SYS::Millis() - beatTimer.SinceLastTick() - arpInterval;
+      arpTimer = timeForSync - arpInterval;
       synced = true;
       ArpStart(true);
       return true;
@@ -176,15 +203,41 @@ namespace MatrixOS::MidiCenter
   void Arpeggiator::GenerateNoteList()
   {
     arpList.clear();
+    if (config -> type == ARP_ByOrder)
+    {
+      std::multimap<uint32_t, uint8_t> tempList; // time, noteID
+      for(auto it = inputList.begin(); it != inputList.end(); it++)
+        tempList.insert({it->second.time, it->first});
+
+      for(auto it = tempList.begin(); it != tempList.end(); it++)
+        arpList.push_back(it->second);
+    }
+    else
+    {
     for (auto it = inputList.begin(); it != inputList.end(); it++)
       arpList.push_back(it->first);
-  } 
+    }
+
+    size_t size = arpList.size();
+    for(uint8_t octave = 1; octave < config->octaveRange; octave++) // OctaveExpansion
+    {
+      for(auto it = arpList.begin(); it != arpList.begin() + size; it++)
+      {
+        uint8_t note = *it + octave * 12;
+        if (note <= *(arpList.end() - 1))
+          continue;
+        if (note > 127)
+          return;
+        arpList.push_back(note);
+      }
+    }
+    
+  }
 
   void Arpeggiator::NoteArrange() 
   {
     std::vector<uint8_t> tempArrange;
-    uint8_t tempHigh = 0;
-    uint8_t tempLow = 0;
+    uint8_t tempNote = 0;
     arpArrange.clear();
     arpArrange.reserve(arpList.size());
     switch (config->type)
@@ -217,10 +270,10 @@ namespace MatrixOS::MidiCenter
           arpArrange.push_back(*arpList.begin());
           break;
         }
-        tempHigh = *arpList.rbegin() + (config->octaveRange - 1)  * 12;
+        tempNote = *arpList.rbegin();
         for(auto it = arpList.begin(); it != arpList.end() - 1; it++)
         {
-          arpArrange.push_back(tempHigh);
+          arpArrange.push_back(tempNote);
           arpArrange.push_back(*it);
         }
         break;
@@ -231,10 +284,10 @@ namespace MatrixOS::MidiCenter
           arpArrange.push_back(*arpList.begin());
           break;
         }
-        tempLow = *arpList.begin();
+        tempNote = *arpList.begin();
         for(auto it = arpList.begin() + 1; it != arpList.end(); it++)
         {
-          arpArrange.push_back(tempLow);
+          arpArrange.push_back(tempNote);
           arpArrange.push_back(*it);
         }
         break;
@@ -246,43 +299,28 @@ namespace MatrixOS::MidiCenter
           arpArrange.push_back(*it);
         break;
       case ARP_ByOrder:
-      {
-        std::map<uint8_t, uint8_t> tempList; // noteCount, noteID
-        for(auto it = inputList.begin(); it != inputList.end(); it++)
-        {
-          tempList.insert({it->second, it->first});
-        }
-        for(auto it = tempList.begin(); it != tempList.end(); it++)
-        {
-          arpArrange.push_back(it->second);
-        }
+        for(auto it = arpList.begin(); it != arpList.end(); it++)
+          arpArrange.push_back(*it);
         break;
-      }
     }
-    if(config->type == ARP_Down || config->type == ARP_Diverge)
-      std::reverse(arpArrange.begin(), arpArrange.end());
   }
 
-  void Arpeggiator::OctaveExpansion()
+  void Arpeggiator::Reverse()
   {
-    size_t size = arpArrange.size();
-    for(uint8_t octave = 1; octave < config->octaveRange; octave++)
+    switch(config->type)
     {
-      for(auto it = arpArrange.begin(); it != arpArrange.begin() + size; it++)
-      {
-        if((config->type == ARP_PinkUp || config->type == ARP_ThumbUp || config->type == ARP_PinkDown || config->type == ARP_ThumbDown) && *it == *arpArrange.begin())
-          arpArrange.push_back(*arpArrange.begin());
-        else if (*it + octave * 12 <= 127)
-          arpArrange.push_back(*it + octave * 12);
-        else
-          return;
-      }
-    }
-    if(config->type == ARP_PinkDown || config->type == ARP_ThumbDown)
-    {
-      std::reverse(arpArrange.begin(), arpArrange.end());
-      arpArrange.insert(arpArrange.begin(), *arpArrange.rbegin());
-      arpArrange.pop_back();
+      case ARP_Down:
+      case ARP_Diverge:
+        std::reverse(arpArrange.begin(), arpArrange.end());
+        break;
+      case ARP_PinkDown:
+      case ARP_ThumbDown:
+        std::reverse(arpArrange.begin(), arpArrange.end());
+        arpArrange.insert(arpArrange.begin(), *arpArrange.rbegin());
+        arpArrange.pop_back();
+        break;
+      default:
+        break;
     }
   }
   

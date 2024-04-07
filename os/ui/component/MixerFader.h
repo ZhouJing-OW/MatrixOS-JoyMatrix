@@ -67,7 +67,7 @@ class MixerFader : public UIComponent {
 
   virtual bool Render(Point origin) {
     position = origin;
-    Smooth(200);
+    // Smooth(200);
 
     for (uint8_t y = 0; y < dimension.y; y++){ 
       for (uint8_t x = 0; x < dimension.x; x++){
@@ -136,7 +136,9 @@ class MixerFader : public UIComponent {
         float piece = ((knobPtr[i]->max - knobPtr[i]->min + 1) / divide);
         float area = vertical ? ((float)dimension.y - xy.y - 0.5) : ((float)xy.x + 1 - 0.5);
         int16_t target = (int)(piece * area > 127 ? 127 : piece * area);
-        smoothList.emplace(i, target);
+        knobPtr[i]->byte2 = target;
+        MatrixOS::KnobCenter::Knob_Function(knobPtr[i]);
+        // smoothList.emplace(i, target);
       }
 
       return true;
@@ -145,22 +147,22 @@ class MixerFader : public UIComponent {
   }
 
   private:
-  void Smooth(uint16_t ms)
-  {
-    uint8_t step = 127 / (ms / (1000 / Device::fps));
-    for (auto it = smoothList.begin(); it != smoothList.end(); it++)
-    {
-      int8_t i = it->first;
-      int16_t target = it->second;
-      if (knobPtr[i]->byte2 < target) knobPtr[i]->byte2 = knobPtr[i]->byte2 + step > target ? target : knobPtr[i]->byte2 + step;
-      if (knobPtr[i]->byte2 > target) knobPtr[i]->byte2 = knobPtr[i]->byte2 - step < target ? target : knobPtr[i]->byte2 - step;
-      MatrixOS::KnobCenter::Knob_Function(knobPtr[i]);
-      if (knobPtr[i]->byte2 == target) {
-        smoothList.erase(it);
-        break;
-      }
-    }
-  }
+  // void Smooth(uint16_t ms)
+  // {
+  //   uint8_t step = 127 / (ms / (1000 / Device::fps));
+  //   for (auto it = smoothList.begin(); it != smoothList.end(); it++)
+  //   {
+  //     int8_t i = it->first;
+  //     int16_t target = it->second;
+  //     if (knobPtr[i]->byte2 < target) knobPtr[i]->byte2 = knobPtr[i]->byte2 + step > target ? target : knobPtr[i]->byte2 + step;
+  //     if (knobPtr[i]->byte2 > target) knobPtr[i]->byte2 = knobPtr[i]->byte2 - step < target ? target : knobPtr[i]->byte2 - step;
+  //     MatrixOS::KnobCenter::Knob_Function(knobPtr[i]);
+  //     if (knobPtr[i]->byte2 == target) {
+  //       smoothList.erase(it);
+  //       break;
+  //     }
+  //   }
+  // }
 
   void SetKnobBar()
   {

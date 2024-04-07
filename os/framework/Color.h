@@ -78,14 +78,19 @@ const Color COLOR_GOLD    = Color(0xFFAA00); //Color(0xFFAA00)
 const Color COLOR_YELLOW  = Color(0xFFFF00); //Color(0xFFFF00)
 const Color COLOR_GREEN   = Color(0x80FF00); //Color(0x80FF00)
 const Color COLOR_LIME    = Color(0x00FF00); //Color(0x00FF00)
-const Color COLOR_CYAN    = Color(0x00FF55); //Color(0x00FF66)
-const Color COLOR_AZURE   = Color(0x00FFFF); //Color(0x0066FF)
+const Color COLOR_CYAN    = Color(0x00FF55); //Color(0x00FF55)
+const Color COLOR_AZURE   = Color(0x00FFFF); //Color(0x00FFFF)
 const Color COLOR_BLUE    = Color(0x0000FF); //Color(0x0000FF)
 const Color COLOR_PURPLE  = Color(0x5500FF); //Color(0x5500FF) 
 const Color COLOR_VIOLET  = Color(0xAA00FF); //Color(0xAA00FF)
 const Color COLOR_PINK    = Color(0xFF00AA); //Color(0xFF00AA)
 const Color COLOR_WHITE   = Color(0xFFFFFF); //Color(0xFFFFFF)
 const Color COLOR_BLANK   = Color(0x000000); //Color(0x000000)
+
+const Color COLOR_CONFIG[16] = {
+  COLOR_RED,   COLOR_ORANGE,    COLOR_GOLD,      COLOR_YELLOW, COLOR_GREEN,  COLOR_LIME,   COLOR_CYAN,      Color(0x00FFAA),
+  COLOR_AZURE, Color(0x00AAFF), Color(0x0055FF), COLOR_BLUE,   COLOR_PURPLE, COLOR_VIOLET, Color(0xFF00FF), COLOR_PINK,
+};
 
 const Color COLOR_KNOB_8PAGE[8] = {COLOR_RED, COLOR_PINK, COLOR_VIOLET, COLOR_PURPLE, COLOR_ORANGE, COLOR_GOLD, COLOR_YELLOW, COLOR_GREEN};
 const Color COLOR_SEQ_4PAGE[4]  = {COLOR_LIME, COLOR_GREEN, COLOR_YELLOW, COLOR_GOLD};

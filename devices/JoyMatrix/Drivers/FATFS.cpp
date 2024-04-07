@@ -26,8 +26,21 @@ namespace Device::FATFS {
       return;
     } else {
       MLOGI("FatFs", "Succeeded to mount FatFs (%s)", esp_err_to_name(err));
+      GetFreeSpace();
       return;
     }
+  }
+
+  uint64_t GetFreeSpace()
+  {
+    uint64_t total = 0, free = 0;
+    esp_err_t err = esp_vfs_fat_info(MOUNT_PATH, &total, &free);
+    if (err != ESP_OK) {
+      MLOGE("FatFs", "Failed to get vfs FAT partition information (%s)", esp_err_to_name(err));
+      return 0;
+    }
+    MLOGD("FatFs", "Total space: %llu, Free space: %llu", total, free);
+    return free;
   }
 
   void Format()

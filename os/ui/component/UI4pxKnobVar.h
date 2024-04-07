@@ -29,7 +29,7 @@ class UI4pxKnobVar : public UIComponent {
 
   }
 
-  virtual Dimension GetSize() { return Dimension(digits * 3 + (digits - 1) * (digits > 0) * spacing + 1, 4); }
+  virtual Dimension GetSize() { return Dimension(digits * 3 + (digits - 1) * (digits > 0) * spacing + 2, 4); }
   virtual Color GetColor() { return (knobPtr.size() > 0) ? knobPtr[activeKnob]->color : COLOR_BLANK; };
 
   void Render4pxNumber(Point origin, Color color, uint8_t value) {

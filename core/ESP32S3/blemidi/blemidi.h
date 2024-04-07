@@ -52,7 +52,7 @@ extern "C" {
 #endif
 
 #ifndef BLEMIDI_OUTBUFFER_FLUSH_MS
-#define BLEMIDI_OUTBUFFER_FLUSH_MS 10
+#define BLEMIDI_OUTBUFFER_FLUSH_MS 20
 #endif
 
 #include "freertos/timers.h"
