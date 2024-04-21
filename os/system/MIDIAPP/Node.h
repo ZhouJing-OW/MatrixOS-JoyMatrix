@@ -2,26 +2,26 @@
 #include <map>
 #include <queue>
 
-enum RouterNode : uint8_t {
+enum NodeID : uint8_t {
   NODE_NONE         = 0x00,
   NODE_ALL          = 0x00,
   
   NODE_INPUT        = 0x01,
   NODE_KEYPAD       = 0x02,
-  NODE_SEQUENCER    = 0x03,
+  NODE_SEQ          = 0x03,
   NODE_CHORDSEQ     = 0x04,
 
   NODE_EUCLIDEAN    = 0x21,
   NODE_CHANCE777    = 0x22,
   NODE_M1SHA        = 0x23,
 
-  NODE_SEQOUT1      = 0x51, // Just for sequencer input and output mark
+  BYPASS_SEQ1       = 0x51, // Just for sequencer input and output mark
   NODE_CHORD        = 0x60,
 
-  NODE_SEQOUT2      = 0x71, // Just for sequencer input and output mark
+  BYPASS_SEQ2       = 0x71, // Just for sequencer input and output mark
   NODE_ARP          = 0x80,
 
-  NODE_SEQOUT3      = 0x91, // Just for sequencer input and output mark
+  BYPASS_SEQ3       = 0x91, // Just for sequencer input and output mark
   NODE_MIDIFX       = 0xA0,
 
   NODE_MIDIOUT      = 0xFF,
@@ -29,7 +29,7 @@ enum RouterNode : uint8_t {
 
 namespace MatrixOS::MidiCenter
 {
-  void MidiRouter(RouterNode from, uint8_t type, uint8_t channel, uint8_t byte1, uint8_t byte2);
+  void MidiRouter(NodeID from, uint8_t type, uint8_t channel, uint8_t byte1, uint8_t byte2);
 
   struct NodeInfo {
     char name[16];
@@ -38,8 +38,14 @@ namespace MatrixOS::MidiCenter
   };
 
   struct NoteInfo {
-    uint8_t velocity;
+    int8_t velocity;
     uint32_t time;
+
+    NoteInfo(uint8_t velocity, uint32_t time)
+    {
+      this->velocity = velocity;
+      this->time = time;
+    }
 
     bool operator==(const NoteInfo& other) const {
       return velocity == other.velocity && time == other.time;
@@ -48,7 +54,7 @@ namespace MatrixOS::MidiCenter
 
   class Node {
   public:
-    RouterNode thisNode;
+    NodeID thisNode;
     uint8_t channel;
     uint8_t configNum;
 
@@ -67,7 +73,7 @@ namespace MatrixOS::MidiCenter
           OutListNoteOff(byte1);
       }
       else
-        inputList.insert({byte1, {byte2, MatrixOS::SYS::Millis()}});
+        inputList.insert_or_assign(byte1, NoteInfo(byte2, MatrixOS::SYS::Millis()));
     // MLOGD("Midi Router", "Note Route into ARP channel: %d, note: %d, velocity: %d", channel, byte1, byte2);
     // MLOGD("Midi Router", "ARP inputList size: %d", arp->inputList.size());
     }
@@ -77,7 +83,9 @@ namespace MatrixOS::MidiCenter
       MidiRouter(thisNode, SEND_NOTE, channel, note, 0);
     }
   };
+
 }
 
+
 #include "Arpeggiator.h"
-#include "Chord.h"
+#include "Chorder.h"

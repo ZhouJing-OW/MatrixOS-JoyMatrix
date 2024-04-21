@@ -28,6 +28,7 @@ namespace Device::AnalogInput
   const uint8_t dialDevide = 36;
 
   void Dial() {
+    
     int8_t rockerR_y = GetRocker(RY);
     int8_t rockerR_x = GetRocker(RX);
     int8_t rockerL_y = GetRocker(LY);
@@ -82,18 +83,20 @@ namespace Device::AnalogInput
 
     for (auto it = dialPtr.begin(); it != dialPtr.end(); it++)
     {
+      if (it->second->GetPtr() == nullptr) continue;
+
       KeyInfo* keyInfo = Device::KeyPad::GetKey(it->first);
       if (keyInfo->active())
       {
-        if (it->second->byte2 != it->second->def && Device::KeyPad::Shift())
+        if (it->second->Value() != it->second->def && Device::KeyPad::Shift())
         {
           uint16_t ms = 150;
           uint8_t step = 127 / (ms / (1000 / Device::analog_input_scanrate));
           int16_t target = it->second->def;
-          if (it->second->byte2 < target)
-            it->second->byte2 = it->second->byte2 + step > target ? target : it->second->byte2 + step;
-          if (it->second->byte2 > target)
-            it->second->byte2 = it->second->byte2 - step < target ? target : it->second->byte2 - step;
+          if (it->second->Value() < target)
+            it->second->SetValue(it->second->Value() + step > target ? target : it->second->Value() + step);
+          if (it->second->Value() > target)
+            it->second->SetValue(it->second->Value() - step < target ? target : it->second->Value() - step);
           MatrixOS::KnobCenter::Knob_Function(it->second);
         }
         if (delta != 0)
@@ -101,10 +104,10 @@ namespace Device::AnalogInput
           int16_t* valptr;
           int16_t tempMax;
           int16_t tempMin;
-          int16_t byte2Prv = it->second->byte2;
+          int16_t byte2Prv = it->second->Value();
           if (it->second->max - it->second->min > 127)
           {
-            valptr = &it->second->byte2;
+            valptr = it->second->GetPtr();
             tempMax = it->second->max;
             tempMin = it->second->min;
           }
@@ -123,8 +126,8 @@ namespace Device::AnalogInput
             *valptr -= delta;
 
           if (valptr == &dialValue.find(it->first)->second)
-            it->second->byte2 = dialValue.find(it->first)->second * (it->second->max - it->second->min) / 127 + it->second->min;
-          if (byte2Prv != it->second->byte2)
+            it->second->SetValue(dialValue.find(it->first)->second * (it->second->max - it->second->min) / 127 + it->second->min);
+          if (byte2Prv != it->second->Value())
             MatrixOS::KnobCenter::Knob_Function(it->second);
         }
       }
@@ -141,15 +144,19 @@ namespace Device::AnalogInput
     uint16_t keyID = Device::KeyPad::XY2ID(xy);
     dial_callback = callback;
     dialPtr.emplace(keyID, knob);
-    int16_t valueMap = (knob->byte2 - knob->min) * 127 / (knob->max - knob->min);
+    int16_t valueMap = (knob->Value() - knob->min) * 127 / (knob->max - knob->min);
     dialValue.emplace(keyID, valueMap);
   }
 
+  void DisableDial()
+  {
+    dialValue.clear();
+    dialPtr.clear();
+  }
+
   KnobConfig* GetDialPtr() {
-    if (dialPtr.size() > 0)
-      return dialPtr.begin()->second;
-    else
-      return nullptr;
+    if (!dialPtr.empty()) return dialPtr.begin()->second;
+    else return nullptr;
   }
 
 }

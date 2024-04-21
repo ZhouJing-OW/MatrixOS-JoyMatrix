@@ -2,9 +2,9 @@
 
 namespace MatrixOS::MidiCenter 
 {
-  std::unordered_map<uint16_t, uint16_t> CNTR_PadHold; // keyID , midiID
-  std::unordered_set<uint16_t> CNTR_PadToggle; // midiID
-  std::unordered_set<uint16_t> CNTR_PadMidiID; // midiID, midiIDCount
+  std::map<uint16_t, uint16_t> CNTR_PadHold; // keyID , midiID
+  std::set<uint16_t> CNTR_PadToggle; // midiID
+  std::set<uint16_t> CNTR_PadMidiID; // midiID, midiIDCount
   PadCheck padCheck[127];
   uint8_t inputCount = 0;
 
@@ -14,7 +14,7 @@ namespace MatrixOS::MidiCenter
     inputCount++;
     
     uint16_t keyID = Device::KeyPad::XY2ID(xy);
-    uint16_t midiID = GetMidiID(type, channel, byte1);
+    uint16_t midiID = MidiID(type, channel, byte1);
     auto it_m = CNTR_PadMidiID.find(midiID);
     if (it_m != CNTR_PadMidiID.end()) // The MIDI messages exist in the list
     {
@@ -37,7 +37,7 @@ namespace MatrixOS::MidiCenter
     if(inputCount >= 16) return; // 1 second 16 notes limit
     inputCount++;
 
-    uint16_t midiID = GetMidiID(type, channel, byte1);
+    uint16_t midiID = MidiID(type, channel, byte1);
     auto it_m = CNTR_PadMidiID.find(midiID);
     if (it_m != CNTR_PadMidiID.end()) // the MIDI messages exist in the list
     {
@@ -63,21 +63,21 @@ namespace MatrixOS::MidiCenter
 
   bool FindChord(int8_t channel, int8_t byte1)
   {
-    uint16_t midiID = GetMidiID(SEND_NOTE, channel, byte1);
+    uint16_t midiID = MidiID(SEND_NOTE, channel, byte1);
     if (CNTR_Chord.find(midiID) != CNTR_Chord.end()) return true;
     return false;
   }
 
   bool FindArp(int8_t channel, int8_t byte1)
   {
-    uint16_t midiID = GetMidiID(SEND_NOTE, channel, byte1);
+    uint16_t midiID = MidiID(SEND_NOTE, channel, byte1);
     if (CNTR_Arp.find(midiID) != CNTR_Arp.end()) return true;
     return false;
   }
 
   bool FindHold(int8_t type, int8_t channel, int8_t byte1)
   {
-    uint16_t midiID = GetMidiID(type, channel, byte1);
+    uint16_t midiID = MidiID(type, channel, byte1);
     if (CNTR_PadMidiID.find(midiID) != CNTR_PadMidiID.end()) return true;
     return false;
   }

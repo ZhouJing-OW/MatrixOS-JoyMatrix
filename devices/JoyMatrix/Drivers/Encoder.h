@@ -13,10 +13,13 @@ class EncoderEvent {
   const uint8_t highSpeed = 3;  // The encoder changes the value with each pulse in high speed mode.
 
   void Setup(KnobConfig* config) {
+    if (config == nullptr || config->GetPtr() == nullptr) 
+    { knob = nullptr; return;}
+     
     this->knob = config;
     if (knob->min <= knob->max)
     {
-      val = &knob->byte2;
+      val = knob->GetPtr();
       if (*val < knob->min) *val = knob->min;
       if (*val > knob->max) *val = knob->max;
       if (knob->def < knob->min) knob->def = knob->min;
@@ -98,8 +101,8 @@ class EncoderEvent {
   void ValuePlus(bool lowSpeed = false) {
     bool shift = Device::KeyPad::Shift();
     bool wide = knob->max - knob->min > 48;
-    int16_t temp = knob->byte2 + ((shift || !wide || knob->type != SEND_CC) ? !lowSpeed : highSpeed);
-    knob->byte2 = temp > knob->max ? knob->max : temp;
+    int16_t temp = knob->Value() + ((shift || !wide || knob->type != SEND_CC) ? !lowSpeed : highSpeed);
+    knob->SetValue(temp > knob->max ? knob->max : temp);
     MatrixOS::KnobCenter::Knob_Function(knob);
     timer.RecordCurrent();
   }
@@ -107,8 +110,8 @@ class EncoderEvent {
   void ValueMinus(bool lowSpeed = false) {
     bool shift = Device::KeyPad::Shift();
     bool wide = knob->max - knob->min > 48;
-    int16_t temp = knob->byte2 - ((shift || !wide || knob->type != SEND_CC) ? !lowSpeed : highSpeed);
-    knob->byte2 = temp < knob->min ? knob->min : temp;
+    int16_t temp = knob->Value() - ((shift || !wide || knob->type != SEND_CC) ? !lowSpeed : highSpeed);
+    knob->SetValue(temp < knob->min ? knob->min : temp);
     MatrixOS::KnobCenter::Knob_Function(knob);
     timer.RecordCurrent();
   }

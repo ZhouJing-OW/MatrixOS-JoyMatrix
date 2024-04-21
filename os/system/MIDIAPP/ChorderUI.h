@@ -4,16 +4,16 @@
 
 namespace MatrixOS::MidiCenter
 {
-  class ChordUI : public NodeUI
+  class ChorderUI : public NodeUI
   {
     public:
-    Chord* chord;
-    virtual void SetNull() { chord = nullptr; }
+    Chorder* chorder;
+    virtual void SetNull() { chorder = nullptr; }
 
-    ChordUI () {
+    ChorderUI () {
       channel = MatrixOS::UserVar::global_channel;
       channelPrv = channel;
-      CheckNodeChange(chord, NODE_CHORD);
+      CheckNodeChange(chorder, NODE_CHORD);
       // KnobInit();
     }
 
@@ -47,17 +47,17 @@ namespace MatrixOS::MidiCenter
 
     virtual bool Render(Point origin)
     {
-      CheckNodeChange(chord, NODE_CHORD);
+      CheckNodeChange(chorder, NODE_CHORD);
 
       Color switchColor = COLOR_WHITE;
-      MatrixOS::LED::SetColor(origin + Point(15, 0), switchColor.ToLowBrightness(chord != nullptr));
+      MatrixOS::LED::SetColor(origin + Point(15, 0), switchColor.ToLowBrightness(chorder != nullptr));
 
       LabelRender(origin + labelPos);
 
-      if (chord == nullptr)
+      if (chorder == nullptr)
         return true;
 
-      switch(chord->activeLabel)
+      switch(chorder->activeLabel)
       {
         case 0: 
           MaxVoicesRender(origin + maxVoicesPos);
@@ -79,23 +79,23 @@ namespace MatrixOS::MidiCenter
       {
         if (keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          if (chord == nullptr) On();
+          if (chorder == nullptr) On();
           else Off();
         }
         if (keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll("Chord ON/OFF", COLOR_ORANGE);
+          MatrixOS::UIInterface::TextScroll("Chorder ON/OFF", COLOR_ORANGE);
           return true;
         }
       }
 
-      if (chord == nullptr) 
+      if (chorder == nullptr) 
         return false;
 
       if(xy == labelPos || xy == labelPos + Point(1, 0))
         return LableKeyEvent(xy, labelPos, keyInfo);
       
-      switch(chord->activeLabel)
+      switch(chorder->activeLabel)
       {
         case 0: 
           if(xy.y == maxVoicesPos.y && xy.x >= maxVoicesPos.x && xy.x < maxVoicesPos.x + maxVoicesWidth)
@@ -123,12 +123,12 @@ namespace MatrixOS::MidiCenter
       {
         Point xy = origin + Point(x, 0);
         Color thisColor = labelColor[x];
-        MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness(chord != nullptr));
-        if (chord == nullptr) continue;
+        MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness(chorder != nullptr));
+        if (chorder == nullptr) continue;
         
-        if (x == chord->activeLabel)
+        if (x == chorder->activeLabel)
           MatrixOS::LED::SetColor(xy, activeColor);
-        if ((chord->activeLabel == 2 && x == 3) || (chord->activeLabel == 3 && x == 2))
+        if ((chorder->activeLabel == 2 && x == 3) || (chorder->activeLabel == 3 && x == 2))
           MatrixOS::LED::SetColor(xy, activeColor.Scale(127));
       }
     }
@@ -139,7 +139,7 @@ namespace MatrixOS::MidiCenter
       if(keyInfo->state == RELEASED && keyInfo->hold == false)
       {
         // MatrixOS::KnobCenter::SetPage(4);
-        chord->activeLabel = ui.x;
+        chorder->activeLabel = ui.x;
         return true;
       }
       if(keyInfo->state == HOLD)
@@ -154,9 +154,9 @@ namespace MatrixOS::MidiCenter
     # define RETURN_MAX 1
     
     uint8_t VoiceRange(bool max_min){
-      switch(chord->config->trebleRange - chord->config->bassRange) 
+      switch(chorder->config->trebleRange - chorder->config->bassRange) 
       {
-        case 0: return max_min == RETURN_MIN ? 2 : 3 + chord->config->seventh;
+        case 0: return max_min == RETURN_MIN ? 2 : 3 + chorder->config->seventh;
         case 1: return max_min == RETURN_MIN ? 3 : 5;
         case 2: return max_min == RETURN_MIN ? 4 : 7;
         case 3: 
@@ -167,7 +167,7 @@ namespace MatrixOS::MidiCenter
 
     void MaxVoicesRender(Point origin)
     {
-      Color numColor = chord->config->seventh ? COLOR_GOLD : COLOR_YELLOW;
+      Color numColor = chorder->config->seventh ? COLOR_GOLD : COLOR_YELLOW;
       Color voidColor = COLOR_RED;
       for(uint8_t x = 0; x < maxVoicesWidth; x++)
       {
@@ -177,7 +177,7 @@ namespace MatrixOS::MidiCenter
         else if (x + 1 < VoiceRange(RETURN_MIN))
           MatrixOS::LED::SetColor(xy, COLOR_ORANGE);
         else
-          MatrixOS::LED::SetColor(xy, numColor.ToLowBrightness( x + 1 <= chord->config->maxVoices));
+          MatrixOS::LED::SetColor(xy, numColor.ToLowBrightness( x + 1 <= chorder->config->maxVoices));
       }
     }
 
@@ -187,7 +187,7 @@ namespace MatrixOS::MidiCenter
       bool inRange = ui.x + 1 <= VoiceRange(RETURN_MAX) && ui.x + 1 >= VoiceRange(RETURN_MIN);
       if(keyInfo->state == RELEASED && keyInfo->hold == false)
       {
-        if (inRange) chord->config->maxVoices = ui.x + 1;
+        if (inRange) chorder->config->maxVoices = ui.x + 1;
       }
       if(keyInfo->state == HOLD)
       {
@@ -202,11 +202,11 @@ namespace MatrixOS::MidiCenter
     {
       Color bassColor = COLOR_BLUE;
       Color trebleColor = COLOR_AZURE;
-      MatrixOS::LED::SetColor(origin + Point(0, 0), bassColor.ToLowBrightness(chord->config->bassRange == 0));
-      MatrixOS::LED::SetColor(origin + Point(1, 0), bassColor.ToLowBrightness(chord->config->bassRange <= 1));
+      MatrixOS::LED::SetColor(origin + Point(0, 0), bassColor.ToLowBrightness(chorder->config->bassRange == 0));
+      MatrixOS::LED::SetColor(origin + Point(1, 0), bassColor.ToLowBrightness(chorder->config->bassRange <= 1));
       MatrixOS::LED::SetColor(origin + Point(2, 0), trebleColor);
-      MatrixOS::LED::SetColor(origin + Point(3, 0), trebleColor.ToLowBrightness(chord->config->trebleRange >= 3));
-      MatrixOS::LED::SetColor(origin + Point(4, 0), trebleColor.ToLowBrightness(chord->config->trebleRange == 4));
+      MatrixOS::LED::SetColor(origin + Point(3, 0), trebleColor.ToLowBrightness(chorder->config->trebleRange >= 3));
+      MatrixOS::LED::SetColor(origin + Point(4, 0), trebleColor.ToLowBrightness(chorder->config->trebleRange == 4));
     }
 
     bool RangeEvent(Point xy, Point offset, KeyInfo* keyInfo)
@@ -216,22 +216,22 @@ namespace MatrixOS::MidiCenter
       {
         switch(ui.x)
         {
-          case 0: chord->config->bassRange = 0; break;
-          case 1: chord->config->bassRange = 1; break;
+          case 0: chorder->config->bassRange = 0; break;
+          case 1: chorder->config->bassRange = 1; break;
           case 2: 
-            chord->config->bassRange = 2; 
-            chord->config->trebleRange = 2;
-            chord->config->randomDrop = false;
-            chord->config->randomTreble = false;
-            chord->config->autoVoicing = false;
+            chorder->config->bassRange = 2; 
+            chorder->config->trebleRange = 2;
+            chorder->config->randomDrop = false;
+            chorder->config->randomTreble = false;
+            chorder->config->autoVoicing = false;
             break;
-          case 3: chord->config->trebleRange = 3; break;
-          case 4: chord->config->trebleRange = 4; break;
+          case 3: chorder->config->trebleRange = 3; break;
+          case 4: chorder->config->trebleRange = 4; break;
         }
         uint8_t max = VoiceRange(RETURN_MAX);
         uint8_t min = VoiceRange(RETURN_MIN);
-        if(chord->config->maxVoices > max) chord->config->maxVoices = max;
-        else if(chord->config->maxVoices < min) chord->config->maxVoices = min;
+        if(chorder->config->maxVoices > max) chorder->config->maxVoices = max;
+        else if(chorder->config->maxVoices < min) chorder->config->maxVoices = min;
       }
 
       if(keyInfo->state == HOLD)
@@ -246,8 +246,8 @@ namespace MatrixOS::MidiCenter
     {
       Color thridColor = COLOR_YELLOW;
       Color SeventhColor = COLOR_GOLD;
-      MatrixOS::LED::SetColor(origin + Point(0, 0), thridColor.ToLowBrightness(chord->config->seventh == 0));
-      MatrixOS::LED::SetColor(origin + Point(1, 0), SeventhColor.ToLowBrightness(chord->config->seventh == 1));
+      MatrixOS::LED::SetColor(origin + Point(0, 0), thridColor.ToLowBrightness(chorder->config->seventh == 0));
+      MatrixOS::LED::SetColor(origin + Point(1, 0), SeventhColor.ToLowBrightness(chorder->config->seventh == 1));
     }
 
     bool SeventhKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
@@ -255,12 +255,12 @@ namespace MatrixOS::MidiCenter
       Point ui = xy - offset;
       if(keyInfo->state == RELEASED && keyInfo->hold == false)
       {
-        chord->config->seventh = ui.x;
+        chorder->config->seventh = ui.x;
         return true;
       }
       if(keyInfo->state == HOLD)
       {
-        if (chord->config->seventh) MatrixOS::UIInterface::TextScroll(ui.x == 0 ? "Third" : "Seventh", COLOR_LIME);
+        if (chorder->config->seventh) MatrixOS::UIInterface::TextScroll(ui.x == 0 ? "Third" : "Seventh", COLOR_LIME);
         else MatrixOS::UIInterface::TextScroll("Third", COLOR_GREEN);
         return true;
       }
@@ -270,9 +270,9 @@ namespace MatrixOS::MidiCenter
     void HamonyRender(Point origin)
     {
       Color harmonyColor = COLOR_YELLOW;
-      MatrixOS::LED::SetColor(origin + Point(0, 0), harmonyColor.ToLowBrightness(chord->config->harmony == 50));
-      MatrixOS::LED::SetColor(origin + Point(1, 0), harmonyColor.ToLowBrightness(chord->config->harmony == 75));
-      MatrixOS::LED::SetColor(origin + Point(2, 0), harmonyColor.ToLowBrightness(chord->config->harmony == 100));
+      MatrixOS::LED::SetColor(origin + Point(0, 0), harmonyColor.ToLowBrightness(chorder->config->harmony == 50));
+      MatrixOS::LED::SetColor(origin + Point(1, 0), harmonyColor.ToLowBrightness(chorder->config->harmony == 75));
+      MatrixOS::LED::SetColor(origin + Point(2, 0), harmonyColor.ToLowBrightness(chorder->config->harmony == 100));
     }
 
     bool HamonyKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
@@ -280,7 +280,7 @@ namespace MatrixOS::MidiCenter
       Point ui = xy - offset;
       if(keyInfo->state == RELEASED && keyInfo->hold == false)
       {
-        chord->config->harmony = ui.x * 25 + 50;
+        chorder->config->harmony = ui.x * 25 + 50;
         return true;
       }
       if(keyInfo->state == HOLD)
@@ -296,10 +296,10 @@ namespace MatrixOS::MidiCenter
       Color bassColor = COLOR_BLUE;
       Color trebleColor = COLOR_AZURE;
       Color autoColor = COLOR_GREEN;
-      if(chord->config->randomDrop || chord->config->randomTreble)
-        MatrixOS::LED::SetColor(origin + Point(0, 0), autoColor.ToLowBrightness(chord->config->autoVoicing));
-      MatrixOS::LED::SetColor(origin + Point(1, 0), bassColor.ToLowBrightness(chord->config->randomDrop));
-      MatrixOS::LED::SetColor(origin + Point(2, 0), trebleColor.ToLowBrightness(chord->config->randomTreble));
+      if(chorder->config->randomDrop || chorder->config->randomTreble)
+        MatrixOS::LED::SetColor(origin + Point(0, 0), autoColor.ToLowBrightness(chorder->config->autoVoicing));
+      MatrixOS::LED::SetColor(origin + Point(1, 0), bassColor.ToLowBrightness(chorder->config->randomDrop));
+      MatrixOS::LED::SetColor(origin + Point(2, 0), trebleColor.ToLowBrightness(chorder->config->randomTreble));
       
     }
 
@@ -311,15 +311,15 @@ namespace MatrixOS::MidiCenter
         switch(ui.x)
         {
           case 0: 
-            if(chord->config->randomDrop || chord->config->randomTreble)
-              chord->config->autoVoicing = !chord->config->autoVoicing; 
+            if(chorder->config->randomDrop || chorder->config->randomTreble)
+              chorder->config->autoVoicing = !chorder->config->autoVoicing; 
             break;
-          case 1: chord->config->randomDrop = !chord->config->randomDrop; break;
-          case 2: chord->config->randomTreble = !chord->config->randomTreble; break;
+          case 1: chorder->config->randomDrop = !chorder->config->randomDrop; break;
+          case 2: chorder->config->randomTreble = !chorder->config->randomTreble; break;
           
         }
-        if(chord->config->trebleRange - chord->config->bassRange == 0) 
-          chord->config->bassRange = 1;
+        if(chorder->config->trebleRange - chorder->config->bassRange == 0) 
+          chorder->config->bassRange = 1;
         return true;
       }
       if(keyInfo->state == HOLD)

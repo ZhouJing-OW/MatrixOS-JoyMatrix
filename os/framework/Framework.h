@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PSRAM.h"
 //Custom Data Type
 #include "Types.h"
 #include "Fract16.h"

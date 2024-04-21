@@ -216,56 +216,12 @@ void Drambo::CommonEnd(UI &ui)
 
 bool Drambo::ConfigInit()
 {
-  // CH = new ChannelConfig;
-  // for(uint8_t ch = 0; ch < 16; ch++){
-  //   CH->color[ch] = COLOR_LIME;
-  //   CH->padType[ch] = 1;
-  //   CH->bankLSB[ch] = 0;
-  //   CH->PC[ch] = 0;
-  //   CH->activeDrumNote[ch] = 36;
-  //   for(uint8_t n = 0; n < 3; n++){
-  //     CH->activePadConfig[ch][n] = 0;
-  //   }
-  // }
-  // CH->padType[1]  = DRUM_PAD;
-  // CH->padType[2]  = DRUM_PAD;
-  // CH->color[0]  = COLOR_PURPLE;
-  // CH->color[1]  = COLOR_ORANGE;
-  // CH->color[2]  = COLOR_ORANGE;
-  // CH->color[13] = COLOR_AZURE;
-  // CH->color[14] = COLOR_AZURE;
-  // CH->color[15] = COLOR_PURPLE;
-
   TAB = new TabConfig[5];
   TAB[0] = TabConfig{"MAIN", COLOR_LIME, 0, 3};
   TAB[1] = TabConfig{"NOTE", COLOR_PURPLE, 0, 2};
   TAB[2] = TabConfig{"SEQ", COLOR_CYAN, 0, 1};
   TAB[3] = TabConfig{"CLIP", COLOR_VIOLET, 0, 1};
   TAB[4] = TabConfig{"MIXER", COLOR_YELLOW,0, 2};
-
-  // PAD = new NotePadConfig[4];
-  // PAD[0] = {.overlap = 4, .scale = MAJOR};
-  // PAD[1] = {.overlap = 4, .scale = MAJOR};
-  // PAD[2] = {.overlap = 4, .scale = MAJOR};
-  // PAD[3] = {.overlap = 4, .scale = MAJOR};
-
-  // DRUM = new MidiButtonConfig[4 * 16];
-  // for (uint8_t i = 0; i < 4; i++)
-  // {
-  //   for (uint8_t n = 0; n < 16; n++)
-  //   {
-  //     DRUM[i * 16 + n].byte1 = n + 36;
-  //     DRUM[i * 16 + n].byte1 = n + 36;
-  //     DRUM[i * 16 + n].byte1 = n + 36;
-  //     DRUM[i * 16 + n].channel = 9;
-  //     if(n % 12 == 0)
-  //       DRUM[i * 16 + n].color = COLOR_DRUM_PAD[1];
-  //     else
-  //       DRUM[i * 16 + n].color = COLOR_DRUM_PAD[0];
-  //     DRUM[i * 16 + n].type = SEND_NOTE;
-  //     DRUM[i * 16 + n].globalChannel = true;
-  //   }
-  // }
 
   CC = new MidiButtonConfig[16];
   for (uint8_t n = 0; n < 16; n++) {
@@ -300,14 +256,14 @@ bool Drambo::KnobInit()
     {
       for (uint8_t n = 0; n < DRAMBO_NUM_OF_KNOB; n++) {
         KnobConfig tempKnob;
-        tempKnob.channel = ch;
+        tempKnob.data.channel = ch;
         tempKnob.type = SEND_CC;
-        tempKnob.byte1 = knobCC[n];
+        tempKnob.data.byte1 = knobCC[n];
         tempKnob.color = COLOR_KNOB_8PAGE[n / 8];
         switch (n)
         {  // set knob page 0
-          case 0: tempKnob.lock = true; tempKnob.byte2 = 80; tempKnob.def = 80; break;
-          case 1: tempKnob.lock = true; tempKnob.byte2 = 63; tempKnob.def = 63; break;
+          case 0: tempKnob.lock = true; tempKnob.data.byte2 = 80; tempKnob.def = 80; break;
+          case 1: tempKnob.lock = true; tempKnob.middleMode = true; tempKnob.data.byte2 = 63; tempKnob.def = 63; break;
         }
         MatrixOS::KnobCenter::SaveKnobContinuous(tempKnob);
       }

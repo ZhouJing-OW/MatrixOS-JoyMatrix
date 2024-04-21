@@ -29,7 +29,7 @@ bool MultiPad::DrumRender(Point origin)
         if (i < 16){
           if (MatrixOS::MidiCenter::FindHold((con + i)->type, channel, (con + i)->byte1))
             MatrixOS::LED::SetColor(xy, COLOR_WHITE);
-          else if (i == channelConfig->activeDrumNote[channel])
+          else if ((con + i)->byte1 == channelConfig->activeNote[channel])
             MatrixOS::LED::SetColor(xy, (con + i)->color.Blink_Key(Device::KeyPad::fnState));
           else
             MatrixOS::LED::SetColor(xy, (con + i)->color.ToLowBrightness().Blink_Key(Device::KeyPad::fnState));
@@ -68,7 +68,7 @@ bool MultiPad::DrumKeyEvent(Point xy, KeyInfo* keyInfo)
       i = xy.x + (dimension.y - 1 - xy.y) * width;
       if((Device::KeyPad::fnState.active())) 
       {
-        channelConfig->activeDrumNote[channel] = i;
+        channelConfig->activeNote[channel] = (con + i)->byte1;
         MatrixOS::Component::DrumNote_Setting(drumConfig, pos + i);
         return true;
       } 
@@ -77,7 +77,7 @@ bool MultiPad::DrumKeyEvent(Point xy, KeyInfo* keyInfo)
       i = xy.x - (dimension.x - width) + (dimension.y - 1 - xy.y) * width;
     else
       return false;
-    channelConfig->activeDrumNote[channel] = i;
+    channelConfig->activeNote[channel] = (con + i)->byte1;
     MatrixOS::MidiCenter::Hold(xy + position, (con + i)->type, channel, (con + i)->byte1, (con + i)->byte2);
     // noteNameView++;
     return true;

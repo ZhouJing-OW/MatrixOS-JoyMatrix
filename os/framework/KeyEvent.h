@@ -50,6 +50,7 @@ struct KeyInfo {
   KeyState state = IDLE;
   uint32_t lastEventTime = 0;  // PRESSED and RELEASED event only
   Fract16 velocity = 0;
+  bool shortHold = false;
   bool hold = false;
 
   KeyInfo() {}
@@ -134,6 +135,7 @@ struct KeyInfo {
     if (state == RELEASED)
     {
       hold = false;
+      shortHold = false;
       state = IDLE;
     }
 
@@ -208,6 +210,12 @@ struct KeyInfo {
       {
         state = HOLD;
         hold = true;
+        return true;
+      }
+
+      if (MatrixOS::SYS::Millis() - lastEventTime > short_hold_threshold)
+      {
+        shortHold = true;
         return true;
       }
     }

@@ -6,7 +6,6 @@
 #include "framework/Scales.h"
 #include "framework/ComponentVariable.h"
 #include "system/MIDIAPP/MidiCenter.h"
-#include "system/MIDIAPP/MidiAppUI.h"
 #include <fstream>
 
 // #define DRAMBO_CONFIG_HASH  StaticHash("ZhouJing-Drambo-Config")

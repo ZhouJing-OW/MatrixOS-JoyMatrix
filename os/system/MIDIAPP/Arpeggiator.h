@@ -73,19 +73,19 @@ namespace MatrixOS::MidiCenter
       SetActiveConfig(configNum);
     }
 
-    bool empty;
-    bool synced;
-    int8_t currentStep = -1;
-    uint8_t currentOctave = 0;
-    uint8_t currentRepeat = 0;
-    uint8_t currentArpNote = 0;
-    uint32_t arpTimer;
-    double arpInterval;
-    double intervalDelta;
-    uint32_t gateLength;
-    uint8_t decayNow;
-    uint8_t activeLabel;
-    uint8_t lastLabel;
+    bool empty = true;
+    bool synced = false;
+    int8_t currentStep      = -1;
+    uint8_t currentOctave   = 0;
+    uint8_t currentRepeat   = 0;
+    uint8_t currentArpNote  = 0;
+    uint32_t arpTimer       = 0;
+    double arpInterval      = 0;
+    double intervalDelta    = 0;
+    uint32_t gateLength     = 0;
+    uint8_t decayNow        = 0;
+    uint8_t activeLabel     = 0;
+    uint8_t lastLabel       = 0;
 
     virtual void Scan();
     void SetActiveConfig(uint8_t num);
@@ -96,7 +96,7 @@ namespace MatrixOS::MidiCenter
     void Trigger();
     void ArpEnd(bool reset = true);
     void ArpStart(bool reset = true);
-    bool StratCheck();
+    bool StartCheck();
     bool GetStep();
     void GenerateNoteList();
     void NoteArrange();

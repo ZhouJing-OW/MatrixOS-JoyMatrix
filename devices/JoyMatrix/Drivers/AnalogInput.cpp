@@ -87,7 +87,7 @@ namespace Device::AnalogInput
         reading[i] = middleOfThree(result[0], result[1], result[2]);
     }
     
-    if (dialPtr.size() > 0)
+    if (!dialPtr.empty())
       dialMode = true;
     else
     {
@@ -103,7 +103,17 @@ namespace Device::AnalogInput
     ModWheel();
     if(!dialMode) PitchWheel();
     if(!dialMode) DirectPad();
-    if (dialMode) Dial();
+    if (dialMode) 
+    {
+      if(Device::KeyPad::Rocker()) 
+      {
+        DisableDial();
+        Device::KeyPad::LRockerState.Clear();
+        Device::KeyPad::RRockerState.Clear();
+        return;
+      }
+      Dial();
+    }
 
   }
 

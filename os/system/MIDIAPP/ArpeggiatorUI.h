@@ -248,7 +248,7 @@ namespace MatrixOS::MidiCenter
 
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          type.byte2 = ui.x - 4;
+          type.SetValue(ui.x - 4);
           return true;
         }
       }
@@ -261,7 +261,7 @@ namespace MatrixOS::MidiCenter
       {
         Point xy = origin + Point(x, 0);
         Color thisColor = rateColor[x];
-        if (x == rate.byte2)
+        if (x == rate.Value())
         {
           if(arpeggiator->arpInterval >= 2000.0 / Device::fps)
           {
@@ -283,7 +283,7 @@ namespace MatrixOS::MidiCenter
       Point ui = xy - offset;
       if(keyInfo->state == RELEASED && keyInfo->hold == false)
       {
-        rate.byte2 = ui.x;
+        rate.SetValue(ui.x);
         return true;
       }
 
@@ -305,7 +305,7 @@ namespace MatrixOS::MidiCenter
         {
           if (x == arpeggiator->currentOctave && !arpeggiator->inputList.empty())
             MatrixOS::LED::SetColor(xy, COLOR_ORANGE);
-          else if(x < octaveRange.byte2)
+          else if(x < octaveRange.Value())
             MatrixOS::LED::SetColor(xy, thisColor);
           else
             MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
@@ -322,7 +322,7 @@ namespace MatrixOS::MidiCenter
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          octaveRange.byte2 = ui.x + 1;
+          octaveRange.SetValue(ui.x + 1);
           return true;
         }
         if(keyInfo->state == HOLD)
@@ -342,7 +342,7 @@ namespace MatrixOS::MidiCenter
         Point xy = origin + Point(x, 0);
         if(x == arpeggiator->currentRepeat && !arpeggiator->inputList.empty())
           MatrixOS::LED::SetColor(xy, COLOR_ORANGE);
-        else if(x < noteRepeat.byte2)
+        else if(x < noteRepeat.Value())
           MatrixOS::LED::SetColor(xy, thisColor);
         else
           MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
@@ -354,7 +354,7 @@ namespace MatrixOS::MidiCenter
       Point ui = xy - offset;
       if(keyInfo->state == RELEASED && keyInfo->hold == false)
       {
-        noteRepeat.byte2 = ui.x + 1;
+        noteRepeat.SetValue(ui.x + 1);
         return true;
       }
       if(keyInfo->state == HOLD)
@@ -406,7 +406,7 @@ namespace MatrixOS::MidiCenter
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          patternLength.byte2 = patternLength.byte2 - 1 > 1 ? patternLength.byte2 - 1 : 1;
+          patternLength.SetValue(patternLength.Value() - 1 > 1 ? patternLength.Value() - 1 : 1);
           return true;
         }
         if (keyInfo->state == HOLD)
@@ -419,7 +419,7 @@ namespace MatrixOS::MidiCenter
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          patternLength.byte2 = patternLength.byte2 + 1 < 9 ? patternLength.byte2 + 1 : 8;
+          patternLength.SetValue(patternLength.Value() + 1 < 9 ? patternLength.Value() + 1 : 8);
           return true;
         }
         if (keyInfo->state == HOLD)
@@ -447,7 +447,7 @@ namespace MatrixOS::MidiCenter
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          patternLength.byte2 = ui.x - 3;
+          patternLength.SetValue(ui.x - 3);
           return true;
         }
         if(keyInfo->state == HOLD)
@@ -489,10 +489,10 @@ namespace MatrixOS::MidiCenter
         else if(x > 2 && x < 13)
         {
           uint8_t i = x - 3;
-          if(i >= chance.byte2 / 10)
-            MatrixOS::LED::SetColor(xy, backColor.ToLowBrightness().Blink_Color((chance.byte2 - 1) % 10 == i, blinkColor));
+          if(i >= chance.Value() / 10)
+            MatrixOS::LED::SetColor(xy, backColor.ToLowBrightness().Blink_Color((chance.Value() - 1) % 10 == i, blinkColor));
           else
-            MatrixOS::LED::SetColor(xy, thisColor.Blink_Color((chance.byte2 - 1) % 10 == i, blinkColor));
+            MatrixOS::LED::SetColor(xy, thisColor.Blink_Color((chance.Value() - 1) % 10 == i, blinkColor));
         }
         else if(x == 15)
           MatrixOS::LED::SetColor(xy, skipColor.ToLowBrightness(arpeggiator->config->skip));
@@ -508,7 +508,7 @@ namespace MatrixOS::MidiCenter
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          chance.byte2 = chance.byte2 - 1 > 5 ? chance.byte2 - 1 : 5;
+          chance.SetValue(chance.Value() - 1 > 5 ? chance.Value() - 1 : 5);
           return true;
         }
         if(keyInfo->state == HOLD)
@@ -521,7 +521,7 @@ namespace MatrixOS::MidiCenter
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          chance.byte2 = chance.byte2 + 1 < 100 ? chance.byte2 + 1 : 100;
+          chance.SetValue(chance.Value() + 1 < 100 ? chance.Value() + 1 : 100);
           return true;
         }
         if(keyInfo->state == HOLD)
@@ -534,12 +534,12 @@ namespace MatrixOS::MidiCenter
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          chance.byte2 = (ui.x - 3) * 10 + (chance.byte2 % 10 == 0 ? 10 : chance.byte2 % 10);
+          chance.SetValue((ui.x - 3) * 10 + (chance.Value() % 10 == 0 ? 10 : chance.Value() % 10));
           return true;
         }
         if(keyInfo->state == HOLD)
         {
-          string cs = std::to_string(chance.byte2) + "%";
+          string cs = std::to_string(chance.Value()) + "%";
           MatrixOS::UIInterface::TextScroll(cs, COLOR_ORANGE);
           return true;
         }
@@ -566,10 +566,10 @@ namespace MatrixOS::MidiCenter
       {
         Point xy = origin + Point(x, 0);
         Color thisColor = gateColor[x];
-        if (x == gate.byte2)
+        if (x == gate.Value())
           MatrixOS::LED::SetColor(xy,knobColor[6]);
-        else if (x < gate.byte2)
-          MatrixOS::LED::SetColor(xy, gateColor[gate.byte2]);
+        else if (x < gate.Value())
+          MatrixOS::LED::SetColor(xy, gateColor[gate.Value()]);
         else
           MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
       }
@@ -580,7 +580,7 @@ namespace MatrixOS::MidiCenter
       Point ui = xy - offset;
       if(keyInfo->state == RELEASED && keyInfo->hold == false)
       {
-        gate.byte2 = ui.x;
+        gate.SetValue(ui.x);
         return true;
       }
 
@@ -604,11 +604,11 @@ namespace MatrixOS::MidiCenter
         {
           if (x == 0)
             MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
-          else if (decayNum[x] < velDecay.byte2)
+          else if (decayNum[x] < velDecay.Value())
             MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
-          else if (decayNum[x - 1] < velDecay.byte2 && decayNum[x] >= velDecay.byte2)
+          else if (decayNum[x - 1] < velDecay.Value() && decayNum[x] >= velDecay.Value())
           {
-            uint8_t scale = (int)((255 - 16) * (velDecay.byte2 - decayNum[x - 1]) / (decayNum[x] - decayNum[x - 1]) + 16);
+            uint8_t scale = (int)((255 - 16) * (velDecay.Value() - decayNum[x - 1]) / (decayNum[x] - decayNum[x - 1]) + 16);
             MatrixOS::LED::SetColor(xy, thisColor.Scale(scale));
           }
           else
@@ -630,9 +630,9 @@ namespace MatrixOS::MidiCenter
           else
             MatrixOS::LED::SetColor(xy, backColor.ToLowBrightness());
           
-          if (decayNum[x - 1] < velDecay.byte2 && decayNum[x] >= velDecay.byte2)
+          if (decayNum[x - 1] < velDecay.Value() && decayNum[x] >= velDecay.Value())
           {
-            uint8_t scale = (int)((255 - 16) * (velDecay.byte2 - decayNum[x - 1]) / (decayNum[x] - decayNum[x - 1]) + 16);
+            uint8_t scale = (int)((255 - 16) * (velDecay.Value() - decayNum[x - 1]) / (decayNum[x] - decayNum[x - 1]) + 16);
             MatrixOS::LED::SetColor(xy, thisColor.Scale(scale));
           }
         }
@@ -644,7 +644,7 @@ namespace MatrixOS::MidiCenter
       Point ui = xy - offset;
       if(keyInfo->state == RELEASED && keyInfo->hold == false)
       {
-        velDecay.byte2 = decayNum[ui.x];
+        velDecay.SetValue(decayNum[ui.x]);
         return true;
       }
       if(keyInfo->state == HOLD)
@@ -685,16 +685,21 @@ namespace MatrixOS::MidiCenter
       }
       return false;
     }
+    
+    virtual void VarGet()
+    {
+      if(arpeggiator == nullptr) return;
+
+      for(uint8_t i = 0; i < 8; i++)
+      {
+        velocity[i].SetPtr(&arpeggiator->config->velocity[i]);
+        knobPtr[i]->SetPtr(arpeggiator->configPtr[i]);
+      }
+    }
 
     virtual void VarSet()
     {
       if(arpeggiator == nullptr) return;
-      
-      for (uint8_t i = 0; i < 8; i++)
-      {
-        velocity[i].SyncTo(&arpeggiator->config->velocity[i]);
-        knobPtr[i]->SyncTo(arpeggiator->configPtr[i]);
-      }
 
       uint8_t activeKnob = Device::Encoder::GetActEncoder();
       KnobConfig* ptr = Device::Encoder::GetEncoderPtr(activeKnob);
@@ -712,17 +717,6 @@ namespace MatrixOS::MidiCenter
       }
     }
 
-    virtual void VarGet()
-    {
-      if(arpeggiator == nullptr) return;
-
-      for (uint8_t i = 0; i < 8; i++)
-      {
-        velocity[i].Get(&arpeggiator->config->velocity[i]);
-        knobPtr[i]->Get(arpeggiator->configPtr[i]);
-      }
-    }
-
     KnobConfig type;                        // 0 - 11
     KnobConfig rate;                        // 1/16, 1/12, 1/8, 1/6, 1/4, 1/3, 1/2, 1, 2, 3, 4, 6, 8, 12, 16, 32
     KnobConfig octaveRange;                 // 1 - 6 
@@ -736,16 +730,16 @@ namespace MatrixOS::MidiCenter
     void KnobInit()
     {
       for(uint8_t i = 0; i < 8; i++)
-        velocity[i] = {.lock = true, .byte2 = 127, .min = 1, .def = 127, . color = COLOR_ORANGE};
+        velocity[i]     = {.lock = true, .data = {.varPtr = nullptr},   .min = 1,   .def = 127,  .color = COLOR_ORANGE};
 
-      type              = {.lock = true,  .min = 0,   .max = 11,   .def = 0,   .color = knobColor[0]};
-      rate              = {.lock = true,  .min = 0,   .max = 15,   .def = 4,   .color = knobColor[1]};
-      octaveRange       = {.lock = true,  .min = 1,   .max = 6,    .def = 1,   .color = knobColor[2]};
-      noteRepeat        = {.lock = true,  .min = 1,   .max = 8,    .def = 1,   .color = knobColor[3]};
-      patternLength     = {.lock = true,  .min = 1,   .max = 8,    .def = 1,   .color = knobColor[4]};
-      chance            = {.lock = true,  .min = 5,   .max = 100,  .def = 100, .color = knobColor[5]};
-      gate              = {.lock = true,  .min = 0,   .max = 15,   .def = 6,   .color = knobColor[6]};
-      velDecay          = {.lock = true,  .min = 0,   .max = 48,   .def = 0,   .color = knobColor[7]};
+      type              = {.lock = true, .data = {.varPtr = nullptr},   .min = 0,   .max = 11,   .def = 0,   .color = knobColor[0]};
+      rate              = {.lock = true, .data = {.varPtr = nullptr},   .min = 0,   .max = 15,   .def = 4,   .color = knobColor[1]};
+      octaveRange       = {.lock = true, .data = {.varPtr = nullptr},   .min = 1,   .max = 6,    .def = 1,   .color = knobColor[2]};
+      noteRepeat        = {.lock = true, .data = {.varPtr = nullptr},   .min = 1,   .max = 8,    .def = 1,   .color = knobColor[3]};
+      patternLength     = {.lock = true, .data = {.varPtr = nullptr},   .min = 1,   .max = 8,    .def = 1,   .color = knobColor[4]};
+      chance            = {.lock = true, .data = {.varPtr = nullptr},   .min = 5,   .max = 100,  .def = 100, .color = knobColor[5]};
+      gate              = {.lock = true, .data = {.varPtr = nullptr},   .min = 0,   .max = 15,   .def = 6,   .color = knobColor[6]};
+      velDecay          = {.lock = true, .data = {.varPtr = nullptr},   .min = 0,   .max = 48,   .def = 0,   .color = knobColor[7]};
     }
   };
 }

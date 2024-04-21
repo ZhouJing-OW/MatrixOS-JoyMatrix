@@ -22,7 +22,7 @@ class UI4pxKnobVar : public UIComponent {
     for (uint8_t i = 0; i <knobPtr.size() ; i++)
     {
       if(knobPtr[i] != nullptr)
-        knobPrv.push_back(knobPtr[i]->byte2);
+        knobPrv.push_back(knobPtr[i]->Value());
       else
         knobPrv.push_back(0);
     }
@@ -49,7 +49,7 @@ class UI4pxKnobVar : public UIComponent {
     if (knobPtr[activeKnob] == nullptr)
       return false;
     
-    int16_t value = knobPtr[activeKnob]->byte2;
+    int16_t value = knobPtr[activeKnob]->Value();
     uint8_t sig_figure = int(log10(value) + 1);
     Point render_origin = origin;
     // MLOGD("4PX", "Render %d, sigfig %d", *value, sig_figure);
@@ -83,16 +83,16 @@ class UI4pxKnobVar : public UIComponent {
       switch (xy.y)
       {
       case 0:
-        knobPtr[activeKnob]->byte2 = knobPtr[activeKnob]->byte2 + 10 < knobPtr[activeKnob]->max ? knobPtr[activeKnob]->byte2 + 10 : knobPtr[activeKnob]->max;
+        knobPtr[activeKnob]->SetValue(knobPtr[activeKnob]->Value() + 10 < knobPtr[activeKnob]->max ? knobPtr[activeKnob]->Value() + 10 : knobPtr[activeKnob]->max);
         break;
       case 1:
-        knobPtr[activeKnob]->byte2 += (knobPtr[activeKnob]->byte2 < knobPtr[activeKnob]->max);
+        knobPtr[activeKnob]->SetValue(knobPtr[activeKnob]->Value() + (knobPtr[activeKnob]->Value() < knobPtr[activeKnob]->max));
         break;
       case 2:
-        knobPtr[activeKnob]->byte2 -= (knobPtr[activeKnob]->byte2 > knobPtr[activeKnob]->min);
+        knobPtr[activeKnob]->SetValue(knobPtr[activeKnob]->Value() - (knobPtr[activeKnob]->Value() > knobPtr[activeKnob]->min));
         break;
       case 3:
-        knobPtr[activeKnob]->byte2 = knobPtr[activeKnob]->byte2 - 10 > knobPtr[activeKnob]->min ? knobPtr[activeKnob]->byte2 - 10 : knobPtr[activeKnob]->min;
+        knobPtr[activeKnob]->SetValue(knobPtr[activeKnob]->Value() - 10 > knobPtr[activeKnob]->min ? knobPtr[activeKnob]->Value() - 10 : knobPtr[activeKnob]->min);
         break;
       }
       return true;
@@ -112,10 +112,10 @@ class UI4pxKnobVar : public UIComponent {
     {
       if(knobPtr[i] != nullptr)
       {
-        if(knobPtr[i]->byte2 != knobPrv[i])
+        if(knobPtr[i]->Value() != knobPrv[i])
         {
           activeKnob = i;
-          knobPrv[i] = knobPtr[i]->byte2;
+          knobPrv[i] = knobPtr[i]->Value();
           return;
         }
       }

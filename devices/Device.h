@@ -60,6 +60,7 @@ namespace Device
   {
     void Init();
     void UseDial(Point xy, KnobConfig* knob, std::function<void()> callback = nullptr);
+    void DisableDial();
     KnobConfig* GetDialPtr();
     void SetUpDown(int8_t* up_down, int8_t max, int8_t min = 0, int8_t step = 1, bool loop = false, std::function<void()> callback = nullptr);
     void SetLeftRight(int8_t* left_right, int8_t max, int8_t min = 0, int8_t step = 1, bool loop = false, std::function<void()> callback = nullptr);

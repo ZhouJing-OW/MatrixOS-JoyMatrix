@@ -2,13 +2,13 @@
 
 namespace MatrixOS::MidiCenter
 {
-  std::unordered_map<uint16_t, uint32_t> CNTR_Arp; // midiID, length
+  std::map<uint16_t, uint32_t> CNTR_Arp; // midiID, length
 
   void Arpeggiator::Scan()
   {
     arpInterval = rateToRatio[config->rate] * tickInterval * 24;
 
-    if(!StratCheck()) {
+    if(!StartCheck()) {
       if (configPrv != *config) {
         configPrv = *config;
         MatrixOS::FATFS::MarkChanged(configRoot, configNum);
@@ -21,7 +21,8 @@ namespace MatrixOS::MidiCenter
     {
       CheckVarChange();
       gateLength = arpInterval * gateToRatio[config->gate];
-      gateLength = gateLength < 10 ? 10 : gateLength;
+      gateLength = (gateLength > arpInterval && gateLength > 15) ? gateLength - 10 : gateLength;
+      gateLength = gateLength < 5 ? 5 : gateLength;
       if(currentArpNote >= arpArrange.size())
       currentArpNote = 0;
       currentOctave = (arpArrange[currentArpNote] - inputList.begin()->first) / 12;
@@ -79,7 +80,7 @@ namespace MatrixOS::MidiCenter
         float velRatio = inputVelocity / 127.0;
         velocity = (uint8_t)(velocity * velRatio);
         uint16_t noteID = SEND_NOTE << 12 | channel << 8 | note;
-        CNTR_Arp.insert({noteID, MatrixOS::SYS::Millis() + gateLength});
+        CNTR_Arp.insert_or_assign(noteID, MatrixOS::SYS::Millis() + gateLength);
         MidiRouter(NODE_ARP, SEND_NOTE, channel, note, velocity);
       }
       if(currentRepeat >= config->noteRepeat - 1)
@@ -144,7 +145,7 @@ namespace MatrixOS::MidiCenter
     }
   }
 
-  bool Arpeggiator::StratCheck()
+  bool Arpeggiator::StartCheck()
   {
     
     if(inputList.empty())
@@ -169,7 +170,7 @@ namespace MatrixOS::MidiCenter
         timeForSync = MatrixOS::SYS::Millis();
         break;
       case 1:
-        syncNow = !stepTimer.IsLonger(20);
+        syncNow =!stepTimer.IsLonger(tickInterval * 3);
         timeForSync = MatrixOS::SYS::Millis() - stepTimer.SinceLastTick();
         break;
       // case 2:

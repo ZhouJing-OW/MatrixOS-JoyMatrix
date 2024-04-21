@@ -76,7 +76,7 @@ class MixerFader : public UIComponent {
         bool active = activeMode && (i >= activePoint) && (i < activePoint + ENCODER_NUM);
         if(knobPtr[i] != nullptr && i < count)
         {
-          float value = knobPtr[i]->byte2;
+          float value = knobPtr[i]->Value();
           float divide = vertical ? dimension.y : dimension.x;
           float piece = ((knobPtr[i]->max - knobPtr[i]->min + 1) / divide);
           uint8_t thisPoint = vertical ? (dimension.y - y) : x + 1;
@@ -136,7 +136,7 @@ class MixerFader : public UIComponent {
         float piece = ((knobPtr[i]->max - knobPtr[i]->min + 1) / divide);
         float area = vertical ? ((float)dimension.y - xy.y - 0.5) : ((float)xy.x + 1 - 0.5);
         int16_t target = (int)(piece * area > 127 ? 127 : piece * area);
-        knobPtr[i]->byte2 = target;
+        knobPtr[i]->SetValue(target);
         MatrixOS::KnobCenter::Knob_Function(knobPtr[i]);
         // smoothList.emplace(i, target);
       }

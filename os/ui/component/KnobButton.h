@@ -85,12 +85,12 @@ class KnobButton : public UIComponent {
         
         if (knobPtr[i] != nullptr && i < count)
         {
-          int16_t val = knobPtr[i]->byte2;
+          int16_t val = knobPtr[i]->Value();
           int16_t range = knobPtr[i]->max - knobPtr[i]->min + 1;
           int16_t halfRange = range / 2;
           Color color = knobPtr[i]->color;
 
-          if (knobPtr[i]->def == halfRange || knobPtr[i]->def == halfRange + range % 2 - 1)  // middleMode
+          if (knobPtr[i]->middleMode)
           {
             if (val > halfRange + 1)  // right
             {

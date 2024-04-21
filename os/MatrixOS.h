@@ -327,7 +327,7 @@ namespace MatrixOS
     void ListSavePart(SaveVarInfo& saveVar, uint16_t pos, std::fstream& fio);
     void SaveContinuous(void* VariablePtr, size_t size, std::fstream& fio);
 
-    void MarkChanged(void* varPtr, uint16_t pose);
+    void MarkChanged(void* varPtr, uint16_t pose = 0);
     bool VarManager(string name, string suffix, std::list<SaveVarInfo>& varList);
     void VarManageEnd(string suffix);
   }

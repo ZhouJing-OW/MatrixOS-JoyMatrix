@@ -13,22 +13,49 @@ void MatrixBoot::Setup() {
 }
                                                                                             
 bool MatrixBoot::Idle(bool ready) {
-  uint8_t step = counter % 12;
-  if (timer.Tick(60))
+  uint8_t step = (counter / 12) % 12;
+  if (timer.Tick(5))
   {
     MatrixOS::LED::Fill(0);
-    const Color local_color = Color(MATRIX_BOOT_IDLE, MATRIX_BOOT_IDLE, MATRIX_BOOT_IDLE);
-    if (step <= 3)
+    Color local_color = Color(MATRIX_BOOT_IDLE, MATRIX_BOOT_IDLE, MATRIX_BOOT_IDLE);
+    Point line_origin = Point(0,0);
+    if (step <= 4)
     {
-      Point line_origin = origin + Point(-1, -1) + Point(0, step);
-      for (uint8_t i = 0; i < step + 1; i++)
-      { MatrixOS::LED::SetColor(line_origin + Point(1, -1) * i, local_color); }
+      if(step > 0)
+      {
+        line_origin = origin + Point(-1, -1) + Point(0, step - 1);
+        for (uint8_t i = 0; i < step; i++)
+        {
+          MatrixOS::LED::SetColor(line_origin + Point(1, -1) * i, local_color.Scale(255 - (counter % 12) * 21));
+        }
+      }
+      if(step < 4)
+      {
+        line_origin = origin + Point(-1, -1) + Point(0, step);
+        for (uint8_t i = 0; i < step + 1; i++)
+        {
+          MatrixOS::LED::SetColor(line_origin + Point(1, -1) * i, local_color.Scale((counter % 12) * 21));
+        }
+      }
     }
-    else if (step <= 6)
+    if (step >= 4 && step <= 8)
     {
-      Point line_origin = origin + Point(0, 2) + Point(step - 4, 0);
-      for (uint8_t i = 0; i < 3 - (step - 4); i++)
-      { MatrixOS::LED::SetColor(line_origin + Point(1, -1) * i, local_color); }
+      if(step > 4)
+      {
+        line_origin = origin + Point(0, 2) + Point(step - 5, 0);
+        for (uint8_t i = 0; i < 3 - (step - 5); i++)
+        {
+          MatrixOS::LED::SetColor(line_origin + Point(1, -1) * i, local_color.Scale(255 - (counter % 12) * 21));
+        }
+      }
+      if(step <= 7)
+      {
+        line_origin = origin + Point(0, 2) + Point(step - 4, 0);
+        for (uint8_t i = 0; i < 3 - (step - 4); i++)
+        {
+          MatrixOS::LED::SetColor(line_origin + Point(1, -1) * i, local_color.Scale((counter % 12) * 21));
+        }
+      }
     }
     MatrixOS::LED::Update();
     counter++;

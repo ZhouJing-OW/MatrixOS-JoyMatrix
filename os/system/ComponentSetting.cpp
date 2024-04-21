@@ -67,8 +67,8 @@ namespace MatrixOS::Component {
 
         UI knobSetting("Knob Setting", con->color);
 
-        UI4pxNumberWithColorFunc numberChannel  ([&]() -> Color { return COLOR_LIME; },             3, &con->channel, true);
-        UI4pxNumberWithColorFunc numberByte1    ([&]() -> Color { return typeColor[con->type]; },   3, &con->byte1);
+        UI4pxNumberWithColorFunc numberChannel  ([&]() -> Color { return COLOR_LIME; },             3, &con->data.channel, true);
+        UI4pxNumberWithColorFunc numberByte1    ([&]() -> Color { return typeColor[con->type]; },   3, &con->data.byte1);
         UI4pxNumberWithColorFunc numberDef      ([&]() -> Color { return con->color; },             3, &con->def);
         UI4pxNumberWithColorFunc numberMin      ([&]() -> Color { return COLOR_AZURE; },            3, &con->min);
         UI4pxNumberWithColorFunc numberMax      ([&]() -> Color { return COLOR_RED; },              3, &con->max);
@@ -97,8 +97,8 @@ namespace MatrixOS::Component {
         UIButtonWithColorFunc plus_10("+10",[&]() -> Color { return (active != 0) ? COLOR_WHITE : COLOR_BLANK;}, 
             [&]() -> void { 
                 switch(active) {
-                    case 1: con->channel    = (con->channel + 10 < 15) ? con->channel + 10 : 15; break;  // channel
-                    case 2: con->byte1      = (con->byte1 + 10 < 127) ? con->byte1 + 10 : 127; break; // cc / pc / note
+                    case 1: con->data.channel    = (con->data.channel + 10 < 15) ? con->data.channel + 10 : 15; break;  // channel
+                    case 2: con->data.byte1      = (con->data.byte1 + 10 < 127) ? con->data.byte1 + 10 : 127; break; // cc / pc / note
                     case 3: con->def        = (con->def + 10 < con->max) ? con->def + 10 : con->max; break; // default
                     case 4: con->min        = (con->min + 10 < con->max) ? con->min + 10 : con->max; if(con->def < con->min) con->def = con->min; break; //min
                     case 5: con->max        = (con->max + 10 < 127) ? con->max + 10 : 127; //max
@@ -107,8 +107,8 @@ namespace MatrixOS::Component {
         UIButtonWithColorFunc plus_1("+1",[&]() -> Color { return (active != 0) ? COLOR_WHITE : COLOR_BLANK;}, 
             [&]() -> void {
                 switch(active) {
-                    case 1: con->channel    = (con->channel + 1 < 15) ? con->channel + 1 : 15;break;  // channel
-                    case 2: con->byte1      = (con->byte1 + 1 < 127) ? con->byte1 + 1 : 127; break; // cc / pc / note
+                    case 1: con->data.channel    = (con->data.channel + 1 < 15) ? con->data.channel + 1 : 15;break;  // channel
+                    case 2: con->data.byte1      = (con->data.byte1 + 1 < 127) ? con->data.byte1 + 1 : 127; break; // cc / pc / note
                     case 3: con->def        = (con->def + 1 < con->max) ? con->def + 1 : con->max; break; // default
                     case 4: con->min        = (con->min + 1 < con->max) ? con->min + 1 : con->max; if(con->def < con->min) con->def = con->min; break; //min
                     case 5: con->max        = (con->max + 1 < 127) ? con->max + 1 : 127; break; //max
@@ -117,8 +117,8 @@ namespace MatrixOS::Component {
         UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : COLOR_BLANK;}, 
             [&]() -> void {
                 switch(active) {
-                    case 1: con->channel    = (con->channel - 1 > 0) ? con->channel - 1 : 0; break; // channel
-                    case 2: con->byte1      = (con->byte1 - 1 > 0) ? con->byte1 - 1 : 0; break; // cc / pc / note
+                    case 1: con->data.channel    = (con->data.channel - 1 > 0) ? con->data.channel - 1 : 0; break; // channel
+                    case 2: con->data.byte1      = (con->data.byte1 - 1 > 0) ? con->data.byte1 - 1 : 0; break; // cc / pc / note
                     case 3: con->def        = (con->def - 1 > con->min) ? con->def - 1 : con->min; break; // default
                     case 4: con->min        = (con->min - 1 > 0) ? con->min - 1 : 0; break; //min
                     case 5: con->max        = (con->max - 1 > con->min) ? con->max - 1 : con->min; if(con->def > con->max) con->def = con->max; break; //max
@@ -127,8 +127,8 @@ namespace MatrixOS::Component {
         UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : COLOR_BLANK;}, 
             [&]() -> void {
                 switch(active) {
-                    case 1: con->channel    = (con->channel - 10 > 0) ? con->channel - 10 : 0; break; // channel
-                    case 2: con->byte1      = (con->byte1 - 10 > 0) ? con->byte1 - 10 : 0; break; // cc / pc / note
+                    case 1: con->data.channel    = (con->data.channel - 10 > 0) ? con->data.channel - 10 : 0; break; // channel
+                    case 2: con->data.byte1      = (con->data.byte1 - 10 > 0) ? con->data.byte1 - 10 : 0; break; // cc / pc / note
                     case 3: con->def        = (con->def - 10 > con->min) ? con->def - 10 : con->min; break; // default
                     case 4: con->min        = (con->min - 10 > 0) ? con->min - 10 : 0; break; //min
                     case 5: con->max        = (con->max - 10 > con->min) ? con->max - 10 : con->min; if(con->def > con->max) con->def = con->max; break; //max
@@ -404,37 +404,37 @@ namespace MatrixOS::Component {
         MatrixOS::FATFS::MarkChanged(firstCon, pos);
     }
 
-    void BPM_Setting() {
-        UI bpmSetting("BPM Setting", COLOR_PURPLE);
+    // void BPM_Setting() {
+    //     UI bpmSetting("BPM Setting", COLOR_PURPLE);
 
-        KnobConfig bpm = {.byte2 = MatrixOS::UserVar::BPM, .min = 20, .max = 300, .def = 120, .color = COLOR_PURPLE};
-        std::vector<KnobConfig*> knob = {&bpm};
-        MatrixOS::KnobCenter::SetKnobBar(knob);
+    //     KnobConfig bpm = {.byte2 = MatrixOS::UserVar::BPM, .min = 20, .max = 300, .def = 120, .color = COLOR_PURPLE};
+    //     std::vector<KnobConfig*> knob = {&bpm};
+    //     MatrixOS::KnobCenter::SetKnobBar(knob);
 
-        UI4pxNumber numberBPM(COLOR_PURPLE, 3, &bpm.byte2);
-        UIButtonWithColorFunc plus_10( "+10", 
-            [&]() -> Color { return COLOR_WHITE; }, 
-            [&]() -> void { bpm.byte2 = (bpm.byte2 + 10 < 300) ? bpm.byte2 + 10 : 300; });
-        UIButtonWithColorFunc plus_1( "+1", 
-            [&]() -> Color { return COLOR_WHITE; }, 
-            [&]() -> void { bpm.byte2 += (bpm.byte2 < 300); });
-        UIButtonWithColorFunc minus_1( "-1", 
-            [&]() -> Color { return Color(0xFFFFFF).ToLowBrightness(); }, 
-            [&]() -> void { bpm.byte2 -= (bpm.byte2 > 20); });
-        UIButtonWithColorFunc minus_10( "-10", 
-            [&]() -> Color { return Color(0xFFFFFF).ToLowBrightness(); }, 
-            [&]() -> void { bpm.byte2 = (bpm.byte2 - 10 > 20) ? bpm.byte2 - 10 : 20; });
+    //     UI4pxNumber numberBPM(COLOR_PURPLE, 3, &bpm.byte2);
+    //     UIButtonWithColorFunc plus_10( "+10", 
+    //         [&]() -> Color { return COLOR_WHITE; }, 
+    //         [&]() -> void { bpm.byte2 = (bpm.byte2 + 10 < 300) ? bpm.byte2 + 10 : 300; });
+    //     UIButtonWithColorFunc plus_1( "+1", 
+    //         [&]() -> Color { return COLOR_WHITE; }, 
+    //         [&]() -> void { bpm.byte2 += (bpm.byte2 < 300); });
+    //     UIButtonWithColorFunc minus_1( "-1", 
+    //         [&]() -> Color { return Color(0xFFFFFF).ToLowBrightness(); }, 
+    //         [&]() -> void { bpm.byte2 -= (bpm.byte2 > 20); });
+    //     UIButtonWithColorFunc minus_10( "-10", 
+    //         [&]() -> Color { return Color(0xFFFFFF).ToLowBrightness(); }, 
+    //         [&]() -> void { bpm.byte2 = (bpm.byte2 - 10 > 20) ? bpm.byte2 - 10 : 20; });
 
-        bpmSetting.AddUIComponent(numberBPM, Point(4, 0));
-        bpmSetting.AddUIComponent(plus_10, Point(15, 0));
-        bpmSetting.AddUIComponent(plus_1, Point(15, 1));
-        bpmSetting.AddUIComponent(minus_1, Point(15, 2));
-        bpmSetting.AddUIComponent(minus_10, Point(15, 3));
+    //     bpmSetting.AddUIComponent(numberBPM, Point(4, 0));
+    //     bpmSetting.AddUIComponent(plus_10, Point(15, 0));
+    //     bpmSetting.AddUIComponent(plus_1, Point(15, 1));
+    //     bpmSetting.AddUIComponent(minus_1, Point(15, 2));
+    //     bpmSetting.AddUIComponent(minus_10, Point(15, 3));
 
-        MatrixOS::KnobCenter::AddKnobBarTo(bpmSetting);
-        bpmSetting.Start();
-        MatrixOS::KnobCenter::DisableAll();
-        MatrixOS::UserVar::BPM = bpm.byte2;
-    }
+    //     MatrixOS::KnobCenter::AddKnobBarTo(bpmSetting);
+    //     bpmSetting.Start();
+    //     MatrixOS::KnobCenter::DisableAll();
+    //     MatrixOS::UserVar::BPM = bpm.byte2;
+    // }
 
 }

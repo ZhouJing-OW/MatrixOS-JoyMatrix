@@ -2,11 +2,13 @@
 
 namespace MatrixOS::MidiCenter
 {
-  std::unordered_map<uint8_t, Node*> chords; // channel, Chord
-  std::unordered_set<uint16_t> CNTR_Chord; // midiID
+  std::map<uint8_t, Node*> chords; // channel, Chord
+  std::set<uint16_t> CNTR_Chord; // midiID
 
   enum NoteNum : uint8_t { N_root, N_2ed, N_3rd, N_4th, N_5th, N_6th, N_7th};
-  enum Interval : uint8_t {
+  
+  enum Interval : uint8_t 
+  {
     I_m2 = 1,   I_M2 = 2,   I_A2 = 3,
     I_m3 = 3,   I_M3 = 4,
     I_d4 = 4,   I_P4 = 5,   I_A4 = 6,
@@ -15,7 +17,7 @@ namespace MatrixOS::MidiCenter
     I_d7 = 9,   I_m7 = 10,  I_M7 = 11,
   };
 
-  void Chord::Scan()
+  void Chorder::Scan()
   {
     GetCurrentScale();
 
@@ -66,20 +68,20 @@ namespace MatrixOS::MidiCenter
     }
   }
 
-  void Chord::OutListNoteOff(uint8_t note)
+  void Chorder::OutListNoteOff(uint8_t note)
   {
     if(tempList.find(note) != tempList.end()) tempList.erase(note);
     MidiRouter(thisNode, SEND_NOTE, channel, note, 0);
   }
 
-  void Chord::SetActiveConfig(uint8_t num)
+  void Chorder::SetActiveConfig(uint8_t num)
   {
     if (num >= NODES_MAX_CONFIGS) num = NODES_MAX_CONFIGS - 1;
     activeConfig = config + num;
-    nodesConfigNum[channel].emplace(NODE_CHORD, num);
+    nodesConfigNum[channel].insert_or_assign(NODE_CHORD, num);
   }
 
-  void Chord::CreateChord()
+  void Chorder::CreateChord()
   {
     uint8_t voice[7] = {inputList.begin()->first, 0, 0, 0, 0, 0, 0};
     std::vector<uint8_t> createChord;
@@ -104,7 +106,7 @@ namespace MatrixOS::MidiCenter
     SendChord(createChord, voice);
   }
 
-  void Chord::CheckInput(uint8_t* voice)
+  void Chorder::CheckInput(uint8_t* voice)
   { 
     // if(inputList.size() < 2) return;
 
@@ -177,7 +179,7 @@ namespace MatrixOS::MidiCenter
     
   }  
 
-  void Chord::CheckVoices(uint8_t* voice)
+  void Chorder::CheckVoices(uint8_t* voice)
   {
     srand(MatrixOS::SYS::Millis());
     auto Check   = [&](uint8_t i)->bool { 
@@ -300,7 +302,7 @@ namespace MatrixOS::MidiCenter
     {0b00001000, 0b00001100, 0b00011000, 0b10011000}, // drop4
   }; 
 
-  uint32_t Chord::Voicing(uint8_t* voice)
+  uint32_t Chorder::Voicing(uint8_t* voice)
   {
     uint8_t range = 0, dropNow = 0, v_l = 0, v_h = 0;
     auto Index_h = [&]()->uint8_t {
@@ -313,8 +315,8 @@ namespace MatrixOS::MidiCenter
           uint8_t note = (i == 0 ? 0 : voice[i * 2]) + voice[N_root];
           uint8_t thisBass = note - (2 - config->bassRange) * 12;
           uint8_t thisTreble = note + (config->trebleRange - 2) * 12;
-          bass.emplace(std::abs(thisBass - lastBass), i);
-          treble.emplace(std::abs(thisTreble - lastTreble), i);
+          bass.insert_or_assign(std::abs(thisBass - lastBass), i);
+          treble.insert_or_assign(std::abs(thisTreble - lastTreble), i);
         }
         if (rand() % 2) bass.erase(bass.begin()); 
         if (rand() % 2) treble.erase(treble.begin());
@@ -340,7 +342,7 @@ namespace MatrixOS::MidiCenter
         {
           uint8_t note = (i == 0 ? 0 : voice[i * 2]) + voice[N_root];
           uint8_t thisBass = note - (2 - config->bassRange) * 12;
-          bass.emplace(std::abs(thisBass - lastBass), i);
+          bass.insert_or_assign(std::abs(thisBass - lastBass), i);
         }
         autoBass = bass.begin()->second;
       }
@@ -384,7 +386,7 @@ namespace MatrixOS::MidiCenter
     return voiceBits;
   }
 
-  void Chord::SendChord(std::vector<uint8_t>& createChord, uint8_t* voice)
+  void Chorder::SendChord(std::vector<uint8_t>& createChord, uint8_t* voice)
   {
     uint8_t velocity = inputList.begin()->second.velocity;
     lastBass = 127;  lastTreble = 0;
@@ -396,14 +398,14 @@ namespace MatrixOS::MidiCenter
         continue;
       lastBass = *it < lastBass ? *it : lastBass;
       lastTreble = *it > lastTreble ? *it : lastTreble;
-      uint16_t midiID = GetMidiID(SEND_NOTE, channel, *it);
+      uint16_t midiID = MidiID(SEND_NOTE, channel, *it);
       MidiRouter(NODE_CHORD, SEND_NOTE, channel, *it, velocity);
       CNTR_Chord.insert(midiID);
     }
 
   }
 
-  void Chord::GetCurrentScale()
+  void Chorder::GetCurrentScale()
   {
     if (channel != MatrixOS::UserVar::global_channel) return;
     if (channelConfig == nullptr || notePadConfig == nullptr) { scale = 0x0FFF; return; }

@@ -24,6 +24,7 @@ bool MultiPad::PianoRender(Point origin)
         {
           case IN_NONE:   thisColor = color;        thisRootColor = rootColor;       break;
           case IN_INPUT:  thisColor = COLOR_WHITE;  thisRootColor = COLOR_WHITE;     break;
+          case IN_SEQ:    thisColor = COLOR_GREEN;  thisRootColor = COLOR_GREEN;     break;
           case IN_ARP:    thisColor = COLOR_ORANGE; thisRootColor = COLOR_ORANGE;    break;
           case IN_CHORD:  thisColor = COLOR_GOLD;   thisRootColor = COLOR_GOLD;      break;
           case IN_VOICE:  thisColor = colorRotate;  thisRootColor = rootColorRotate; break;
@@ -60,6 +61,7 @@ bool MultiPad::PianoKeyEvent(Point xy, KeyInfo* keyInfo)
       GeneratePianoMap();
       return true;
     }
+    channelConfig->activeNote[channel] = pianoMap[n];
     if(Device::KeyPad::Shift()) MatrixOS::MidiCenter::Toggle(SEND_NOTE, channel, pianoMap[n]);
     else MatrixOS::MidiCenter::Hold(xy + position, SEND_NOTE, channel, pianoMap[n]);
   } 

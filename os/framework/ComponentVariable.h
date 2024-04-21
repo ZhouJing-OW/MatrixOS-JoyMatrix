@@ -7,18 +7,22 @@ struct SaveVarInfo {
   uint32_t filePos = 0; // The position of the file pointer,written by FATFS::ListLoad
 };
 
+struct ProjectConfig
+{
+  int16_t bpm = 120;
+  int16_t swing = 0;
+  bool loop = false;
+};
+
 struct TransportState {
   bool play = false;
   bool pause = false;
   bool record = false;
   bool mute = false;
   bool solo = false;
-  bool loop = false;
+  bool undo = false;
   bool metronome = false;
   bool autoGrouth = false;
-  bool undo = false;
-  bool channelMute[16] = {};
-  bool channelSolo[16] = {};
 };
 
 struct AnalogConfig {
@@ -42,11 +46,14 @@ struct ChannelConfig {
   int8_t soloCC = 119;
   int8_t padType[16]; // PianoPad \ NotePad \ DrumPad
   uint8_t activePadConfig[16][3];
-  uint8_t activeDrumNote[16];
+  uint8_t activeNote[16];
+  bool channelMute[16];
+  bool channelSolo[16];
   int8_t bankMSB[16];
   int8_t bankLSB[16];
   int8_t PC[16];
   Color color[16];
+
 };
 
 struct NotePadConfig {
@@ -75,18 +82,65 @@ struct MidiButtonConfig {
 
 struct KnobConfig {
   uint16_t pos = 0xFFFF; // Changed by the knob center.
-  bool lock = false;
-  int8_t type = SEND_NONE;// 0：none, 1：CC, 2：PC,
-  int8_t channel = 0;
-  int8_t byte1 = 0; // CC \ PC bank
-  int16_t byte2 = 0; // CC value \ PC
+  bool lock       = false;
+  bool middleMode = false;
+  SendType type = SEND_NONE;// 0：none, 1：CC, 2：PC,
+  union DataBank
+  {
+    struct
+    {
+      int8_t  channel;
+      int8_t  byte1; // CC \ PC bank
+      int16_t byte2; // CC value \ PC
+    };
+    int16_t* varPtr = nullptr;
+  }data;
+
   int16_t min = 0;
   int16_t max = 127;
   int16_t def = 0;
   Color color = COLOR_RED;
 
-  void SyncTo(int16_t* dest) { *dest = byte2;}
-  void Get(int16_t* src) { byte2 = *src;}
+  int16_t Value() 
+  {
+    if (type == SEND_NONE) {  return (data.varPtr != nullptr) ? *data.varPtr : def; }
+    else return data.byte2;
+  }
+
+  void SetType(SendType type) { if(type != SEND_NONE)this->type = type; }
+
+  void SetPtr(int16_t* ptr) { data.varPtr = ptr; type = SEND_NONE; }
+
+  int16_t* GetPtr() {if(type == SEND_NONE) return data.varPtr; else return &data.byte2;}
+  
+  void SetValue(int16_t value)
+  {
+    if(type == SEND_NONE) { if(data.varPtr != nullptr) *data.varPtr = value; }
+    else data.byte2 = value;
+  }
+
+  KnobConfig& operator=(const KnobConfig& knob)
+  {
+    this->type = knob.type;
+    this->pos = knob.pos;
+    this->lock = knob.lock;
+    this->middleMode = knob.middleMode;
+    if (type == SEND_NONE)
+    {
+      this->data.varPtr = knob.data.varPtr;
+    }
+    else
+    {
+      this->data.channel = knob.data.channel;
+      this->data.byte1 = knob.data.byte1;
+      this->data.byte2 = knob.data.byte2;
+    }
+    this->min = knob.min;
+    this->max = knob.max;
+    this->def = knob.def;
+    this->color = knob.color;
+    return *this;
+  }
 };
 
 

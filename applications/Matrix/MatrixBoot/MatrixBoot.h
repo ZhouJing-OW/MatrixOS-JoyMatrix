@@ -16,7 +16,7 @@ class MatrixBoot : public BootAnimation {
   Timer timer;
 
   Point origin = Point(7, 1);
-  uint8_t counter;
+  uint16_t counter;
 
   uint8_t boot_phase;
   uint32_t boot_phase_1_tick_time = 0;

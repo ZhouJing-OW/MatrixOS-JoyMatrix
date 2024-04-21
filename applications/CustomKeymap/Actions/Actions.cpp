@@ -3,16 +3,16 @@
 #include "midi/MidiAction.h"
 #include "keyboard/KeyboardAction.h"
 
-#define TAG "UAD Actions"
+#define UAD_TAG "UAD Actions"
 
 bool UAD::ExecuteAction(ActionInfo* actionInfo, cb0r_t actionData, KeyInfo* keyInfo)
 {
-    MLOGV(TAG, "Executing action");
+    MLOGV(UAD_TAG, "Executing action");
     cb0r_s action_index;
 
     if(!cb0r_get(actionData, 0, &action_index) || action_index.type != CB0R_INT)
     {
-        MLOGE(TAG, "Failed to get action index");
+        MLOGE(UAD_TAG, "Failed to get action index");
         return false;
     }
 

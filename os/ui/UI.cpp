@@ -79,7 +79,7 @@ void UI::UIKeyEvent(KeyEvent* keyEvent) {
   // MLOGD("UI Key Event", "%d - %d", keyID, keyInfo->state);
   if (keyEvent->id == FUNCTION_KEY)
   {
-    if (!disableExit && keyEvent->info.state == RELEASED && Device::KeyPad::fnState.hold == false)
+    if (!disableExit && keyEvent->info.state == RELEASED && Device::KeyPad::fnState.shortHold == false)
     {
       MLOGD("UI", "Function Key Exit");
       Exit();

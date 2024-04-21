@@ -188,12 +188,13 @@ namespace MatrixOS::KnobCenter
     switch (knob->type) {
       case SEND_NONE: break;
       case SEND_CC: 
-        MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, knob->channel, knob->byte1, knob->byte2)); 
+        MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, knob->data.channel, knob->data.byte1, knob->data.byte2)); 
         break;
       case SEND_PC: 
-        MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, knob->channel, 0, knob->byte1));
-        MatrixOS::MIDI::Send(MidiPacket(0, ProgramChange, knob->channel, knob->byte2, knob->byte2)); 
+        MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, knob->data.channel, 0, knob->data.byte1));
+        MatrixOS::MIDI::Send(MidiPacket(0, ProgramChange, knob->data.channel, knob->data.byte2, knob->data.byte2)); 
         break;
+      case SEND_NOTE: break;
     }
   }
 }

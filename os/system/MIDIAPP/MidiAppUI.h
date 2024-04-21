@@ -1,9 +1,8 @@
 #pragma once
 #include "ArpeggiatorUI.h"
-#include "ChordUI.h"
-#include "SequncerUI.h"
+#include "ChorderUI.h"
+#include "SequencerUI.h"
 #include "MidiCenter.h"
-#include <variant>
 #include <memory>
 
 namespace MatrixOS::MidiCenter
@@ -15,8 +14,8 @@ namespace MatrixOS::MidiCenter
     std::unique_ptr<NodeUI> ui;
     Dimension dimension;
     uint8_t channel;
-    RouterNode activeUI;
-    RouterNode lastUI = NODE_NONE;
+    NodeID activeUI;
+    NodeID lastUI = NODE_NONE;
     bool largePad = false;
     bool holdFN = false;
 
@@ -28,18 +27,21 @@ namespace MatrixOS::MidiCenter
     virtual Dimension GetSize() { return dimension; }
     UIComponent* GetUI() { return ui.get(); }
 
-    void SetNode(RouterNode node = NODE_NONE) 
+    void SetNode(NodeID nodeID = NODE_NONE) 
     {
-      lastUI = node == NODE_NONE ? activeUI : NODE_NONE;
+      lastUI = nodeID == NODE_NONE ? activeUI : NODE_NONE;
       largePad = false;
-      activeUI = node;
-      switch (node)
+      activeUI = nodeID;
+      switch (nodeID)
       {
+        case NODE_SEQ:
+          ui = std::make_unique<SequencerUI>(); 
+          break;
         case NODE_ARP:
           ui = std::make_unique<ArpeggiatorUI>(); 
           break;
         case NODE_CHORD:
-          ui = std::make_unique<ChordUI>(); 
+          ui = std::make_unique<ChorderUI>(); 
           break;
         default:
           ui = nullptr;
@@ -49,14 +51,14 @@ namespace MatrixOS::MidiCenter
       else ui->VarGet();
     }
 
-    inline void NodeOn(RouterNode node) { 
-      if(activeUI == node) ui->On();
-      else NodeInsert(channel, node);
+    inline void NodeOn(NodeID nodeID) { 
+      if(activeUI == nodeID) ui->On();
+      else NodeInsert(channel, nodeID);
     }
 
-    inline void NodeOff(RouterNode node) { 
-      if(activeUI == node) ui->Off();
-      else NodeDelete(channel, node);
+    inline void NodeOff(NodeID nodeID) { 
+      if(activeUI == nodeID) ui->Off();
+      else NodeDelete(channel, nodeID);
     }
 
     virtual bool Render(Point origin) {
@@ -67,16 +69,17 @@ namespace MatrixOS::MidiCenter
         for(uint8_t x = 0; x < dimension.x; x++)
           for(uint8_t y = 0; y < dimension.y; y++)
             MatrixOS::LED::SetColor(Point(x, y) + origin, COLOR_BLANK);
-        Color PadColor;
+        Color padColor;
         switch(channelConfig->padType[channel])
         {
-          case NOTE_PAD: PadColor = COLOR_NOTE_PAD[1]; break;
-          case PIANO_PAD: PadColor = COLOR_PIANO_PAD[1]; break;
-          case DRUM_PAD: PadColor = COLOR_DRUM_PAD[1]; break;
+          case NOTE_PAD: padColor = COLOR_NOTE_PAD[1]; break;
+          case PIANO_PAD: padColor = COLOR_PIANO_PAD[1]; break;
+          case DRUM_PAD: padColor = COLOR_DRUM_PAD[1]; break;
         }
-        MatrixOS::LED::SetColor(origin + Point(0, 1), PadColor);
-        AppRender(NODE_ARP, origin + Point(12, 0));
-        AppRender(NODE_CHORD, origin + Point(10, 0));
+        MatrixOS::LED::SetColor(origin + Point(0, 1), padColor);
+        SeqButtonRender(origin + Point(6, 0));
+        AppButtonRender(NODE_ARP, origin + Point(12, 0));
+        AppButtonRender(NODE_CHORD, origin + Point(10, 0));
         
       }
       else if (ui != nullptr || !largePad)
@@ -119,9 +122,9 @@ namespace MatrixOS::MidiCenter
           return true;
         }
         
-        if (keyInfo->state == HOLD)
+        if (keyInfo->state == HOLD && (largePad || activeUI != NODE_NONE))
         {
-          MatrixOS::UIInterface::TextScroll("Back", lastUI == NODE_NONE ? COLOR_RED : nodesInfo[lastUI].color);
+          MatrixOS::UIInterface::TextScroll("Back", COLOR_RED);
           return true;
         }
       }
@@ -134,13 +137,19 @@ namespace MatrixOS::MidiCenter
           return true;
         }
         
-        if (keyInfo->state == HOLD)
+        if (keyInfo->state == HOLD && largePad == false)
         {
-          MatrixOS::UIInterface::TextScroll("large Pad", lastUI == NODE_NONE ? COLOR_RED : nodesInfo[lastUI].color);
+          Color padColor;
+          switch(channelConfig->padType[channel])
+          {
+            case NOTE_PAD: padColor = COLOR_NOTE_PAD[1]; break;
+            case PIANO_PAD: padColor = COLOR_PIANO_PAD[1]; break;
+            case DRUM_PAD: padColor = COLOR_DRUM_PAD[1]; break;
+          }
+          MatrixOS::UIInterface::TextScroll("large Pad", padColor);
           return true;
         }
       }
-
 
       if (largePad) return multiPad->KeyEvent(xy, keyInfo);
       if (xy.y > 1) return multiPad->KeyEvent(xy - Point(0, 2), keyInfo);
@@ -149,12 +158,15 @@ namespace MatrixOS::MidiCenter
       {
         switch(xy.x)
         {
+          case 6: case 7: case 8: case 9:
+            holdFN = false;
+            return SeqButtonKeyEvent(xy, Point(6, 0), keyInfo);
           case 10: case 11:
             holdFN = false;
-            return AppKeyEvent(NODE_CHORD,  xy, Point(10, 0), keyInfo);
+            return AppButtonKeyEvent(NODE_CHORD,  xy, Point(10, 0), keyInfo);
           case 12: case 13:
             holdFN = false;
-            return AppKeyEvent(NODE_ARP,    xy, Point(12, 0), keyInfo);
+            return AppButtonKeyEvent(NODE_ARP,    xy, Point(12, 0), keyInfo);
         }
       }
       else if (ui != nullptr)
@@ -164,52 +176,76 @@ namespace MatrixOS::MidiCenter
 
   private:
 
-    void AppRender(RouterNode node, Point xy)
+    void AppButtonRender(NodeID nodeID, Point xy)
     {
-      Color thisColor = nodesInfo[node].color.ToLowBrightness(FindNode(node));
+      Color thisColor = nodesInfo[nodeID].color.ToLowBrightness(FindNode(nodeID));
       Color switchColor = COLOR_WHITE;
 
       MatrixOS::LED::SetColor(xy + Point(0, 0), thisColor);
       MatrixOS::LED::SetColor(xy + Point(1, 0), thisColor);
       MatrixOS::LED::SetColor(xy + Point(0, 1), thisColor);
-      MatrixOS::LED::SetColor(xy + Point(1, 1), switchColor.ToLowBrightness(FindNode(node)));
+      MatrixOS::LED::SetColor(xy + Point(1, 1), switchColor.ToLowBrightness(FindNode(nodeID)));
     }
 
-    bool AppKeyEvent(RouterNode node, Point xy, Point offset, KeyInfo* keyInfo)
+    bool AppButtonKeyEvent(NodeID nodeID, Point xy, Point offset, KeyInfo* keyInfo)
     {
       Point ui = xy - offset;
       if (ui == Point(1, 1))
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          if (FindNode(node)) NodeOff(node);
-          else NodeOn(node);
+          if (FindNode(nodeID)) NodeOff(nodeID);
+          else NodeOn(nodeID);
           return true;
         }
         if(keyInfo->state == HOLD)
         {
-          string on_off = FindNode(node) ? " Off" : " On";
-          MatrixOS::UIInterface::TextScroll(nodesInfo[node].name + on_off, nodesInfo[node].color);
+          string on_off = FindNode(nodeID) ? " Off" : " On";
+          MatrixOS::UIInterface::TextScroll(nodesInfo[nodeID].name + on_off, nodesInfo[nodeID].color);
         }
       }
       else
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          SetNode(node);
+          SetNode(nodeID);
           return true;
         }
         if(keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll(nodesInfo[node].name, nodesInfo[node].color);
+          MatrixOS::UIInterface::TextScroll(nodesInfo[nodeID].name, nodesInfo[nodeID].color);
         }
       }
       return false;
     }
 
-    bool FindNode(RouterNode node)
+    void SeqButtonRender(Point origin)
     {
-      return nodesInChannel[channel].find(node) != nodesInChannel[channel].end();
+      for(uint8_t x = 0; x < 4; x++) {
+        for(uint8_t y = 0; y < 2; y++) {
+          Point xy = origin + Point(x, y);
+          MatrixOS::LED::SetColor(xy, nodesInfo[NODE_SEQ].color);
+        }
+      }
+    }
+
+    bool SeqButtonKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
+    {
+      if(keyInfo->state == RELEASED && keyInfo->hold == false)
+      {
+        SetNode(NODE_SEQ);
+        return true;
+      }
+      if(keyInfo->state == HOLD)
+      {
+        MatrixOS::UIInterface::TextScroll(nodesInfo[NODE_SEQ].name, nodesInfo[NODE_SEQ].color);
+      }
+      return false;
+    }
+
+    bool FindNode(NodeID nodeID)
+    {
+      return nodesInChannel[channel].find(nodeID) != nodesInChannel[channel].end();
     }
   };
 }

@@ -13,11 +13,11 @@ namespace MatrixOS::MidiCenter
     uint8_t channel;
     uint8_t channelPrv;
     std::vector<KnobConfig*> knobPtr;
-    RouterNode currentNode = NODE_NONE;
+    NodeID currentNode = NODE_NONE;
 
     virtual void SetNull() = 0;
     virtual bool SetKnobPtr() = 0;
-
+    
     virtual void On()
     {
       channel = MatrixOS::UserVar::global_channel;
@@ -40,12 +40,12 @@ namespace MatrixOS::MidiCenter
     virtual void VarGet(){}
     virtual void VarSet(){}
     
-    Node* GetNodePtr(RouterNode node)
+    Node* GetNodePtr(NodeID nodeID)
     {
-      auto it = nodesInChannel[channel].find(node);
+      auto it = nodesInChannel[channel].find(nodeID);
       if (it != nodesInChannel[channel].end())
       {
-        MLOGD("MidiNode", "%s in channel: %d Actived", nodesInfo[node].name, channel + 1);
+        MLOGD("MidiNode", "%s in channel: %d Actived", nodesInfo[nodeID].name, channel + 1);
         Node* tempNode = it->second;
         return tempNode;
       }
@@ -54,14 +54,14 @@ namespace MatrixOS::MidiCenter
     }
 
     template <typename T>
-    bool CheckNodeChange(T*& nodePtr, RouterNode node) 
+    bool CheckNodeChange(T*& nodePtr, NodeID nodeID) 
     {
       channel = MatrixOS::UserVar::global_channel; // return true if channel changed
-      if (channel != channelPrv || node != currentNode)
+      if (channel != channelPrv || nodeID != currentNode)
       {
         channelPrv = channel;
-        currentNode = node;
-        nodePtr = (T*)GetNodePtr(node);   
+        currentNode = nodeID;
+        nodePtr = (T*)GetNodePtr(nodeID);   
         
         if (nodePtr == nullptr) { MatrixOS::KnobCenter::DisableExtraPage(); return false; }
         VarGet();
@@ -72,7 +72,7 @@ namespace MatrixOS::MidiCenter
       
       if (nodePtr == nullptr) // return true if nodePtr was null but now it's not
       {
-        nodePtr = (T*)GetNodePtr(node);
+        nodePtr = (T*)GetNodePtr(nodeID);
         if (nodePtr == nullptr) return false;
         VarGet();
         if (SetKnobPtr()) {MatrixOS::KnobCenter::AddExtraPage(knobPtr); MatrixOS::KnobCenter::SetPage(4);}

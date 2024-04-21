@@ -126,11 +126,11 @@ namespace MatrixOS::KnobCenter
         
         if (knob != nullptr && x < ENCODER_NUM)
         {
-          int16_t val = knob->byte2;
+          int16_t val = knob->Value();
           int16_t range = knob->max - knob->min + 1;
           int16_t halfRange = range / 2;
 
-          if (knob->def == halfRange || knob->def == halfRange + range % 2 - 1)  // middleMode
+          if (knob->middleMode)
           {
             if (val > halfRange + 1)  // right
             {
@@ -197,7 +197,7 @@ namespace MatrixOS::KnobCenter
       { 
         for (uint8_t x = 0; x < ENCODER_NUM; x++) {
           Point xy = Point(x, 0) + origin;
-          if (x <= displayKnob->byte2 - displayKnob->min)
+          if (x <= displayKnob->Value() - displayKnob->min)
             MatrixOS::LED::SetColor(xy, displayKnob->color);
           else if (x <= displayKnob->max - displayKnob->min)
             MatrixOS::LED::SetColor(xy, displayKnob->color.Scale(16));
@@ -214,12 +214,11 @@ namespace MatrixOS::KnobCenter
 
         int16_t full = (displayKnob->max - displayKnob->min + 1);
         int16_t half = (full / 2);
-        float value = displayKnob->byte2;
+        float value = displayKnob->Value();
         float divide = ENCODER_NUM;
         float piece = (full / divide);
-        bool middleMode = (displayKnob->def == half || displayKnob->def == half + full % 2 - 1);
         uint8_t thisPoint = x + 1;
-        if (middleMode)
+        if (displayKnob->middleMode)
         {
           if ((value >= half - 1) && (value <= half + 1))  // middle
           {

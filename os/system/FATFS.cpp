@@ -8,7 +8,7 @@
 #include <map>
 #include <set>
 
-#define AUTO_SAVE_INTERVAL 1000
+#define AUTO_SAVE_INTERVAL 5000
 namespace MatrixOS::FATFS 
 {
   StaticTimer_t FATFS_autosave_timer_def;
@@ -16,7 +16,7 @@ namespace MatrixOS::FATFS
 
   string nameInManage;
   std::list<std::pair<SaveVarInfo, string>> listInManage; // SaveVarInfo, suffix
-  std::queue<std::pair<void*, uint16_t>> changedVar;
+  std::set<std::pair<void*, uint16_t>> changedVar;
   std::set<string> suffixList;
   
   inline string NameToPath(string appName, string suffix) { return "/storage/" + appName + "." + suffix; }
@@ -24,36 +24,65 @@ namespace MatrixOS::FATFS
   void Scan()
   {
     if (changedVar.empty() || listInManage.empty()) return;
-    std::map<string, std::queue<std::pair<SaveVarInfo, uint16_t>>> saveMap;
+    string suffix = "";
+    SaveVarInfo saveInfo;
+    uint16_t savePos = 0;
 
-    while (!changedVar.empty())
-    {
-      for (auto it : listInManage) {
-        if (it.first.ptr != nullptr && *it.first.ptr == changedVar.front().first) {
-          saveMap[it.second].push({it.first, changedVar.front().second});
-          break;
-        }
-      }
-      changedVar.pop();
-    }
-    if(saveMap.empty()) return;
-
-    for (auto it : saveMap)
-    {
-      std::fstream fio;
-      if (OpenFile(nameInManage, it.first, fio, false))
-      {
-        while (!it.second.empty())
-        {
-          auto itVar = it.second.front();
-          ListSavePart(itVar.first, itVar.second, fio);
-          MLOGD("FATFS: " + nameInManage + "." + it.first, "Variable Pos %d Saved.", fio.tellp());
-          it.second.pop();
-        }
-        fio.close();
+    for (auto it : listInManage) {
+      if (it.first.ptr != nullptr && *it.first.ptr == changedVar.begin()->first) {
+        suffix = it.second;
+        saveInfo = it.first; 
+        savePos = changedVar.begin()->second;
+        break;
       }
     }
+    changedVar.erase(changedVar.begin());
+
+    if(suffix == "") return;
+
+    std::fstream fio;
+    if (OpenFile(nameInManage, suffix, fio, false))
+    {
+      ListSavePart(saveInfo, savePos, fio);
+      MLOGD("FATFS: " + nameInManage + "." + suffix, "Variable Pos %d Saved.", fio.tellp());
+      fio.close();
+    }
+
   }
+
+  //   void Scan()
+  // {
+  //   if (changedVar.empty() || listInManage.empty()) return;
+  //   std::map<string, std::queue<std::pair<SaveVarInfo, uint16_t>>> saveMap;
+
+  //   while (!changedVar.empty())
+  //   {
+  //     for (auto it : listInManage) {
+  //       if (it.first.ptr != nullptr && *it.first.ptr == changedVar.begin()->first) {
+  //         saveMap[it.second].push({it.first, changedVar.begin()->second});
+  //         break;
+  //       }
+  //     }
+  //     changedVar.erase(changedVar.begin());
+  //   }
+  //   if(saveMap.empty()) return;
+
+  //   for (auto it : saveMap)
+  //   {
+  //     std::fstream fio;
+  //     if (OpenFile(nameInManage, it.first, fio, false))
+  //     {
+  //       while (!it.second.empty())
+  //       {
+  //         auto itVar = it.second.front();
+  //           ListSavePart(itVar.first, itVar.second, fio);
+  //           MLOGD("FATFS: " + nameInManage + "." + it.first, "Variable Pos %d Saved.", fio.tellp());
+  //         it.second.pop();
+  //       }
+  //       fio.close();
+  //     }
+  //   }
+  // }
 
   char* LoadFile(size_t size, uint16_t& count, string appName, string suffix)
   {
@@ -187,7 +216,7 @@ namespace MatrixOS::FATFS
 
   void SaveContinuous(void* VariablePtr, size_t size, std::fstream& fio) { fio.write((char*)VariablePtr, size); }
 
-  void MarkChanged(void* varPtr, uint16_t pose) { changedVar.push(std::pair{varPtr, pose});
+  void MarkChanged(void* varPtr, uint16_t pose) { changedVar.insert({varPtr, pose});
   }
 
   bool VarManager(string name, string suffix, std::list<SaveVarInfo>& varList)
@@ -226,8 +255,7 @@ namespace MatrixOS::FATFS
 
   void VarManageEnd(string suffix)
   {
-    if(!changedVar.empty())
-      Scan();
+    while(!changedVar.empty()) { Scan();}
 
     for(auto it = listInManage.begin(); it != listInManage.end();)
     {

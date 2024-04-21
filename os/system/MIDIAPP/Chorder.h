@@ -1,9 +1,7 @@
 #pragma once
 #include "MatrixOS.h"
 
-
-
-struct ChordConfig // Only the base type is allowed within the structure
+struct ChorderConfig // Only the base type is allowed within the structure
 {
   bool autoVoicing        = false;
   bool randomTreble      = false;
@@ -14,9 +12,9 @@ struct ChordConfig // Only the base type is allowed within the structure
   uint8_t trebleRange     = 2;
   uint8_t harmony         = 100;
 
-  bool operator==(const ChordConfig& other) const { return memcmp(this, &other, sizeof(ChordConfig)) == 0; }
-  bool operator!=(const ChordConfig& other) const { return !(*this == other); }
-  ChordConfig& operator=(const ChordConfig& other) { memcpy(this, &other, sizeof(ChordConfig)); return *this; }
+  bool operator==(const ChorderConfig& other) const { return memcmp(this, &other, sizeof(ChorderConfig)) == 0; }
+  bool operator!=(const ChorderConfig& other) const { return !(*this == other); }
+  ChorderConfig& operator=(const ChorderConfig& other) { memcpy(this, &other, sizeof(ChorderConfig)); return *this; }
 };
 
 namespace MatrixOS::MidiCenter
@@ -24,7 +22,7 @@ namespace MatrixOS::MidiCenter
   extern ChannelConfig* channelConfig;
   extern NotePadConfig* notePadConfig;
 
-  enum ChordType : uint8_t { 
+  enum ChorderType : uint8_t { 
     TRI_Major,            TRI_Minor,            TRI_Diminished,       TRI_Augmented,
     SEVEN_Major,          SEVEN_Minor,          SEVEN_Dominant,       SEVEN_HalfDiminished,
     SEVEN_Diminished,     SEVEN_MinorMajor,     SEVEN_AugmentedMajor, SEVEN_Augmented,
@@ -36,11 +34,11 @@ namespace MatrixOS::MidiCenter
     0b001001001001, 0b100010001001, 0b100100010001, 0b010100010001, 
   };
 
-  class Chord : public Node
+  class Chorder : public Node
   {
-    public:
-    ChordConfig* config;
-    ChordConfig* activeConfig;
+  public:
+    ChorderConfig* config;
+    ChorderConfig* activeConfig;
     uint16_t chordCheck[12];
     uint16_t scale = 0x0FFF;
     uint16_t scalePrv = 0xFFFF;
@@ -54,16 +52,17 @@ namespace MatrixOS::MidiCenter
     std::map<uint8_t, NoteInfo> tempList;
     int8_t currentVoice[4] = {-1, -1, -1, -1};
 
-    Chord(uint8_t channel, ChordConfig* config, uint8_t configNum)
+    Chorder(uint8_t channel, ChorderConfig* config, uint8_t configNum)
     {
       if (channelConfig == nullptr || notePadConfig == nullptr)
-        MLOGE("MidiNode Chord", "No channel config or notepad config found. scale set to CHOMATIC.");
+        MLOGE("MidiNode Chorder", "No channel config or notepad config found. scale set to CHOMATIC.");
       thisNode = NODE_CHORD;
       this->config = config;
       this->channel = channel;
       SetActiveConfig(configNum);
     }
-    ~Chord()
+
+    ~Chorder()
     {
       for(auto it : tempList)
         MidiRouter(NODE_CHORD, SEND_NOTE, channel, it.first, 0);
@@ -71,7 +70,7 @@ namespace MatrixOS::MidiCenter
 
     virtual void Scan();
 
-    private:
+  private:
     virtual void OutListNoteOff(uint8_t note);
     void CreateChord();
     void CheckInput(uint8_t* voice);

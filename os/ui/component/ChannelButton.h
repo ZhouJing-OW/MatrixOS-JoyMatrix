@@ -48,8 +48,8 @@ class ChannelButton : public UIComponent {
         {
           Color color;
           Color blinkColor = COLOR_WHITE;
-          if (state->solo) color = config->color[i].Blink_Color(state->channelSolo[i], COLOR_BLUE);
-          else if (state->mute) color = config->color[i].Blink_Color(state->channelMute[i], COLOR_RED);
+          if (state->solo) color = config->color[i].Blink_Color(config->channelSolo[i], COLOR_BLUE);
+          else if (state->mute) color = config->color[i].Blink_Color(config->channelMute[i], COLOR_RED);
           else color = config->color[i].Blink_Key(Device::KeyPad::fnState);
 
           if (MatrixOS::MidiCenter::FindHold(SEND_CC, i, config->muteCC)) 
@@ -83,7 +83,7 @@ class ChannelButton : public UIComponent {
 
         if (state->solo == true) 
         { //solo
-          state->channelSolo[i] = !state->channelSolo[i];
+          config->channelSolo[i] = !config->channelSolo[i];
           MatrixOS::MidiCenter::Hold(xy + position, SEND_CC, i, config->soloCC, 127);
 
           if (i != MatrixOS::UserVar::global_channel )
@@ -95,7 +95,7 @@ class ChannelButton : public UIComponent {
         } 
         else if(state->mute == true) //mute
         { 
-          state->channelMute[i] = !state->channelMute[i];
+          config->channelMute[i] = !config->channelMute[i];
           MatrixOS::MidiCenter::Hold(xy + position, SEND_CC, i, config->muteCC, 127);
         } 
         else // default
