@@ -1,6 +1,5 @@
 #include "MidiCenter.h"
 
-
 #define midi_center_scanrate 1000
 
 namespace MatrixOS::MidiCenter
@@ -227,10 +226,15 @@ namespace MatrixOS::MidiCenter
     memset(padCheck, 0, sizeof(padCheck));
     uint8_t currentChannel = MatrixOS::UserVar::global_channel;
 
-    for(auto it : CNTR_SeqEdit) 
+    if (!CNTR_SeqEditStep.empty())
     {
-      if (currentChannel == ID_Channel(it.first))
-        padCheck[ID_Byte1(it.first)] = IN_SEQ;
+      SEQ_Step* step = CNTR_SeqEditStep.front().second;
+      std::vector<SEQ_Note> notes = step->GetNotes();
+      for (uint8_t i = 0; i < notes.size(); i++)
+      {
+        if(notes[i].number <= 127)
+          padCheck[notes[i].number] = IN_SEQ;
+      }
     }
 
     for(auto it : CNTR_PadMidiID) 

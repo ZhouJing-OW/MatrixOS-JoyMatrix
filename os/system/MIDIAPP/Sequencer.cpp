@@ -3,7 +3,7 @@
 namespace MatrixOS::MidiCenter
 {
   std::map<uint16_t, uint32_t> CNTR_Seq; // midiID, length
-  std::map<uint16_t, NoteInfo> CNTR_SeqEdit; // midiID
+  std::vector<std::pair<SEQ_Pos, SEQ_Step*>> CNTR_SeqEditStep;
 
   void Sequencer::Scan()
   {

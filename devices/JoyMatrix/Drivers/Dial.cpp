@@ -3,7 +3,7 @@
 #include "AnalogInput.h"
 #include <math.h>
 #include <functional>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 namespace Device::AnalogInput
@@ -13,8 +13,8 @@ namespace Device::AnalogInput
   extern AnalogConfig RX;
   extern AnalogConfig RY;
 
-  std::unordered_map<uint16_t, KnobConfig*> dialPtr;
-  std::unordered_map<uint16_t, int16_t> dialValue;
+  std::map<uint16_t, KnobConfig*> dialPtr;
+  std::map<uint16_t, int16_t> dialValue;
   std::function<void()> dial_callback;
 
   int8_t dial_max;

@@ -1,6 +1,6 @@
 #include "AnalogInput.h"
 #include "esp_adc\adc_oneshot.h"
-#include <unordered_map>
+#include <map>
 #include <vector>
 #include <functional>
 
@@ -23,7 +23,7 @@ namespace Device::AnalogInput
 
   bool      dialMode = false;
 
-  extern std::unordered_map<uint16_t, KnobConfig*> dialPtr;
+  extern std::map<uint16_t, KnobConfig*> dialPtr;
   extern vector<uint16_t> keyID;
   extern std::function<void()> dial_callback;
 

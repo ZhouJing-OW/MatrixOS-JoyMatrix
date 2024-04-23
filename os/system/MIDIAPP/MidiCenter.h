@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MatrixOS.h"
+#include "SeqData.h"
 #include "Node.h"
 #include <math.h>
 #include <cmath>
@@ -30,12 +31,11 @@ namespace MatrixOS::MidiCenter
   extern ArpConfig*         arpConfig;
   extern ChorderConfig*     chordConfig;
   
-  
   extern std::set<uint16_t>             CNTR_PadMidiID;   // midiID
   extern std::map<uint16_t, uint16_t>   CNTR_PadHold;     // keyID, midiID
   extern std::set<uint16_t>             CNTR_PadToggle;   // midiID
   extern std::map<uint16_t, uint32_t>   CNTR_Seq;         // midiID, length
-  extern std::map<uint16_t, NoteInfo>   CNTR_SeqEdit;     // midiID
+  extern std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep;
   extern std::set<uint16_t>             CNTR_Chord;       // midiID
   extern std::map<uint16_t, uint32_t>   CNTR_Arp;         // midiID, length
 
