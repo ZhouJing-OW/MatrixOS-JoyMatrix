@@ -1,4 +1,5 @@
 #include "MidiCenter.h"
+#include <bitset>
 
 namespace MatrixOS::MidiCenter
 {
@@ -182,9 +183,10 @@ namespace MatrixOS::MidiCenter
   void Chorder::CheckVoices(uint8_t* voice)
   {
     srand(MatrixOS::SYS::Millis());
+    std::bitset<12> check = keyScale;
     auto Check   = [&](uint8_t i)->bool { 
       bool random = activeConfig->harmony != 100 ? rand() % 101 > activeConfig->harmony : false;
-      bool ret = keyScale >> i & 1 || random;
+      bool ret = check[i] || random;
       return i ? ret : false; 
     };
     auto Rand    = [&](bool harmony)->bool { return harmony ? rand() % 101 > activeConfig->harmony : rand() % 2;};
@@ -198,61 +200,71 @@ namespace MatrixOS::MidiCenter
       }
     };
 
-    // check 3ed
-    if(!voice[N_3rd])
-      Choose (I_m3, I_M3, N_3rd);  // check and random choose m3 or M3        
-
     // check 2ed
-    // if(!voice[N_2ed]) {
-    //   uint8_t check_A2 = voice[N_3rd] == I_m3 ? 0 : I_A2; // check if 3th is m3, 2ed can't be A2
-    //   Choose (I_m2, check_A2, N_2ed);             // check and random choose m2 or M2 
-    //   Choose (voice[N_2ed], I_M2, N_2ed, true);   // if random by harmony is true, choose the second one                           
-    // }     
+    if(!voice[N_2ed]) {
+      uint8_t check_A2 = Check(I_M3) ? I_A2 : 0;  // if 3rd can't be M3, 2ed con't be A2
+      Choose (check_A2, I_m2, N_2ed, true);       // if random by harmony is true, choose I_m2
+      Choose (voice[N_2ed], I_M2, N_2ed);         // random choose m2/A2 or M2                           
+    }   
+
+    // check 3ed
+    if(!voice[N_3rd]) {
+      uint8_t check_m3 = voice[N_2ed] == I_A2 ? 0 : I_m3; // check if 2ed is A2, 3rd can't be m3
+      switch (voice[N_2ed]) 
+      { 
+        case I_m2: Choose (I_M3, check_m3, N_3rd, true); break;
+        case I_M2: Choose (check_m3, I_M3, N_3rd, true); break;
+        default: Choose (I_M3, check_m3, N_3rd);
+      }
+    }
+
+    // check 4th
+    if(!voice[N_4th]) {
+      uint8_t check_d4 = voice[N_3rd] == I_M3 ? 0 : I_d4;
+      uint8_t check_A4 = (Check(I_P5) | Check(I_A5)) ? I_A4 : 0;
+      Choose (check_A4, check_d4, N_4th, true);
+      Choose (voice[N_4th], I_P4, N_4th, true);
+    }
 
     // check 5th
     if(!voice[N_5th]) {
       uint8_t check_d5 = voice[N_3rd] == I_M3 || voice[N_4th] == I_A4 ? 0 : I_d5;                    
-      uint8_t check_A5 = voice[N_6th] == I_M6 ? 0 : I_A5;
-      Choose (check_A5, check_d5, N_5th, true);
+      Choose (I_A5, check_d5, N_5th, true);
       Choose (voice[N_5th], I_P5, N_5th, true);           
     }                          
 
-    // check 4th
-    // if(!voice[N_4th]) {
-    //   uint8_t check_d4 = voice[N_3rd] == I_M3 ? 0 : I_d4;                   
-    //   uint8_t check_A4 = voice[N_5th] == I_d5 ? 0 : I_A4;
-    //   Choose (check_d4, check_A4, N_4th);
-    //   Choose (voice[N_4th], I_P4, N_4th, true);
-    // }
+    // check 6th
+    if(!voice[N_6th]) {
+      uint8_t check_m6 = voice[N_5th] == I_A5 ? 0 : I_m6;
+      uint8_t check_M6 = (Check(I_M7) | Check(I_m7)) ? I_M6 : 0;
+      switch (voice[N_3rd]) 
+      { 
+        case I_m3: Choose (check_M6, check_m6, N_6th, true); break;
+        case I_M3: Choose (check_m6, check_M6, N_6th, true); break;
+        default: Choose (check_m6, check_M6, N_6th);
+      }
+      Choose(check_m6, check_M6, N_6th); 
+    }  
 
     // check 7th
     if(!voice[N_7th]) {
-      uint8_t check_d7 = (voice[N_5th] >= I_P5 || voice[N_6th] == I_M6) ? 0 : I_d7;
-      uint8_t check_m7 = voice[N_5th] == I_A5 ? 0 : I_m7;
-      uint8_t check_M7 = voice[N_5th] == I_d5 ? 0 : I_M7;
+      uint8_t check_d7 = (voice[N_6th] == I_M6) ? 0 : I_d7;
       switch(voice[N_3rd])
       {
         case I_m3:
-          Choose(check_d7, check_M7, N_7th, true);
-          Choose(voice[N_7th], check_m7, N_7th, true); break;
+          Choose(I_M7, check_d7, N_7th, true);
+          Choose(voice[N_7th], I_m7, N_7th, true); break;
         case I_M3:
-          Choose(check_d7, check_m7, N_7th, true);
-          Choose(voice[N_7th], check_M7, N_7th, true); break;
+          Choose(check_d7, I_m7, N_7th, true);
+          Choose(voice[N_7th], I_M7, N_7th, true); break;
         default:
         {
-          Choose(check_m7, check_M7, N_7th);
+          Choose(I_m7, I_M7, N_7th);
           bool inharmony = rand() % 101 > activeConfig->harmony && rand() % 101 > activeConfig->harmony;
           if(inharmony && check_d7) voice[N_7th] = I_d7;
         }
       }
-    }                                                   
-
-    // check 6th
-    // if(!voice[N_6th]) {
-    //   uint8_t check_m6 = voice[N_5th] == I_A5 ? 0 : I_m6;
-    //   uint8_t check_M6 = voice[N_7th] == I_d7 ? 0 : I_M6;
-    //   Choose(check_m6, check_M6, N_6th); 
-    // }          
+    }                                                           
   }
 
   const uint8_t voicing_3rd_h[9][3] = {    // third 7th+, 5th+, 3rd+, 1st+, 7th, 5th, 3rd, 1st

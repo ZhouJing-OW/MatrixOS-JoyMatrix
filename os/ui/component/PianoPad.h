@@ -57,12 +57,12 @@
 //           Point xy = origin + Point(x, y);
 //           if (x >= octaveX && x < octaveX + 10 && y == dimension.y - 1) {
 //             if (x == octaveX + config->octave) {
-//               MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+//               MatrixOS::LED::SetColor(xy, Color(WHITE));
 //             } else {
 //               MatrixOS::LED::SetColor(xy, color.ToLowBrightness());
 //             }
 //           } else {
-//             MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+//             MatrixOS::LED::SetColor(xy, Color(BLANK));
 //           }
 //         }
 //       }
@@ -80,7 +80,7 @@
 
 //           if(pianoNote[(dimension.y + y) % 2][(x - config->shift + 7) % 7] >= 0 && note >= 0){
 //             if (MatrixOS::MidiCenter::FindHold(SEND_NOTE, channel, note)) {  // If find the note is currently active. Show it as white
-//               MatrixOS::LED::SetColor(xy, COLOR_WHITE); 
+//               MatrixOS::LED::SetColor(xy, Color(WHITE)); 
 //             } else if (note % 12 == config->rootKey) {
 //               MatrixOS::LED::SetColor(xy, rootColor.Blink_Key(Device::KeyPad::fnState));
 //             } else if (bitRead(c_aligned_scale_map, pianoNote[(dimension.y + y) % 2][(x - config->shift + 7) % 7])) {
@@ -90,7 +90,7 @@
 //               MatrixOS::LED::SetColor(xy, thisColor.Blink_Key(Device::KeyPad::fnState));
 //             }
 //           } else 
-//             MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+//             MatrixOS::LED::SetColor(xy, Color(BLANK))));
 //         }
 //       }
 //       return true;

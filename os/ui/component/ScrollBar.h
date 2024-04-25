@@ -46,7 +46,7 @@ public:
         if (i < count)
         {
           if (i == *num || i == *num + sliderLength - 1)
-            MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+            MatrixOS::LED::SetColor(xy, Color(WHITE));
           else
           {
             Color thisColor = *(color + i);
@@ -54,7 +54,7 @@ public:
           }
         }
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK); 
+          MatrixOS::LED::SetColor(xy, Color(BLANK)); 
       }
     }
     return true;

@@ -23,10 +23,10 @@ bool MultiPad::PianoRender(Point origin)
         switch(MatrixOS::MidiCenter::GetPadCheck(pianoMap[n]))
         {
           case IN_NONE:   thisColor = color;        thisRootColor = rootColor;       break;
-          case IN_INPUT:  thisColor = COLOR_WHITE;  thisRootColor = COLOR_WHITE;     break;
-          case IN_SEQ:    thisColor = COLOR_GREEN;  thisRootColor = COLOR_GREEN;     break;
-          case IN_ARP:    thisColor = COLOR_ORANGE; thisRootColor = COLOR_ORANGE;    break;
-          case IN_CHORD:  thisColor = COLOR_GOLD;   thisRootColor = COLOR_GOLD;      break;
+          case IN_INPUT:  thisColor = Color(WHITE);  thisRootColor = Color(WHITE);     break;
+          case IN_SEQ:    thisColor = Color(LAWN);  thisRootColor = Color(LAWN);     break;
+          case IN_ARP:    thisColor = Color(ORANGE); thisRootColor = Color(ORANGE);    break;
+          case IN_CHORD:  thisColor = Color(GOLD);   thisRootColor = Color(GOLD);      break;
           case IN_VOICE:  thisColor = colorRotate;  thisRootColor = rootColorRotate; break;
         }
 
@@ -38,7 +38,7 @@ bool MultiPad::PianoRender(Point origin)
           MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness().Blink_Key(Device::KeyPad::fnState));
       }
       else 
-        MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+        MatrixOS::LED::SetColor(xy, Color(BLANK));
       
       n++;
     }

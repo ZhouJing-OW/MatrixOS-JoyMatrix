@@ -9,7 +9,7 @@ class TransBar : public UIComponent {
 
   struct TransConfig {
     string name;
-    Color color = COLOR_BLANK;
+    Color color = Color(BLANK);
     uint8_t midiCC;
     bool* state = nullptr;
   }transConfig[2][3];
@@ -25,12 +25,12 @@ class TransBar : public UIComponent {
   }
 
   void TransInit(){
-    transConfig[0][0] = {"Play", COLOR_LIME, 80, &state->play} ;
-    transConfig[0][1] = {"Record", COLOR_ORANGE, 82, &state->record} ;
-    transConfig[0][2] = {"Mute", COLOR_RED, 83, &state->mute};
-    transConfig[1][0] = {"Metronome", COLOR_BLUE, 86, &state->metronome};
-    transConfig[1][1] = {"Auto Grouth", COLOR_LIME, 87, &state->autoGrouth};
-    transConfig[1][2] = {"Undo", COLOR_YELLOW, 88, &state->undo};
+    transConfig[0][0] = {"Play", Color(GREEN), 80, &state->play} ;
+    transConfig[0][1] = {"Record", Color(ORANGE), 82, &state->record} ;
+    transConfig[0][2] = {"Mute", Color(RED), 83, &state->mute};
+    transConfig[1][0] = {"Metronome", Color(BLUE), 86, &state->metronome};
+    transConfig[1][1] = {"Auto Grouth", Color(GREEN), 87, &state->autoGrouth};
+    transConfig[1][2] = {"Undo", Color(YELLOW), 88, &state->undo};
   }
   
   virtual Color GetColor() { return transConfig[0][0].color; }

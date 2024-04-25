@@ -12,12 +12,12 @@ bool MultiPad::OctaveRender(Point origin)
       Point xy = origin + Point(x, y);
       if (x >= octaveX && x < octaveX + 10 && y == dimension.y - 1) {
         if (x == octaveX + config->octave) {
-          MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+          MatrixOS::LED::SetColor(xy, Color(WHITE));
         } else {
           MatrixOS::LED::SetColor(xy, color.ToLowBrightness());
         }
       } else {
-        MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+        MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
     }
   }
@@ -26,7 +26,7 @@ bool MultiPad::OctaveRender(Point origin)
 
 void MultiPad::OctaveShiftRender(Point origin)
 { 
-  Color color = COLOR_WHITE;
+  Color color = Color(WHITE);
   Color color1 = color.Scale((int8_t)((float)padConfig->octave * 239/ 9 + 16));
   Color color2 = color.Scale((int8_t)((1 - (float)padConfig->octave) * 239 / 9 + 16));
   for(uint8_t y = 0; y < dimension.y; y++)

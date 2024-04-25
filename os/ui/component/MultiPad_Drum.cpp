@@ -16,29 +16,29 @@ bool MultiPad::DrumRender(Point origin)
         if (i < 16)
         {
           if (MatrixOS::MidiCenter::FindHold((con + i)->type, channel, (con + i)->byte1))
-            MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+            MatrixOS::LED::SetColor(xy, Color(WHITE));
           else 
             MatrixOS::LED::SetColor(xy, (con + i)->color.Blink_Key(Device::KeyPad::fnState));
         }
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
       else if (x >= dimension.x - width && !settingMode)
       {
         uint8_t i = x - (dimension.x - width) + (dimension.y - 1 - y) * width;
         if (i < 16){
           if (MatrixOS::MidiCenter::FindHold((con + i)->type, channel, (con + i)->byte1))
-            MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+            MatrixOS::LED::SetColor(xy, Color(WHITE));
           else if ((con + i)->byte1 == channelConfig->activeNote[channel])
             MatrixOS::LED::SetColor(xy, (con + i)->color.Blink_Key(Device::KeyPad::fnState));
           else
             MatrixOS::LED::SetColor(xy, (con + i)->color.ToLowBrightness().Blink_Key(Device::KeyPad::fnState));
         }
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
       else if (!(settingMode && x >= dimension.x - 5))
-        MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+        MatrixOS::LED::SetColor(xy, Color(BLANK));
     }
   }
 
@@ -46,7 +46,7 @@ bool MultiPad::DrumRender(Point origin)
 
   for (uint8_t x = 1; x < 16; x++) {
     for (uint8_t y = 0; y < 2; y++) {
-      MatrixOS::LED::SetColor(origin + Point(x, y), COLOR_BLANK);
+      MatrixOS::LED::SetColor(origin + Point(x, y), Color(BLANK));
     }
   }
  

@@ -10,7 +10,7 @@ class ScaleVisualizer : public UIComponent {
   Color color;
   Color rootColor;
 
-  ScaleVisualizer(uint8_t* rootKey, uint16_t* scale, Color color = COLOR_CYAN, Color rootColor = COLOR_AZURE) {
+  ScaleVisualizer(uint8_t* rootKey, uint16_t* scale, Color color = Color(TURQUOISE), Color rootColor = Color(CYAN)) {
     this->rootKey = rootKey;
     this->scale = scale;
     this->color = color;

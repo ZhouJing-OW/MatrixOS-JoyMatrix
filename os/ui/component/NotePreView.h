@@ -114,11 +114,11 @@ class NotePreView : public UIComponent {
         uint8_t channel = config->globalChannel ? MatrixOS::UserVar::global_channel : config->channel;
 
         if (note == 255 && x < view.x && y < view.y)
-          MatrixOS::LED::SetColor(globalPos, COLOR_BLANK); 
+          MatrixOS::LED::SetColor(globalPos, Color(BLANK)); 
         else if (y == dimension.y - 1 && x == config->overlap)
-          MatrixOS::LED::SetColor(globalPos, COLOR_YELLOW);
+          MatrixOS::LED::SetColor(globalPos, Color(YELLOW));
         else if (MatrixOS::MidiCenter::FindHold(SEND_NOTE, channel, note))  // If find the note is currently active. Show it as white
-          MatrixOS::LED::SetColor(globalPos, COLOR_WHITE);
+          MatrixOS::LED::SetColor(globalPos, Color(WHITE));
         else
         {
           uint8_t inScale = InScale(note);  // Check if the note is in scale.

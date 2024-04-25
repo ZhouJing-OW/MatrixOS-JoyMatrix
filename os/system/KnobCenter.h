@@ -79,7 +79,7 @@ namespace MatrixOS::KnobCenter
       if (knobPtr[0] != nullptr)
         return knobPtr[0]->color;
       else
-        return COLOR_WHITE;
+        return Color(WHITE);
     }
 
     virtual Dimension GetSize() { return Dimension(ENCODER_NUM, 1); }
@@ -155,7 +155,7 @@ namespace MatrixOS::KnobCenter
           }
         }
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
       return true;
     }
@@ -202,7 +202,7 @@ namespace MatrixOS::KnobCenter
           else if (x <= displayKnob->max - displayKnob->min)
             MatrixOS::LED::SetColor(xy, displayKnob->color.Scale(16));
           else
-            MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+            MatrixOS::LED::SetColor(xy, Color(BLANK));
         }
         return true;
       }
@@ -227,19 +227,19 @@ namespace MatrixOS::KnobCenter
             else if (x == ENCODER_NUM / 2)
               MatrixOS::LED::SetColor(xy, color.Scale(16));
             else
-              MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+              MatrixOS::LED::SetColor(xy, Color(BLANK));
             continue;
           }
           else if (value > half + 1 && x < (ENCODER_NUM / 2))
           {
-            MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+            MatrixOS::LED::SetColor(xy, Color(BLANK));
             continue;
           }
           else if (value < half - 1)  // left
           {
             if (x >= (ENCODER_NUM / 2))
             {
-              MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+              MatrixOS::LED::SetColor(xy, Color(BLANK));
               continue;
             }
             thisPoint = ENCODER_NUM / 2 - x;
@@ -256,7 +256,7 @@ namespace MatrixOS::KnobCenter
         else if (thisPoint * piece <= value)
           MatrixOS::LED::SetColor(xy, color);
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
       return true;
     }
@@ -267,14 +267,14 @@ namespace MatrixOS::KnobCenter
       {
         Point xy = Point(x, 0) + origin;
         if(x == currentPage)
-          MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+          MatrixOS::LED::SetColor(xy, Color(WHITE));
         else if(x <= pageMax + extraPage)
         {
           Color thisColor = COLOR_KNOB_8PAGE[x];
           MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
         }
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
       return true;
     }

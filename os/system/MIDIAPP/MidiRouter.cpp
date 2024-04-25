@@ -12,10 +12,10 @@ namespace MatrixOS::MidiCenter
   ArpConfig* arpConfig;
 
   std::map<NodeID, NodeInfo> nodesInfo = {
-    {NODE_NONE,   {"",        COLOR_BLANK,    nullptr     }},
-    {NODE_SEQ,    {"SEQ",     COLOR_GREEN,    nullptr     }},
-    {NODE_CHORD,  {"CHORD",   COLOR_YELLOW,   chordConfig }},
-    {NODE_ARP,    {"ARP",     COLOR_ORANGE,   arpConfig   }},
+    {NODE_NONE,   {"",        Color(BLANK),    nullptr     }},
+    {NODE_SEQ,    {"SEQ",     Color(LAWN),    nullptr     }},
+    {NODE_CHORD,  {"CHORD",   Color(YELLOW),   chordConfig }},
+    {NODE_ARP,    {"ARP",     Color(ORANGE),   arpConfig   }},
   };
 
   void MidiRouter(NodeID from, uint8_t type, uint8_t channel, uint8_t byte1, uint8_t byte2)

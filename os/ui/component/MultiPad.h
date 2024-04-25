@@ -66,7 +66,7 @@ class MultiPad : public UIComponent {
     drumSettingArea = Dimension(dimension.x - 5, dimension.y);
   }
 
-  virtual Color GetColor() { return COLOR_WHITE; }
+  virtual Color GetColor() { return Color(WHITE); }
   virtual Dimension GetSize() { return dimension; }
 
   const int8_t pianoNote[2][7] = {{ -1 , 1 , 3 , -1 , 6 , 8 , 10 },
@@ -146,18 +146,18 @@ class MultiPad : public UIComponent {
 
   void SettingAreaRender(Point origin)
   {
-    Color noteColor = COLOR_NOTE_PAD[1];
+    Color noteColor  = COLOR_NOTE_PAD[1];
     Color pianoColor = COLOR_PIANO_PAD[1];
-    Color drumColor = (drumConfig != nullptr) ? COLOR_DRUM_PAD[1] : COLOR_BLANK;
+    Color drumColor  = (drumConfig != nullptr) ? COLOR_DRUM_PAD[1] : Color(BLANK);
 
     MatrixOS::LED::SetColor(origin + Point(dimension.x - 2, 0), noteColor.ToLowBrightness(*padType == NOTE_PAD));
     MatrixOS::LED::SetColor(origin + Point(dimension.x - 3, 0), pianoColor.ToLowBrightness(*padType == PIANO_PAD));
     MatrixOS::LED::SetColor(origin + Point(dimension.x - 4, 0), drumColor.ToLowBrightness(*padType == DRUM_PAD));
-    MatrixOS::LED::SetColor(origin + Point(dimension.x - 5, 0), COLOR_BLANK);
+    MatrixOS::LED::SetColor(origin + Point(dimension.x - 5, 0), Color(BLANK));
 
     for (uint8_t y = 0; y < dimension.y; y++)
     {
-      MatrixOS::LED::SetColor(origin + Point(dimension.x - 6,y), COLOR_BLANK);
+      MatrixOS::LED::SetColor(origin + Point(dimension.x - 6,y), Color(BLANK));
     }
     for (uint8_t x = dimension.x - 5; x < dimension.x; x++)
     {
@@ -169,7 +169,7 @@ class MultiPad : public UIComponent {
         {
           Color color = (*padType == NOTE_PAD) ? noteColor : ((*padType == PIANO_PAD) ? pianoColor : drumColor);
           Color otherColor = (*padType == NOTE_PAD) ? pianoColor : noteColor;
-          Color colorBack = (*padType != DRUM_PAD) ? COLOR_WHITE : COLOR_DRUM_PAD[0];
+          Color colorBack = (*padType != DRUM_PAD) ? Color(WHITE) : COLOR_DRUM_PAD[0];
           uint8_t* activePadConfig = &channelConfig->activePadConfig[channel][*padType];
           uint8_t* otherPadConfig = &channelConfig->activePadConfig[channel][(*padType == NOTE_PAD) ? PIANO_PAD : NOTE_PAD];
           if (i == *activePadConfig)
@@ -180,7 +180,7 @@ class MultiPad : public UIComponent {
             MatrixOS::LED::SetColor(xy, colorBack.ToLowBrightness());
         }
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
     }
   }

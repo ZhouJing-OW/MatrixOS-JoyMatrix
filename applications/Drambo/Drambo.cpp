@@ -23,7 +23,7 @@ void Drambo::Setup() {
     for (uint8_t ch = 0; ch < 16; ch++)
       mixerPos.push_back(ch * DRAMBO_NUM_OF_KNOB + n);
 
-  UI setup("", COLOR_BLUE);
+  UI setup("", Color(BLUE));
   setup.SetLoopFunc([&]() -> void {
     if(MatrixOS::SYS::FNExit == true) Exit();
     toggleTab();
@@ -33,14 +33,14 @@ void Drambo::Setup() {
 }
 
 void Drambo::TabS(){
-  UI tabS("Setting", COLOR_BLUE);
+  UI tabS("Setting", Color(BLUE));
   std::vector<KnobConfig*> sysKnobs = MatrixOS::MidiCenter::GetSysKnobs();
   MatrixOS::KnobCenter::SetKnobBar(sysKnobs);
 
   UI4pxKnobVar number(sysKnobs, 3);
-  // UIButtonLarge systemSettingBtn("System Setting", COLOR_WHITE, Dimension(2,2), [&]() -> void { MatrixOS::SYS::OpenSetting(); });
-  UIButtonLarge tap("Tap to BPM", COLOR_BLUE, Dimension(2, 1), [&]() -> void { });
-  UIButtonLarge exitBtn("Exit", COLOR_RED, Dimension(2, 2), [&]() -> void { ExitApp();});
+  // UIButtonLarge systemSettingBtn("System Setting", Color(WHITE), Dimension(2,2), [&]() -> void { MatrixOS::SYS::OpenSetting(); });
+  UIButtonLarge tap("Tap to BPM", Color(BLUE), Dimension(2, 1), [&]() -> void { });
+  UIButtonLarge exitBtn("Exit", Color(RED), Dimension(2, 2), [&]() -> void { ExitApp();});
   UIButtonDimmable knob1(
       "bpm", sysKnobs[0]->color, [&]() -> bool { return number.activeKnob == 0; }, [&]() -> void { number.activeKnob = 0; });
   UIButtonDimmable knob2(
@@ -51,7 +51,7 @@ void Drambo::TabS(){
       "Brightness", sysKnobs[3]->color, [&]() -> bool { return number.activeKnob == 3; }, [&]() -> void { number.activeKnob = 3; });
     
   UIButtonDimmable bluetooth(
-    "Bluetooth", COLOR_BLUE, []() -> bool { return Device::BLEMIDI::started; },
+    "Bluetooth", Color(BLUE), []() -> bool { return Device::BLEMIDI::started; },
     []() -> void { Device::BLEMIDI::Toggle(); Device::bluetooth = Device::BLEMIDI::started; });
   UIButtonDimmable clockOut(
       "Clock Out", sysKnobs[0]->color, [&]() -> bool { return MatrixOS::UserVar::clockOut; },
@@ -160,9 +160,9 @@ void Drambo::Pop(){
   UI pop("");
   uint8_t chn = MatrixOS::UserVar::global_channel;
 
-  UIPlusMinus ProgramBank(&CH->bankLSB[chn], 127, 1, COLOR_CYAN, false, false,
+  UIPlusMinus ProgramBank(&CH->bankLSB[chn], 127, 1, Color(TURQUOISE), false, false,
     [&]() -> void { MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, chn, 0, CH->bankLSB[chn])); });
-  UIPlusMinus ProgramNum(&CH->PC[chn], 127, 0, COLOR_AZURE, false, false,
+  UIPlusMinus ProgramNum(&CH->PC[chn], 127, 0, Color(CYAN), false, false,
     [&]()-> void { MatrixOS::MIDI::Send(MidiPacket(0, ProgramChange, chn, CH->PC[chn], 0));});
   ChannelButton channel(Dimension(16, 1), CH, MatrixOS::MidiCenter::TransState(), true, [&]() -> void { 
     chn = MatrixOS::UserVar::global_channel;
@@ -217,15 +217,15 @@ void Drambo::CommonEnd(UI &ui)
 bool Drambo::ConfigInit()
 {
   TAB = new TabConfig[5];
-  TAB[0] = TabConfig{"MAIN", COLOR_LIME, 0, 3};
-  TAB[1] = TabConfig{"NOTE", COLOR_PURPLE, 0, 2};
-  TAB[2] = TabConfig{"SEQ", COLOR_CYAN, 0, 1};
-  TAB[3] = TabConfig{"CLIP", COLOR_VIOLET, 0, 1};
-  TAB[4] = TabConfig{"MIXER", COLOR_YELLOW,0, 2};
+  TAB[0] = TabConfig{"MAIN", Color(GREEN), 0, 3};
+  TAB[1] = TabConfig{"NOTE", Color(PURPLE), 0, 2};
+  TAB[2] = TabConfig{"SEQ", Color(TURQUOISE), 0, 1};
+  TAB[3] = TabConfig{"CLIP", Color(VIOLET), 0, 1};
+  TAB[4] = TabConfig{"MIXER", Color(YELLOW),0, 2};
 
   CC = new MidiButtonConfig[16];
   for (uint8_t n = 0; n < 16; n++) {
-    if (n < 8 ) CC[n].color = COLOR_YELLOW; else CC[n].color = COLOR_CYAN;
+    if (n < 8 ) CC[n].color = Color(YELLOW); else CC[n].color = Color(TURQUOISE);
     CC[n].channel = n; 
     CC[n].byte1 = 9;
     CC[n].globalChannel = false;

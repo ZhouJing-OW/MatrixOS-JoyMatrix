@@ -84,7 +84,7 @@ class MixerFader : public UIComponent {
           {
             uint8_t scale = (int)(239 * (value - (thisPoint - 1) * piece) / piece + 16);
             //scale = scale > 255 ? 255 : scale;
-            Color thisColor = knobPtr[i]->color.Blink_Color(active, COLOR_WHITE);
+            Color thisColor = knobPtr[i]->color.Blink_Color(active, Color(WHITE));
             MatrixOS::LED::SetColor(xy, thisColor.Scale(scale));
           } 
           else if (thisPoint * piece <= value)
@@ -95,10 +95,10 @@ class MixerFader : public UIComponent {
               MatrixOS::LED::SetColor(xy, knobPtr[i]->color.ToLowBrightness());
           } 
           else
-            MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+            MatrixOS::LED::SetColor(xy, Color(BLANK));
         } 
         else 
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
     }
     return true;

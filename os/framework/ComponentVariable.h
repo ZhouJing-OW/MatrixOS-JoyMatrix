@@ -35,7 +35,7 @@ struct AnalogConfig {
 
 struct TabConfig{
   char name[12];
-  Color color = COLOR_BLANK;
+  Color color = Color(BLANK);
   uint8_t subTab = 0;
   uint8_t subMax = 3;
 };
@@ -77,7 +77,7 @@ struct MidiButtonConfig {
   int8_t channel = 0 ;   // channel
   int8_t byte1 = 0;    // CC \ PC bank \ Note number
   int8_t byte2 = 127;  // CC value \ PC \ velocity
-  Color color = COLOR_CYAN;
+  Color color = Color(TURQUOISE);
 };
 
 struct KnobConfig {
@@ -99,7 +99,7 @@ struct KnobConfig {
   int16_t min = 0;
   int16_t max = 127;
   int16_t def = 0;
-  Color color = COLOR_RED;
+  Color color = Color(RED);
 
   int16_t Value() 
   {

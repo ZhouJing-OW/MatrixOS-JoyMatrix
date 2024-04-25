@@ -47,17 +47,17 @@ class ChannelButton : public UIComponent {
         if (i < 16)
         {
           Color color;
-          Color blinkColor = COLOR_WHITE;
-          if (state->solo) color = config->color[i].Blink_Color(config->channelSolo[i], COLOR_BLUE);
-          else if (state->mute) color = config->color[i].Blink_Color(config->channelMute[i], COLOR_RED);
+          Color blinkColor = Color(WHITE);
+          if (state->solo) color = config->color[i].Blink_Color(config->channelSolo[i], Color(BLUE));
+          else if (state->mute) color = config->color[i].Blink_Color(config->channelMute[i], Color(RED));
           else color = config->color[i].Blink_Key(Device::KeyPad::fnState);
 
           if (MatrixOS::MidiCenter::FindHold(SEND_CC, i, config->muteCC)) 
-              MatrixOS::LED::SetColor(xy, COLOR_RED);
+              MatrixOS::LED::SetColor(xy, Color(RED));
           else if (MatrixOS::MidiCenter::FindHold(SEND_CC, i, config->soloCC))
-              MatrixOS::LED::SetColor(xy, COLOR_BLUE);
+              MatrixOS::LED::SetColor(xy, Color(BLUE));
           else if (MatrixOS::MidiCenter::FindHold(SEND_CC, i, config->selectCC))
-              MatrixOS::LED::SetColor(xy, COLOR_WHITE); 
+              MatrixOS::LED::SetColor(xy, Color(WHITE)); 
           else if (i == MatrixOS::UserVar::global_channel) 
               MatrixOS::LED::SetColor(xy, blinkColor.Blink_Color(true, color));
           else 

@@ -47,7 +47,7 @@ class RootSelector : public UIComponent {
             MatrixOS::LED::SetColor(xy, color[0].ToLowBrightness());
           }
         } else 
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
     }
     return true;

@@ -31,7 +31,7 @@ class UI4pxNumber : public UIComponent {
       for (int8_t x = 0; x < 3; x++)
       {
         for (int8_t y = 0; y < 4; y++)
-        { MatrixOS::LED::SetColor(origin + Point(x, 3 - y), bitRead(number4px[value][x], y) ? color : COLOR_BLANK); }
+        { MatrixOS::LED::SetColor(origin + Point(x, 3 - y), bitRead(number4px[value][x], y) ? color : Color(BLANK)); }
       }
     }
   }
@@ -46,7 +46,7 @@ class UI4pxNumber : public UIComponent {
       { Render4pxNumber(render_origin, GetColor(), (int)((*value + add1)/ std::pow(10, digit)) % 10); }
       else
       {
-        Render4pxNumber(render_origin, COLOR_BLANK, 10);
+        Render4pxNumber(render_origin, Color(BLANK), 10);
       }
 
       render_origin = render_origin + Point(3 + spacing, 0);

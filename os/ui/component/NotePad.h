@@ -119,12 +119,12 @@
 //             Point xy = origin + Point(x, y);
 //             if (x >= octaveX && x < octaveX + 10 && y == dimension.y - 1) {
 //               if (x == octaveX + config->octave) {
-//                 MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+//                 MatrixOS::LED::SetColor(xy, Color(WHITE));
 //               } else {
 //                 MatrixOS::LED::SetColor(xy, color.ToLowBrightness());
 //               }
 //             } else {
-//               MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+//               MatrixOS::LED::SetColor(xy, Color(BLANK));
 //             }
 //           }
 //         }
@@ -142,9 +142,9 @@
 //           uint8_t channel = config->globalChannel ? MatrixOS::UserVar::global_channel : config->channel;
 
 //           if (note == 255)
-//           { MatrixOS::LED::SetColor(globalPos, COLOR_BLANK); }
+//           { MatrixOS::LED::SetColor(globalPos, Color(BLANK)); }
 //           else if (MatrixOS::MidiCenter::FindHold(SEND_NOTE, channel, note))  // If find the note is currently active. Show it as white
-//           { MatrixOS::LED::SetColor(globalPos, COLOR_WHITE); }
+//           { MatrixOS::LED::SetColor(globalPos, Color(WHITE)); }
 //           else
 //           {
 //             uint8_t inScale = InScale(note);  // Check if the note is in scale.

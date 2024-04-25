@@ -51,7 +51,7 @@ void Setting::Start() {
   AddUIComponent(rotateLeftBtn, origin + Point(-1, 0));
   */
 
-  UIButton formatBtn("Format", COLOR_RED, [&]() -> void { Device::FATFS::Format(); });
+  UIButton formatBtn("Format", Color(RED), [&]() -> void { Device::FATFS::Format(); });
   AddUIComponent(formatBtn, Point(0, 2));
   // Device Control
   UIButton deviceIdBtn("Device ID", Color(0x00FFFF), []() -> void {

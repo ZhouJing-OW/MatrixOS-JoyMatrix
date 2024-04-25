@@ -379,8 +379,9 @@ namespace MatrixOS::MidiCenter
     SEQ_Step capStep = SEQ_Step();
     std::set<uint8_t> inputList;
     CapState state = CAP_NORMAL;
+    bool editingStepEmpty = true;
 
-  public:
+   public:
     void Capture(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if(channel != MatrixOS::UserVar::global_channel) return;
@@ -394,9 +395,9 @@ namespace MatrixOS::MidiCenter
       }
     }
 
-    void ChangeState(CapState state , bool updateCap = false)
+    void ChangeState(CapState changeState , bool updateCap = false)
     {
-      switch(state)
+      switch(changeState)
       {
         case CAP_NORMAL:
           inputList.clear(); 
@@ -406,14 +407,16 @@ namespace MatrixOS::MidiCenter
           break;
         case CAP_EDIT: break;
       }
-      this->state = state;
+      this->state = changeState;
     }
 
     void Editing(SEQ_Pos pos, SEQ_Step* step)
     {
+      editingStepEmpty = step->NoteEmpty();
       if (!inputList.empty())
         step->CopyNotes(capStep);
       CNTR_SeqEditStep.push_back(std::make_pair(pos, step));
+      ChangeState(CAP_EDIT);
     }
 
     void EditCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
@@ -448,6 +451,7 @@ namespace MatrixOS::MidiCenter
       CNTR_SeqEditStep.clear();
       capStep.ClearNote();
       inputList.clear();
+      editingStepEmpty = true;
     }
 
     void EndEditing()
@@ -455,6 +459,8 @@ namespace MatrixOS::MidiCenter
       state = CAP_NORMAL;
       CNTR_SeqEditStep.clear();
     }
+
+    bool EditingStepEmpty() const { return editingStepEmpty; }
 
     SEQ_Step* GetCap(){return &capStep;}
   };
@@ -496,19 +502,15 @@ namespace MatrixOS::MidiCenter
 
     void Capture_ChangeState(CapState state, bool updateCap = false) { capturer.ChangeState(state, updateCap); }
 
-    void Capture_CopyStepNotes(SEQ_Pos position) { if(Step(position)) capturer.GetCap()->CopyNotes(*Step(position)); }
+    void Capture_UpdateCap(SEQ_Pos position) { if(Step(position)) capturer.GetCap()->CopyNotes(*Step(position)); }
 
     void Capture_Editing(SEQ_Pos position) 
     { 
       SEQ_Step* step = Step(position, true);
-      if(step) 
-      {
-        capturer.Editing(position, step);
-        capturer.ChangeState(CAP_EDIT);
-      }
+      if(step) capturer.Editing(position, step);
     }
 
-    void Capture_SaveEdited(SEQ_Pos position)
+    void Capture_SaveHold(SEQ_Pos position)
     {
       SEQ_Step* step = Step(position);
       if(!step) return;
@@ -516,33 +518,31 @@ namespace MatrixOS::MidiCenter
       if(step->Empty()) 
       {
         step->ClearNote();
+        capturer.ChangeState(CAP_NORMAL, !capturer.EditingStepEmpty());
         if (step->Empty()) DeleteStep(position);
-        capturer.ChangeState(CAP_NORMAL);
         return; 
       }
 
       capturer.ChangeState(CAP_NORMAL, true);
     }
 
-    void Capture_SaveNormal(SEQ_Pos position)
+    void Capture_SaveClick(SEQ_Pos position)
     {
-      SEQ_Step* step = Step(position);
-      
-      if(!step || !NoteEmpty(position))
+      if(!capturer.EditingStepEmpty())
       {
         ClearNote(position);
         capturer.ChangeState(CAP_NORMAL);
         return;
       }
 
-      SEQ_Step* capStep = capturer.GetCap();
-      if(capStep->NoteEmpty())
+      if(capturer.GetCap()->NoteEmpty())
       {
         if(channelConfig != nullptr)
           AddNote(position, SEQ_Note(channelConfig->activeNote[position.ChannelNum()], MatrixOS::UserVar::defaultVelocity));
       }
       else
-        step->CopyNotes(*capStep);
+        Step(position)->CopyNotes(*(capturer.GetCap()));
+
       capturer.ChangeState(CAP_NORMAL);
     }
 
@@ -557,6 +557,8 @@ namespace MatrixOS::MidiCenter
     }
 
     void Capture_Clear() { capturer.Clear(); }
+
+    uint8_t Capture_CapCount() { return capturer.GetCap()->NoteCount(); }
 
     void Capture_EndEditing() { capturer.EndEditing(); }
 
@@ -617,7 +619,12 @@ namespace MatrixOS::MidiCenter
 
     bool    NoteEmpty(SEQ_Pos position) { if(Step(position)) return Step(position)->NoteEmpty(); return true;}
 
-    uint8_t NoteCount(SEQ_Pos position) {if(Step(position)) return Step(position)->NoteCount(); return 0;}
+    uint8_t NoteCount(SEQ_Pos position, uint8_t note = 255) 
+    {
+      if(!Step(position)) return 0;
+      if(note > 127)return Step(position)->NoteCount();
+      return Step(position)->FindNote(note);
+    }
 
     uint8_t GetVelocity(SEQ_Pos position, uint8_t note = 255) {if(Step(position)) return Step(position)->GetVelocity(note); return MatrixOS::UserVar::defaultVelocity;}
 
@@ -659,6 +666,7 @@ namespace MatrixOS::MidiCenter
 
     void CopyStep(SEQ_Pos src, SEQ_Pos dst)
     {
+      if(src == dst) return;
       int16_t stepID = StepID(src);
       if (stepID < 0) { DeleteStep(dst); return; }
 
@@ -675,6 +683,7 @@ namespace MatrixOS::MidiCenter
 
     void CopyAutom(SEQ_Pos src, SEQ_Pos dst)
     {
+      if(src == dst) return;
       int16_t automID = AutomID(src);
       if (automID < 0) { DeleteAutom(dst); return; }
 
@@ -692,6 +701,7 @@ namespace MatrixOS::MidiCenter
     {
       // MLOGD("SEQ Copy From","Channel %d. Clip %d. Bar %d.", src.ChannelNum(), src.ClipNum(), src.BarNum());
       // MLOGD("SEQ Copy To  ","Channel %d. Clip %d. Bar %d.", dst.ChannelNum(), dst.ClipNum(), dst.BarNum());
+      if(src == dst) return;
       for (uint8_t s = 0; s < STEP_MAX;  s++)
       { CopyStep (SEQ_Pos(src.ChannelNum(), src.ClipNum(), src.BarNum(), s), SEQ_Pos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), s)); }
       for (uint8_t a = 0; a < AUTOM_MAX; a++)

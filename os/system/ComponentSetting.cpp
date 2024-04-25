@@ -19,20 +19,20 @@ namespace MatrixOS::Component {
 
         UI4pxNumberWithColorFunc number([&]() -> Color { return activeColor; }, 3, &channel);
 
-        UIButtonDimmable selectCC("CC for Select", COLOR_LIME, [&]() -> bool { return active == 1; },
-            [&]() -> void { active = 1; number.value = &con->selectCC; activeColor = COLOR_LIME;});
-        UIButtonDimmable muteCC("CC for Mute", COLOR_RED, [&]() -> bool { return active == 2; },
-            [&]() -> void { active = 2; number.value = &con->muteCC; activeColor = COLOR_RED;});
-        UIButtonDimmable soloCC("CC for Solo", COLOR_BLUE, [&]() -> bool { return active == 3; },
-            [&]() -> void { active = 3;  number.value = &con->soloCC;activeColor = COLOR_BLUE;});
+        UIButtonDimmable selectCC("CC for Select", Color(GREEN), [&]() -> bool { return active == 1; },
+            [&]() -> void { active = 1; number.value = &con->selectCC; activeColor = Color(GREEN);});
+        UIButtonDimmable muteCC("CC for Mute", Color(RED), [&]() -> bool { return active == 2; },
+            [&]() -> void { active = 2; number.value = &con->muteCC; activeColor = Color(RED);});
+        UIButtonDimmable soloCC("CC for Solo", Color(BLUE), [&]() -> bool { return active == 3; },
+            [&]() -> void { active = 3;  number.value = &con->soloCC;activeColor = Color(BLUE);});
         
-        UIButtonWithColorFunc plus_10("+10",[&]() -> Color { return (active != 0) ? COLOR_WHITE : COLOR_BLANK;}, 
+        UIButtonWithColorFunc plus_10("+10",[&]() -> Color { return (active != 0) ? Color(WHITE) : Color(BLANK);}, 
             [&]() -> void { if(active != 0) *number.value = ((int16_t)*number.value + 10 < 127) ? *number.value + 10 : 127;});
-        UIButtonWithColorFunc plus_1("+1",[&]() -> Color { return (active != 0) ? COLOR_WHITE : COLOR_BLANK;}, 
+        UIButtonWithColorFunc plus_1("+1",[&]() -> Color { return (active != 0) ? Color(WHITE) : Color(BLANK);}, 
             [&]() -> void { if(active != 0) *number.value += (*number.value < 127); });
-        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : COLOR_BLANK;}, 
+        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
             [&]() -> void { if(active != 0) *number.value -= (*number.value > 0); });
-        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : COLOR_BLANK;}, 
+        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
             [&]() -> void { if(active != 0) *number.value = ((int16_t)*number.value - 10 > 0) ? *number.value - 10 : 0; });
 
         UIColorSelector colors(&con->color[n], [&]() -> void { active = 0;activeColor = con->color[n]; number.value = &channel;});
@@ -59,7 +59,7 @@ namespace MatrixOS::Component {
 
         string byte1Name[4] = {"SYS", "CC", "PC Bank", "Note"};
         string byte2Name[4] = {"Value", "Value", "PC number", "Velocity"};
-        Color typeColor[4] = {COLOR_BLANK, COLOR_YELLOW, COLOR_BLUE, COLOR_PINK};
+        Color typeColor[4] = {Color(BLANK), Color(YELLOW), Color(BLUE), Color(MAGENTA)};
         int8_t active;
         if(con->type == SEND_NONE)
             active = 3;
@@ -67,34 +67,34 @@ namespace MatrixOS::Component {
 
         UI knobSetting("Knob Setting", con->color);
 
-        UI4pxNumberWithColorFunc numberChannel  ([&]() -> Color { return COLOR_LIME; },             3, &con->data.channel, true);
+        UI4pxNumberWithColorFunc numberChannel  ([&]() -> Color { return Color(GREEN); },             3, &con->data.channel, true);
         UI4pxNumberWithColorFunc numberByte1    ([&]() -> Color { return typeColor[con->type]; },   3, &con->data.byte1);
         UI4pxNumberWithColorFunc numberDef      ([&]() -> Color { return con->color; },             3, &con->def);
-        UI4pxNumberWithColorFunc numberMin      ([&]() -> Color { return COLOR_AZURE; },            3, &con->min);
-        UI4pxNumberWithColorFunc numberMax      ([&]() -> Color { return COLOR_RED; },              3, &con->max);
+        UI4pxNumberWithColorFunc numberMin      ([&]() -> Color { return Color(CYAN); },            3, &con->min);
+        UI4pxNumberWithColorFunc numberMax      ([&]() -> Color { return Color(RED); },              3, &con->max);
 
-        UIButtonDimmable chSetting("Channel", COLOR_LIME, [&]() -> bool { return active == 1; },
+        UIButtonDimmable chSetting("Channel", Color(GREEN), [&]() -> bool { return active == 1; },
             [&]() -> void { active = 1; knobSetting.AddUIComponent(numberChannel, Point(4, 0));});
         UIButtonDimmable byte1Setting(byte1Name[con->type], typeColor[con->type], [&]() -> bool { return active == 2; },
             [&]() -> void { active = 2; knobSetting.AddUIComponent(numberByte1, Point(4, 0));});
         UIButtonDimmable defSetting("Default", con->color, [&]() -> bool { return active == 3;},
             [&]() -> void { active = 3; knobSetting.AddUIComponent(numberDef, Point(4, 0));});
-        UIButtonDimmable minSetting("Min", COLOR_AZURE, [&]() -> bool { return active == 4;},
+        UIButtonDimmable minSetting("Min", Color(CYAN), [&]() -> bool { return active == 4;},
             [&]() -> void { active = 4; knobSetting.AddUIComponent(numberMin, Point(4, 0));});
-        UIButtonDimmable maxSetting("Max", COLOR_RED, [&]() -> bool { return active == 5;},
+        UIButtonDimmable maxSetting("Max", Color(RED), [&]() -> bool { return active == 5;},
             [&]() -> void { active = 5; knobSetting.AddUIComponent(numberMax, Point(4, 0));});
 
-        // UIButtonDimmable sendCC("Send CC", COLOR_YELLOW, [&]() -> bool { return con->type == SEND_CC; },
-        //     [&]() -> void { active = 2; number.value = &con->byte1, activeColor = COLOR_YELLOW; con->type = SEND_CC; 
-        //                     byte1Setting.color = COLOR_YELLOW; byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
-        // UIButtonDimmable sendPC("Send PC", COLOR_BLUE, [&]() -> bool { return con->type == SEND_PC; },
-        //     [&]() -> void { active = 2; number.value = &con->byte1, activeColor = COLOR_BLUE; con->type = SEND_PC; 
-        //                     byte1Setting.color = COLOR_BLUE; byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
-        // UIButtonDimmable sendNote("Send Note", COLOR_PINK, [&]() -> bool { return con->type == SEND_NOTE; },
-        //     [&]() -> void { active = 2; number.value = &con->byte1, activeColor = COLOR_PINK; con->type = SEND_NOTE; 
-        //                     byte1Setting.color = COLOR_PINK; byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
+        // UIButtonDimmable sendCC("Send CC", Color(YELLOW), [&]() -> bool { return con->type == SEND_CC; },
+        //     [&]() -> void { active = 2; number.value = &con->byte1, activeColor = Color(YELLOW); con->type = SEND_CC; 
+        //                     byte1Setting.color = Color(YELLOW); byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
+        // UIButtonDimmable sendPC("Send PC", Color(BLUE), [&]() -> bool { return con->type == SEND_PC; },
+        //     [&]() -> void { active = 2; number.value = &con->byte1, activeColor = Color(BLUE); con->type = SEND_PC; 
+        //                     byte1Setting.color = Color(BLUE); byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
+        // UIButtonDimmable sendNote("Send Note", Color(MAGENTA), [&]() -> bool { return con->type == SEND_NOTE; },
+        //     [&]() -> void { active = 2; number.value = &con->byte1, activeColor = Color(MAGENTA); con->type = SEND_NOTE; 
+        //                     byte1Setting.color = Color(MAGENTA); byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
 
-        UIButtonWithColorFunc plus_10("+10",[&]() -> Color { return (active != 0) ? COLOR_WHITE : COLOR_BLANK;}, 
+        UIButtonWithColorFunc plus_10("+10",[&]() -> Color { return (active != 0) ? Color(WHITE) : Color(BLANK);}, 
             [&]() -> void { 
                 switch(active) {
                     case 1: con->data.channel    = (con->data.channel + 10 < 15) ? con->data.channel + 10 : 15; break;  // channel
@@ -104,7 +104,7 @@ namespace MatrixOS::Component {
                     case 5: con->max        = (con->max + 10 < 127) ? con->max + 10 : 127; //max
                 }
             });
-        UIButtonWithColorFunc plus_1("+1",[&]() -> Color { return (active != 0) ? COLOR_WHITE : COLOR_BLANK;}, 
+        UIButtonWithColorFunc plus_1("+1",[&]() -> Color { return (active != 0) ? Color(WHITE) : Color(BLANK);}, 
             [&]() -> void {
                 switch(active) {
                     case 1: con->data.channel    = (con->data.channel + 1 < 15) ? con->data.channel + 1 : 15;break;  // channel
@@ -114,7 +114,7 @@ namespace MatrixOS::Component {
                     case 5: con->max        = (con->max + 1 < 127) ? con->max + 1 : 127; break; //max
                 }
             });
-        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : COLOR_BLANK;}, 
+        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
             [&]() -> void {
                 switch(active) {
                     case 1: con->data.channel    = (con->data.channel - 1 > 0) ? con->data.channel - 1 : 0; break; // channel
@@ -124,7 +124,7 @@ namespace MatrixOS::Component {
                     case 5: con->max        = (con->max - 1 > con->min) ? con->max - 1 : con->min; if(con->def > con->max) con->def = con->max; break; //max
                 }
             });
-        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : COLOR_BLANK;}, 
+        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
             [&]() -> void {
                 switch(active) {
                     case 1: con->data.channel    = (con->data.channel - 10 > 0) ? con->data.channel - 10 : 0; break; // channel
@@ -165,11 +165,11 @@ namespace MatrixOS::Component {
     void Button_Setting(MidiButtonConfig* firstCon, uint16_t pos) {
         string byte1Name[4] = {"SYSTEM", "CC", "Bank", "Note"};
         string byte2Name[4] = {"Value", "Value", "PC", "Velocity"};
-        Color typeColor[4] = {COLOR_BLANK, COLOR_YELLOW, COLOR_BLUE, COLOR_PINK};
+        Color typeColor[4] = {Color(BLANK), Color(YELLOW), Color(BLUE), Color(MAGENTA)};
 
         int8_t active = 2;
         string name = "Button Setting";
-        Color chBtnColor = COLOR_LIME;
+        Color chBtnColor = Color(GREEN);
 
         MidiButtonConfig* con = firstCon + pos;
         UI buttonSetting(name, con->color);
@@ -178,7 +178,7 @@ namespace MatrixOS::Component {
         UI4pxNumberWithColorFunc numberByte1    ([&]() -> Color { return typeColor[con->type]; }, 3, &con->byte1);
         UI4pxNumberWithColorFunc numberByte2    ([&]() -> Color { return con->color; }, 3, &con->byte2);
 
-        UIButtonDimmable globalCH("Use Global Channel", COLOR_WHITE, [&]() -> bool { return con->globalChannel == true; },
+        UIButtonDimmable globalCH("Use Global Channel", Color(WHITE), [&]() -> bool { return con->globalChannel == true; },
             [&]() -> void { con->globalChannel = !con->globalChannel;});
 
         UIButtonDimmable chSetting("Channel", chBtnColor, [&]() -> bool { return active == 1; },
@@ -188,40 +188,40 @@ namespace MatrixOS::Component {
         UIButtonDimmable byte2Setting(byte2Name[con->type], con->color, [&]() -> bool { return active == 3;},
             [&]() -> void { active = 3; buttonSetting.AddUIComponent(numberByte2, Point(4, 0));});
 
-        UIButtonDimmable sendCC("Send CC", COLOR_YELLOW, [&]() -> bool { return con->type == SEND_CC; },
+        UIButtonDimmable sendCC("Send CC", Color(YELLOW), [&]() -> bool { return con->type == SEND_CC; },
             [&]() -> void { active = 2; buttonSetting.AddUIComponent(numberByte1, Point(4, 0)); con->type = SEND_CC; 
-                            byte1Setting.color = COLOR_YELLOW; byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
-        UIButtonDimmable sendPC("Send PC", COLOR_BLUE, [&]() -> bool { return con->type == SEND_PC; },
+                            byte1Setting.color = Color(YELLOW); byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
+        UIButtonDimmable sendPC("Send PC", Color(BLUE), [&]() -> bool { return con->type == SEND_PC; },
             [&]() -> void { active = 2; buttonSetting.AddUIComponent(numberByte1, Point(4, 0)); con->type = SEND_PC; 
-                            byte1Setting.color = COLOR_BLUE; byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
-        UIButtonDimmable sendNote("Send Note", COLOR_PINK, [&]() -> bool { return con->type == SEND_NOTE; },
+                            byte1Setting.color = Color(BLUE); byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
+        UIButtonDimmable sendNote("Send Note", Color(MAGENTA), [&]() -> bool { return con->type == SEND_NOTE; },
             [&]() -> void { active = 2; buttonSetting.AddUIComponent(numberByte1, Point(4, 0)); con->type = SEND_NOTE; 
-                            byte1Setting.color = COLOR_PINK; byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
-        UIButtonDimmable toggle("Toggle Mode", COLOR_RED, [&]() -> bool { return con->toggleMode == true; },
+                            byte1Setting.color = Color(MAGENTA); byte1Setting.name = byte1Name[con->type]; byte2Setting.name = byte2Name[con->type];});
+        UIButtonDimmable toggle("Toggle Mode", Color(RED), [&]() -> bool { return con->toggleMode == true; },
             [&]() -> void { con->toggleMode = !con->toggleMode; });
 
-        UIButtonWithColorFunc plus_10("+10",[&]() -> Color { return (active != 0) ? COLOR_WHITE : COLOR_BLANK;}, 
+        UIButtonWithColorFunc plus_10("+10",[&]() -> Color { return (active != 0) ? Color(WHITE) : Color(BLANK);}, 
             [&]() -> void { 
                 switch(active) {
                     case 1: con->channel    = con->channel + 10 < 15    ? con->channel + 10     : 15;   break;
                     case 2: con->byte1      = con->byte1 + 10 < 127     ? con->byte1 + 10       : 127;  break;
                     case 3: con->byte2      = con->byte2 + 10 < 127     ? con->byte2 + 10       : 127;  break;
                 }; });
-        UIButtonWithColorFunc plus_1("+1",[&]() -> Color { return (active != 0) ? COLOR_WHITE : COLOR_BLANK;}, 
+        UIButtonWithColorFunc plus_1("+1",[&]() -> Color { return (active != 0) ? Color(WHITE) : Color(BLANK);}, 
             [&]() -> void { 
                 switch(active) {
                     case 1: con->channel    += (con->channel < 15);     break;
                     case 2: con->byte1      += (con->byte1 < 127);      break;
                     case 3: con->byte2      += (con->byte2 < 127);      break;
                 }; });
-        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : COLOR_BLANK;}, 
+        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
             [&]() -> void { 
                 switch(active) {
                     case 1: con->channel    -= (con->channel > 0);      break;
                     case 2: con->byte1      -= (con->byte1 > 0);        break;
                     case 3: con->byte2      -= (con->byte2 > 0);        break;
                 }; });
-        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : COLOR_BLANK;}, 
+        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
             [&]() -> void { 
                 switch(active) {
                     case 1: con->channel    = con->channel - 10 > 0     ? con->channel - 10     : 0;    break;
@@ -261,8 +261,8 @@ namespace MatrixOS::Component {
 
         int8_t channel = MatrixOS::UserVar::global_channel;
 
-        Color color3 = COLOR_AZURE;
-        UI4pxNoteName noteName( &con->byte1, con->color, COLOR_WHITE, color3);
+        Color color3 = Color(CYAN);
+        UI4pxNoteName noteName( &con->byte1, con->color, Color(WHITE), color3);
 
         UIButtonWithColorFunc plus_12("+Octave",[&]() -> Color { return color3;}, [&]() -> void {});
         plus_12.callback = [&]() -> void { 
@@ -375,13 +375,13 @@ namespace MatrixOS::Component {
         NotePadConfig* con = firstCon + pos;
         UI padSetting("Pad Setting", color);
         RootSelector rootSelector(Dimension(7, 2), con, 0, padType);
-        UIItemSelector scaleSelector(Dimension(8, 4), COLOR_ORANGE, &con->scale, 32, scales, scale_names);
-        // UISelector overlapSelector(Dimension(8, 1), "Overlap", COLOR_YELLOW, 8, &con->overlap);
+        UIItemSelector scaleSelector(Dimension(8, 4), Color(ORANGE), &con->scale, 32, scales, scale_names);
+        // UISelector overlapSelector(Dimension(8, 1), "Overlap", Color(YELLOW), 8, &con->overlap);
         NotePreView notePreView(Dimension(8, 2), con);
-        UISelector shiftSelector(Dimension(6, 1), "Shift", COLOR_BLUE, 6, &con->shift);
-        UIButtonDimmable alignRootToggle("Aligh Root Key", COLOR_YELLOW, [&]() -> bool { return (con->alignRoot && con->overlap == 0); },
+        UISelector shiftSelector(Dimension(6, 1), "Shift", Color(BLUE), 6, &con->shift);
+        UIButtonDimmable alignRootToggle("Aligh Root Key", Color(YELLOW), [&]() -> bool { return (con->alignRoot && con->overlap == 0); },
             [&]() -> void { if(con->overlap == 0) { con->alignRoot = !con->alignRoot;} else {con->alignRoot = true; con->overlap = 0;} });
-        UIButtonDimmable enfourceScaleToggle("Enfource Scale", COLOR_ORANGE, [&]() -> bool { return con->enfourceScale; },
+        UIButtonDimmable enfourceScaleToggle("Enfource Scale", Color(ORANGE), [&]() -> bool { return con->enfourceScale; },
             [&]() -> void { con->enfourceScale = !con->enfourceScale; });
 
         padSetting.AddUIComponent(rootSelector, Point(0, 0));
@@ -405,18 +405,18 @@ namespace MatrixOS::Component {
     }
 
     // void BPM_Setting() {
-    //     UI bpmSetting("BPM Setting", COLOR_PURPLE);
+    //     UI bpmSetting("BPM Setting", Color(PURPLE));
 
-    //     KnobConfig bpm = {.byte2 = MatrixOS::UserVar::BPM, .min = 20, .max = 300, .def = 120, .color = COLOR_PURPLE};
+    //     KnobConfig bpm = {.byte2 = MatrixOS::UserVar::BPM, .min = 20, .max = 300, .def = 120, .color = Color(PURPLE)};
     //     std::vector<KnobConfig*> knob = {&bpm};
     //     MatrixOS::KnobCenter::SetKnobBar(knob);
 
-    //     UI4pxNumber numberBPM(COLOR_PURPLE, 3, &bpm.byte2);
+    //     UI4pxNumber numberBPM(Color(PURPLE), 3, &bpm.byte2);
     //     UIButtonWithColorFunc plus_10( "+10", 
-    //         [&]() -> Color { return COLOR_WHITE; }, 
+    //         [&]() -> Color { return Color(WHITE); }, 
     //         [&]() -> void { bpm.byte2 = (bpm.byte2 + 10 < 300) ? bpm.byte2 + 10 : 300; });
     //     UIButtonWithColorFunc plus_1( "+1", 
-    //         [&]() -> Color { return COLOR_WHITE; }, 
+    //         [&]() -> Color { return Color(WHITE); }, 
     //         [&]() -> void { bpm.byte2 += (bpm.byte2 < 300); });
     //     UIButtonWithColorFunc minus_1( "-1", 
     //         [&]() -> Color { return Color(0xFFFFFF).ToLowBrightness(); }, 

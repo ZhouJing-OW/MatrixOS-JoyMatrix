@@ -8,6 +8,46 @@
 #define BLINK_TIME 1000
 #define BREATHE_TIME 1000
 
+enum ColorLabel : uint32_t {
+  WHITE     = 0xFFFFFF,  //0xFFFFFF
+  BLANK     = 0x000000,  //0x000000
+
+  RED       = 0xFF0000,  //0xFF0000
+  TOMATO    = 0xFF2A00,  //0xFF2A00
+  ORANGE    = 0xFF5500,  //0xFF5500
+  GOLD      = 0xFFAA00,  //0xFFAA00
+  YELLOW    = 0xFFFF00,  //0xFFFF00
+  LAWN      = 0x55FF00,  //0x55FF00
+  GREEN     = 0x00FF00,  //0x00FF00
+  TURQUOISE = 0x00FF2A,  //0x00FF2A
+  CYAN      = 0x00FFFF,  //0x00FFFF
+  DEEPSKY   = 0x002AFF,  //0x002AFF
+  BLUE      = 0x0000FF,  //0x0000FF
+  PURPLE    = 0x2A00FF,  //0x2A00FF
+  VIOLET    = 0x8000FF,  //0x8000FF
+  MAGENTA   = 0xFF00FF,  //0xFF00FF
+  DEEPPINK  = 0xFF0080,  //0xFF0080
+  MAROON    = 0xFF002A,  //0xFF002A
+
+  RED_LS         = 0xE01010,
+  TOMATO_LS      = 0xE03010,
+  ORANGE_LS      = 0xE06010, 
+  GOLD_LS        = 0xE09010,
+  YELLOW_LS      = 0xE0E010,
+  LAWN_LS        = 0x50E010,
+  GREEN_LS       = 0x10E010,
+  TURQUOISE_LS   = 0x10E050,
+  CYAN_LS        = 0x10E0E0,
+  DEEPSKY_LS     = 0x1080E0,
+  BLUE_LS        = 0x1010E0,
+  PURPLE_LS      = 0x5010E0,
+  VIOLET_LS      = 0x9010E0,
+  MAGENTA_LS     = 0xE010E0,
+  DEEPPINK_LS    = 0xE01070,
+  MAROON_LS      = 0xE01030,
+
+};
+
 class Color {
  public:
   uint8_t R = 0;
@@ -17,6 +57,7 @@ class Color {
 
   Color();
   Color(uint32_t WRGB);
+  Color(ColorLabel label);
   Color(uint8_t nR, uint8_t nG, uint8_t nB, uint8_t nW = 0);
 
   virtual void Update(){};
@@ -72,29 +113,19 @@ const uint8_t led_gamma[256] = {
     169, 171, 173, 175, 177, 180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213, 215, 218,
     220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255};
 
-const Color COLOR_RED     = Color(0xFF0000); //Color(0xFF0000)
-const Color COLOR_ORANGE  = Color(0xFF5500); //Color(0xFF5500)
-const Color COLOR_GOLD    = Color(0xFFAA00); //Color(0xFFAA00)
-const Color COLOR_YELLOW  = Color(0xFFFF00); //Color(0xFFFF00)
-const Color COLOR_GREEN   = Color(0x80FF00); //Color(0x80FF00)
-const Color COLOR_LIME    = Color(0x00FF00); //Color(0x00FF00)
-const Color COLOR_CYAN    = Color(0x00FF55); //Color(0x00FF55)
-const Color COLOR_AZURE   = Color(0x00FFFF); //Color(0x00FFFF)
-const Color COLOR_BLUE    = Color(0x0000FF); //Color(0x0000FF)
-const Color COLOR_PURPLE  = Color(0x5500FF); //Color(0x5500FF) 
-const Color COLOR_VIOLET  = Color(0xAA00FF); //Color(0xAA00FF)
-const Color COLOR_PINK    = Color(0xFF00AA); //Color(0xFF00AA)
-const Color COLOR_WHITE   = Color(0xFFFFFF); //Color(0xFFFFFF)
-const Color COLOR_BLANK   = Color(0x000000); //Color(0x000000)
-
-const Color COLOR_CONFIG[16] = {
-  COLOR_RED,   COLOR_ORANGE,    COLOR_GOLD,      COLOR_YELLOW, COLOR_GREEN,  COLOR_LIME,   COLOR_CYAN,      Color(0x00FFAA),
-  COLOR_AZURE, Color(0x00AAFF), Color(0x0055FF), COLOR_BLUE,   COLOR_PURPLE, COLOR_VIOLET, Color(0xFF00FF), COLOR_PINK,
+const ColorLabel COLOR_HIGH_SAT[16] = {
+RED,          TOMATO,       ORANGE,       GOLD,         YELLOW,       LAWN,         GREEN,        TURQUOISE,
+CYAN,         DEEPSKY,      BLUE,         PURPLE,       VIOLET,       MAGENTA,      DEEPPINK,     MAROON,
 };
 
-const Color COLOR_KNOB_8PAGE[8] = {COLOR_RED, COLOR_PINK, COLOR_VIOLET, COLOR_PURPLE, COLOR_ORANGE, COLOR_GOLD, COLOR_YELLOW, COLOR_GREEN};
-const Color COLOR_SEQ_4PAGE[4]  = {COLOR_LIME, COLOR_GREEN, COLOR_YELLOW, COLOR_GOLD};
+const ColorLabel COLOR_LOW_SAT[16] = {
+RED_LS,       TOMATO_LS,    ORANGE_LS,    GOLD_LS,      YELLOW_LS,    LAWN_LS,      GREEN_LS,     TURQUOISE_LS,
+CYAN_LS,      DEEPSKY_LS,   BLUE_LS,      PURPLE_LS,    VIOLET_LS,    MAGENTA_LS,   DEEPPINK_LS,  MAROON_LS,
+};
 
-const Color COLOR_PIANO_PAD[2]  = {COLOR_AZURE, COLOR_BLUE}; // [0] ragular color [1] root color
-const Color COLOR_NOTE_PAD[2]   = {COLOR_PURPLE, COLOR_PINK}; // [0] ragular color [1] root color
-const Color COLOR_DRUM_PAD[2]   = {COLOR_ORANGE, COLOR_RED}; // [0] ragular color [1] root color
+const ColorLabel COLOR_KNOB_8PAGE [8] = { RED,          DEEPPINK,     VIOLET,       PURPLE,       ORANGE,       GOLD,         YELLOW,       GREEN};
+const ColorLabel COLOR_SEQ_4PAGE  [4] = { GREEN,        LAWN,         YELLOW,       GOLD};
+
+const ColorLabel COLOR_PIANO_PAD  [2] = { DEEPSKY_LS,   DEEPSKY};  // [0] ragular color [1] root color
+const ColorLabel COLOR_NOTE_PAD   [2] = { PURPLE_LS,    PURPLE};  // [0] ragular color [1] root color
+const ColorLabel COLOR_DRUM_PAD   [2] = { TOMATO_LS,    TOMATO};    // [0] ragular color [1] root color

@@ -74,7 +74,7 @@ class Drambo : public Application {
 inline Application_Info Drambo::info = {
   .name = "Drambo",
   .author = "ZhouJing",
-  .color = COLOR_BLUE,
+  .color = Color(BLUE),
   .version = DRAMBO_APP_VERSION,
   .visibility = true,
 };

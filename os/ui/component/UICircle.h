@@ -13,7 +13,7 @@ class UICircle : public UIComponent {
   }
 
   virtual string GetName() { return name; }
-  virtual Color GetColor() { return COLOR_LIME; }
+  virtual Color GetColor() { return Color(GREEN); }
   virtual Dimension GetSize() { return Dimension(4, 4); }
 
   virtual bool Callback() {
@@ -31,7 +31,7 @@ class UICircle : public UIComponent {
       for(uint8_t y = 0; y < 4; y++) {
         Point xy = origin + Point(x, y);
         if (circle[y] >> x & 1) MatrixOS::LED::SetColor(xy, GetColor());
-        else MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+        else MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
     } 
     return true;

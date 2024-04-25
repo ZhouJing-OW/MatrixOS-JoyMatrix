@@ -69,7 +69,7 @@ class KnobButton : public UIComponent {
     return false;
   }
 
-  virtual Color GetColor() {  if(knobPtr[0] != nullptr) return knobPtr[0]->color; else return COLOR_WHITE; }
+  virtual Color GetColor() {  if(knobPtr[0] != nullptr) return knobPtr[0]->color; else return Color(WHITE); }
   virtual Dimension GetSize() { return dimension; }
 
   virtual bool Render(Point origin) {
@@ -94,34 +94,34 @@ class KnobButton : public UIComponent {
           {
             if (val > halfRange + 1)  // right
             {
-              Color thisColor = color.Blink_Color(active, COLOR_WHITE);
+              Color thisColor = color.Blink_Color(active, Color(WHITE));
               thisColor = thisColor.Scale(val, halfRange, knobPtr[i]->max, lowBrightness);
               MatrixOS::LED::SetColor(xy, knobPtr[i]->lock ? thisColor : thisColor.Blink_Key(Device::KeyPad::fnState));
             }
             else if ((val >= halfRange - 1) && (val <= halfRange + 1))  // middle
             {
               Color thisColor = color.Rotate(90);
-              thisColor = thisColor.Blink_Color(active, COLOR_WHITE);
+              thisColor = thisColor.Blink_Color(active, Color(WHITE));
               thisColor = thisColor.Scale(lowBrightness);
               MatrixOS::LED::SetColor(xy, knobPtr[i]->lock ? thisColor : thisColor.Blink_Key(Device::KeyPad::fnState));
             }
             else if (val < halfRange - 1)  // left
             {
               Color thisColor = color.Invert();
-              thisColor = thisColor.Blink_Color(active, COLOR_WHITE);
+              thisColor = thisColor.Blink_Color(active, Color(WHITE));
               thisColor = thisColor.Scale(halfRange - val, knobPtr[i]->min, halfRange, lowBrightness);
               MatrixOS::LED::SetColor(xy, knobPtr[i]->lock ? thisColor : thisColor.Blink_Key(Device::KeyPad::fnState));
             }
           }
           else  // Regular mode
           {
-            Color thisColor = color.Blink_Color(active, COLOR_WHITE);
+            Color thisColor = color.Blink_Color(active, Color(WHITE));
             thisColor = thisColor.Scale(val, knobPtr[i]->min, knobPtr[i]->max, lowBrightness);
             MatrixOS::LED::SetColor(xy, knobPtr[i]->lock ? thisColor : thisColor.Blink_Key(Device::KeyPad::fnState));
           }
         }
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
     }
     return true;

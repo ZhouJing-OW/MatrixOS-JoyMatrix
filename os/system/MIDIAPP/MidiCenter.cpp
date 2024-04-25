@@ -10,10 +10,10 @@ namespace MatrixOS::MidiCenter
   int16_t tempDefVel = MatrixOS::UserVar::defaultVelocity;
   int16_t tempBright = std::sqrt((uint8_t)MatrixOS::UserVar::brightness);
 
-  KnobConfig  bpm                 = {.lock = true, .data = {.varPtr = &bpmPrv},      .min = 20,  .max = 300,   .def = 120, .color = COLOR_PURPLE};
-  KnobConfig  swing               = {.lock = true, .data = {.varPtr = &swingPrv},    .max = 100, .def = 50,    .color = COLOR_GOLD};
-  KnobConfig  defaultVelocity     = {.lock = true, .data = {.varPtr = &tempDefVel},  .min = 1,   .def = 127,   .color = COLOR_GREEN};
-  KnobConfig  brightness          = {.lock = true, .data = {.varPtr = &tempBright},  .min = 2,   .max = 12,    .def = 4, .color = COLOR_WHITE};
+  KnobConfig  bpm                 = {.lock = true, .data = {.varPtr = &bpmPrv},      .min = 20,  .max = 300,   .def = 120, .color = Color(PURPLE)};
+  KnobConfig  swing               = {.lock = true, .data = {.varPtr = &swingPrv},    .max = 100, .def = 50,    .color = Color(GOLD)};
+  KnobConfig  defaultVelocity     = {.lock = true, .data = {.varPtr = &tempDefVel},  .min = 1,   .def = 127,   .color = Color(LAWN)};
+  KnobConfig  brightness          = {.lock = true, .data = {.varPtr = &tempBright},  .min = 2,   .max = 12,    .def = 4, .color = Color(WHITE)};
 
   std::vector<KnobConfig*> sysKnobs = {&bpm, &swing, &defaultVelocity, &brightness};
   
@@ -57,12 +57,11 @@ namespace MatrixOS::MidiCenter
           {
             if (!clockIn) break;
             tickCount++; halfTick = tickCount * 2;
-            uint8_t count = tickCount % 24;
             tickTimer.RecordCurrent();
-            if (count % 8 == 0) {
-              tickTime[count / 8] = MatrixOS::SYS::Millis();
+            if (tickCount % 8 == 0) {
+              tickTime[tickCount % 24 / 8] = MatrixOS::SYS::Millis();
               stepTimer.RecordCurrent();
-              if (count % 24 == 0) {
+              if (tickCount % 24 == 0) {
                 tickTime[3] = MatrixOS::SYS::Millis();
                 uint32_t inputBPM = std::round(60000.0 / (middleOfThree(tickTime[1] - tickTime[0], tickTime[2] - tickTime[1], tickTime[3] - tickTime[2]) * 3));
                 bpm.SetValue(inputBPM);
@@ -148,11 +147,10 @@ namespace MatrixOS::MidiCenter
       tickCount = (MatrixOS::SYS::Millis() - playStartTime) / tickInterval + 1;
       halfTick = tickCount * 2;
       if (clockOut) MatrixOS::MIDI::Send(MidiPacket(0, Sync));
-      uint8_t count = tickCount % 24;
       tickTimer.RecordCurrent();
-      if(count % 8 == 0)  {
+      if(tickCount % 8 == 0)  {
         stepTimer.RecordCurrent(); 
-        if(count % 24 == 0) {
+        if(tickCount % 24 == 0) {
           beatTimer.RecordCurrent(); 
           // MLOGD("Midi Center", "BPM: %d Interval: %f", bpm.byte2, tickInterval);
         }

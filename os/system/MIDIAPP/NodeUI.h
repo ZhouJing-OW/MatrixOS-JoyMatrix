@@ -81,5 +81,11 @@ namespace MatrixOS::MidiCenter
       }
       return false;
     }
+
+    bool InArea(Point xy, Point offset, Dimension dimension) { return (xy.x >= offset.x) && (xy.x < offset.x + dimension.x) && (xy.y >= offset.y) && (xy.y < offset.y + dimension.y); }
+
   };
+
+  
+
 }

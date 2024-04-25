@@ -45,7 +45,7 @@ class MidiButton : public UIComponent {
         {
           if (MatrixOS::MidiCenter::FindHold(con->type, channel, con->byte1))
           {
-            MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+            MatrixOS::LED::SetColor(xy, Color(WHITE));
           } 
           else if (activePoint != nullptr && ToLowBrightness == true && i != *activePoint) 
           {

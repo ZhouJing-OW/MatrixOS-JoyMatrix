@@ -30,7 +30,7 @@ class UI4pxKnobVar : public UIComponent {
   }
 
   virtual Dimension GetSize() { return Dimension(digits * 3 + (digits - 1) * (digits > 0) * spacing + 2, 4); }
-  virtual Color GetColor() { return (knobPtr.size() > 0) ? knobPtr[activeKnob]->color : COLOR_BLANK; };
+  virtual Color GetColor() { return (knobPtr.size() > 0) ? knobPtr[activeKnob]->color : Color(BLANK); };
 
   void Render4pxNumber(Point origin, Color color, uint8_t value) {
     // MLOGD("4PX", "Num: %d, render at %d-%d", value, origin.x, origin.y);
@@ -39,7 +39,7 @@ class UI4pxKnobVar : public UIComponent {
       for (int8_t x = 0; x < 3; x++)
       {
         for (int8_t y = 0; y < 4; y++)
-        { MatrixOS::LED::SetColor(origin + Point(x, 3 - y), bitRead(number4px[value][x], y) ? color : COLOR_BLANK); }
+        { MatrixOS::LED::SetColor(origin + Point(x, 3 - y), bitRead(number4px[value][x], y) ? color : Color(BLANK)); }
       }
     }
   }
@@ -58,7 +58,7 @@ class UI4pxKnobVar : public UIComponent {
       if (digit < sig_figure || digit == 0)
       { Render4pxNumber(render_origin, GetColor(), (int)(value/ std::pow(10, digit)) % 10); }
       else
-        Render4pxNumber(render_origin, COLOR_BLANK, 10);
+        Render4pxNumber(render_origin, Color(BLANK), 10);
       render_origin = render_origin + Point(3 + spacing, 0);
     }
     RenderplusMinus(origin + Point(GetSize().x - 1, 0));
@@ -66,7 +66,7 @@ class UI4pxKnobVar : public UIComponent {
   }
 
   bool RenderplusMinus(Point origin) {
-    Color thisColor = COLOR_WHITE;
+    Color thisColor = Color(WHITE);
     MatrixOS::LED::SetColor(origin + Point(0, 0), thisColor);
     MatrixOS::LED::SetColor(origin + Point(0, 1), thisColor);
     MatrixOS::LED::SetColor(origin + Point(0, 2), thisColor.ToLowBrightness());

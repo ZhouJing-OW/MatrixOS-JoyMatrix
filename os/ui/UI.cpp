@@ -46,7 +46,7 @@ void UI::RenderUI() {
       displayScrollBar = false;
       for(uint8_t x = 0; x < scrollBar.dimension.x; x++)
         for(uint8_t y = 0; y < scrollBar.dimension.y; y++)
-          MatrixOS::LED::SetColor(Point(x, y) + scrollBar.position, COLOR_BLANK);
+          MatrixOS::LED::SetColor(Point(x, y) + scrollBar.position, Color(BLANK));
     }
 
     // MatrixOS::LED::Fill(0);
@@ -140,7 +140,7 @@ void UI::RemoveUIComponent(Point xy) {
     dimension = it->second->GetSize();
       for(uint8_t x = 0; x < dimension.x; x++)
         for(uint8_t y = 0; y < dimension.y; y++)
-          MatrixOS::LED::SetColor(xy + Point(x, y), COLOR_BLANK);  
+          MatrixOS::LED::SetColor(xy + Point(x, y), Color(BLANK));  
     uiComponentMap.erase(xy);
   }
 }

@@ -24,48 +24,48 @@ namespace MatrixOS::MidiCenter
       return true;
     }
 
-    virtual Color GetColor() { return COLOR_ORANGE; }
+    virtual Color GetColor() { return Color(ORANGE); }
     virtual Dimension GetSize() { return dimension; }
     
     const Point labelPos        = Point(4, 0);
     const Point settingPos      = Point(0, 1);
-    const Color knobColor[8]    = { COLOR_CYAN,     COLOR_AZURE,    COLOR_LIME,     COLOR_GREEN,    COLOR_YELLOW,   COLOR_GOLD,     COLOR_ORANGE,   COLOR_RED };
-    const char labelName[8][8]  = { "Type",         "Rate",         "Octave",       "Repeat",       "Pattern",      "Chance",       "Gate",         "Decay" };
-    const Color labelColor[8]   = { COLOR_GREEN,    COLOR_GREEN,    COLOR_GREEN,    COLOR_GREEN,    COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW };
-    const char rateName[16][8]  = { "1/16",         "1/12",         "1/8",          "1/6",       
-                                    "1/4",          "1/3",          "1/2", 
-                                    "1Beat",        "2Beat",        "3Beat",        
-                                    "4Beat",        "6Beat",        "8Beat",        "12Beat",       "16Beat",       "32Beat" };
-    const Color rateColor[16]   = { COLOR_ORANGE,   COLOR_ORANGE,   COLOR_ORANGE,   COLOR_ORANGE, 
-                                    COLOR_GOLD,     COLOR_GOLD,     COLOR_GOLD, 
-                                    COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW,   
-                                    COLOR_GREEN,    COLOR_GREEN,    COLOR_GREEN,    COLOR_GREEN,    COLOR_GREEN,    COLOR_GREEN };
-    const char gateName[16][8]  = { "5%",           "10%",          "15%",          "20%",          "30%",          "40%",          
-                                    "50%",          "60%",          "70%",          "80%",          "90%",          "100%", 
-                                    "150%",         "200%",         "300%",         "400%" };
-    const Color gateColor[16]   = { COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW,
-                                    COLOR_GOLD,     COLOR_GOLD,     COLOR_GOLD,     COLOR_GOLD,     COLOR_GOLD,     COLOR_GOLD,
-                                    COLOR_ORANGE,   COLOR_ORANGE,   COLOR_ORANGE,   COLOR_ORANGE };     
-    const char typeName[12][16] = { "UP",           "Down",         "Converge",     "Diverge",      "Pink Up",      "Pink Down",       
-                                    "Thumb Up",     "Thumb Down",   "Random",       "Random Other", "Random Once",  "By Order"};
-    const Color typeColor[12]   = { COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW,   COLOR_YELLOW,   
-                                    COLOR_YELLOW,   COLOR_YELLOW,   COLOR_GREEN,    COLOR_GREEN,    COLOR_GREEN,    COLOR_ORANGE};
+    const Color knobColor[8]    = { Color(TURQUOISE), Color(CYAN),      Color(GREEN),     Color(LAWN),      Color(YELLOW),    Color(GOLD),      Color(ORANGE),    Color(RED) };
+    const char labelName[8][8]  = { "Type",           "Rate",           "Octave",         "Repeat",         "Pattern",        "Chance",         "Gate",           "Decay" };
+    const Color labelColor[8]   = { Color(LAWN),      Color(LAWN),      Color(LAWN),      Color(LAWN),      Color(YELLOW),    Color(YELLOW),    Color(YELLOW),    Color(YELLOW) };
+    const char rateName[16][8]  = { "1/16",           "1/12",           "1/8",            "1/6",       
+                                    "1/4",            "1/3",            "1/2", 
+                                    "1Beat",          "2Beat",          "3Beat",        
+                                    "4Beat",          "6Beat",          "8Beat",          "12Beat",         "16Beat",         "32Beat" };
+    const Color rateColor[16]   = { Color(ORANGE),    Color(ORANGE),    Color(ORANGE),    Color(ORANGE), 
+                                    Color(GOLD),      Color(GOLD),      Color(GOLD), 
+                                    Color(YELLOW),    Color(YELLOW),    Color(YELLOW),   
+                                    Color(LAWN),      Color(LAWN),      Color(LAWN),      Color(LAWN),      Color(LAWN),      Color(LAWN) };
+    const char gateName[16][8]  = { "5%",             "10%",            "15%",            "20%",            "30%",            "40%",          
+                                    "50%",            "60%",            "70%",            "80%",            "90%",            "100%", 
+                                    "150%",           "200%",           "300%",           "400%" };
+    const Color gateColor[16]   = { Color(YELLOW),    Color(YELLOW),    Color(YELLOW),    Color(YELLOW),    Color(YELLOW),    Color(YELLOW),
+                                    Color(GOLD),      Color(GOLD),      Color(GOLD),      Color(GOLD),      Color(GOLD),      Color(GOLD),
+                                    Color(ORANGE),    Color(ORANGE),    Color(ORANGE),    Color(ORANGE) };     
+    const char typeName[12][16] = { "UP",             "Down",           "Converge",       "Diverge",        "Pink Up",        "Pink Down",       
+                                    "Thumb Up",       "Thumb Down",     "Random",         "Random Other",   "Random Once",    "By Order"};
+    const Color typeColor[12]   = { Color(YELLOW),    Color(YELLOW),    Color(YELLOW),    Color(YELLOW),    Color(YELLOW),    Color(YELLOW),   
+                                    Color(YELLOW),    Color(YELLOW),    Color(LAWN),      Color(LAWN),      Color(LAWN),      Color(ORANGE)};
     const uint8_t decayNum[16]  = { 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48 };
 
     virtual bool Render(Point origin)
     {
       CheckNodeChange(arpeggiator, NODE_ARP);
 
-      Color switchColor = COLOR_WHITE;
+      Color switchColor = Color(WHITE);
       MatrixOS::LED::SetColor(origin + Point(15, 0), switchColor.ToLowBrightness(arpeggiator != nullptr));
       LabelRender(origin + labelPos);
 
       if (arpeggiator == nullptr) return true;
 
       VarSet();
-      Color configColor = arpeggiator->activeLabel == 8 ? COLOR_WHITE : COLOR_CONFIG[arpeggiator->configNum];
+      Color configColor = arpeggiator->activeLabel == 8 ? Color(WHITE) : COLOR_HIGH_SAT[arpeggiator->configNum];
       MatrixOS::LED::SetColor(origin + Point(14, 0), configColor);
-      // Color timeSyncColor = COLOR_BLUE;
+      // Color timeSyncColor = Color(BLUE);
       // MatrixOS::LED::SetColor(origin + Point(2, 0), timeSyncColor.ToLowBrightness(arpeggiator->config->timeSync));
       switch (arpeggiator->activeLabel)
       { 
@@ -95,7 +95,7 @@ namespace MatrixOS::MidiCenter
           return true;
         }
         if (keyInfo->state == HOLD) {
-          MatrixOS::UIInterface::TextScroll("ARP ON/OFF", COLOR_ORANGE);
+          MatrixOS::UIInterface::TextScroll("ARP ON/OFF", Color(ORANGE));
           return true;
         }
       }
@@ -110,7 +110,7 @@ namespace MatrixOS::MidiCenter
       //     return true;
       //   }
       //   if (keyInfo->state == HOLD) {
-      //     MatrixOS::UIInterface::TextScroll("Sync", COLOR_ORANGE);
+      //     MatrixOS::UIInterface::TextScroll("Sync", Color(ORANGE));
       //     return true;
       //   }
       // }
@@ -122,7 +122,7 @@ namespace MatrixOS::MidiCenter
           return true; 
         }
         if (keyInfo->state == HOLD) {
-          MatrixOS::UIInterface::TextScroll("Config Select", COLOR_CONFIG[arpeggiator->configNum]);
+          MatrixOS::UIInterface::TextScroll("Config Select", COLOR_HIGH_SAT[arpeggiator->configNum]);
           return true;
         }
       }
@@ -151,7 +151,7 @@ namespace MatrixOS::MidiCenter
 
     void LabelRender(Point origin)
     {
-      Color activeColor = COLOR_WHITE;
+      Color activeColor = Color(WHITE);
       for(uint8_t x = 0; x < 8; x++)
       {
         Point xy = origin + Point(x, 0);
@@ -187,9 +187,9 @@ namespace MatrixOS::MidiCenter
 
     void TypeRender(Point origin)
     {
-      Color forbackColor = COLOR_BLUE;
+      Color forbackColor = Color(BLUE);
       Color selectColor = arpeggiator->config->forBackward ? forbackColor : knobColor[0];
-      Color repeatColor = COLOR_GOLD;
+      Color repeatColor = Color(GOLD);
       for(uint8_t x = 0; x < 16; x++)
       {
         Point xy = origin + Point(x, 0);
@@ -221,7 +221,7 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll("For-Backward", COLOR_GREEN);
+          MatrixOS::UIInterface::TextScroll("For-Backward", Color(LAWN));
           return true;
         }
       }
@@ -234,7 +234,7 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll("Repeat-Ends", COLOR_LIME);
+          MatrixOS::UIInterface::TextScroll("Repeat-Ends", Color(GREEN));
           return true;
         }
       }
@@ -271,7 +271,7 @@ namespace MatrixOS::MidiCenter
               MatrixOS::LED::SetColor(xy, thisColor);
           }
           else
-            MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+            MatrixOS::LED::SetColor(xy, Color(WHITE));
         }
         else
           MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
@@ -304,14 +304,14 @@ namespace MatrixOS::MidiCenter
         if(x < 6)
         {
           if (x == arpeggiator->currentOctave && !arpeggiator->inputList.empty())
-            MatrixOS::LED::SetColor(xy, COLOR_ORANGE);
+            MatrixOS::LED::SetColor(xy, Color(ORANGE));
           else if(x < octaveRange.Value())
             MatrixOS::LED::SetColor(xy, thisColor);
           else
             MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
         }
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
     }
 
@@ -327,7 +327,7 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll(std::to_string(ui.x + 1), COLOR_RED);
+          MatrixOS::UIInterface::TextScroll(std::to_string(ui.x + 1), Color(RED));
           return true;
         }
       }
@@ -341,7 +341,7 @@ namespace MatrixOS::MidiCenter
       {
         Point xy = origin + Point(x, 0);
         if(x == arpeggiator->currentRepeat && !arpeggiator->inputList.empty())
-          MatrixOS::LED::SetColor(xy, COLOR_ORANGE);
+          MatrixOS::LED::SetColor(xy, Color(ORANGE));
         else if(x < noteRepeat.Value())
           MatrixOS::LED::SetColor(xy, thisColor);
         else
@@ -359,7 +359,7 @@ namespace MatrixOS::MidiCenter
       }
       if(keyInfo->state == HOLD)
       {
-        MatrixOS::UIInterface::TextScroll(std::to_string(ui.x + 1) + "x", COLOR_ORANGE);
+        MatrixOS::UIInterface::TextScroll(std::to_string(ui.x + 1) + "x", Color(ORANGE));
         return true;
       }
       return false;
@@ -367,10 +367,10 @@ namespace MatrixOS::MidiCenter
 
     void PatternRender(Point origin)
     {
-      Color thisColor = COLOR_ORANGE;
-      Color backColor = COLOR_BLUE;
-      Color skipColor = COLOR_RED;
-      Color lengthColor = arpeggiator->config->skip ? COLOR_RED : knobColor[4]; 
+      Color thisColor = Color(ORANGE);
+      Color backColor = Color(BLUE);
+      Color skipColor = Color(RED);
+      Color lengthColor = arpeggiator->config->skip ? Color(RED) : knobColor[4]; 
       for(uint8_t x = 0; x < 16; x++)
       {
         Point xy = origin + Point(x, 0);
@@ -380,7 +380,7 @@ namespace MatrixOS::MidiCenter
         {
           uint8_t i = x - 4;
           if(i == arpeggiator->currentStep && !arpeggiator->inputList.empty())
-          MatrixOS::LED::SetColor(xy, COLOR_WHITE);
+          MatrixOS::LED::SetColor(xy, Color(WHITE));
           else if(i < arpeggiator->config->patternLength)
           {
             bool active = bitRead(arpeggiator->config->pattern, i);
@@ -395,7 +395,7 @@ namespace MatrixOS::MidiCenter
         else if (x == 1)
           MatrixOS::LED::SetColor(xy, lengthColor.ToLowBrightness());
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
     }
 
@@ -411,7 +411,7 @@ namespace MatrixOS::MidiCenter
         }
         if (keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll("-Step", COLOR_GREEN);
+          MatrixOS::UIInterface::TextScroll("-Step", Color(LAWN));
           return true;
         }
       }
@@ -424,7 +424,7 @@ namespace MatrixOS::MidiCenter
         }
         if (keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll("+Step", COLOR_GREEN);
+          MatrixOS::UIInterface::TextScroll("+Step", Color(LAWN));
           return true;
         }
       }
@@ -452,7 +452,7 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll("Length", COLOR_GREEN);
+          MatrixOS::UIInterface::TextScroll("Length", Color(LAWN));
           return true;
         }
       }
@@ -465,7 +465,7 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll("Skip", COLOR_RED);
+          MatrixOS::UIInterface::TextScroll("Skip", Color(RED));
           return true;
         }
       }
@@ -476,8 +476,8 @@ namespace MatrixOS::MidiCenter
     void ChanceRender(Point origin)
     {
       Color thisColor = knobColor[5];
-      Color backColor = arpeggiator->config->skip ? COLOR_RED : COLOR_BLUE;
-      Color skipColor = COLOR_RED;
+      Color backColor = arpeggiator->config->skip ? Color(RED) : Color(BLUE);
+      Color skipColor = Color(RED);
       Color blinkColor = knobColor[2];
       for(uint8_t x = 0; x < 16; x++)
       {
@@ -497,7 +497,7 @@ namespace MatrixOS::MidiCenter
         else if(x == 15)
           MatrixOS::LED::SetColor(xy, skipColor.ToLowBrightness(arpeggiator->config->skip));
         else
-          MatrixOS::LED::SetColor(xy, COLOR_BLANK);
+          MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
     }
 
@@ -513,7 +513,7 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll("-1%", COLOR_ORANGE);
+          MatrixOS::UIInterface::TextScroll("-1%", Color(ORANGE));
           return true;
         }
       }
@@ -526,7 +526,7 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll("+1%", COLOR_ORANGE);
+          MatrixOS::UIInterface::TextScroll("+1%", Color(ORANGE));
           return true;
         }
       }
@@ -540,7 +540,7 @@ namespace MatrixOS::MidiCenter
         if(keyInfo->state == HOLD)
         {
           string cs = std::to_string(chance.Value()) + "%";
-          MatrixOS::UIInterface::TextScroll(cs, COLOR_ORANGE);
+          MatrixOS::UIInterface::TextScroll(cs, Color(ORANGE));
           return true;
         }
       }
@@ -553,7 +553,7 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         {
-          MatrixOS::UIInterface::TextScroll("Skip", COLOR_RED);
+          MatrixOS::UIInterface::TextScroll("Skip", Color(RED));
           return true;
         }
       }
@@ -595,8 +595,8 @@ namespace MatrixOS::MidiCenter
     void DecayRender(Point origin)
     {
       Color thisColor = knobColor[7];
-      Color backColor = COLOR_BLUE;
-      Color velColor = COLOR_LIME;
+      Color backColor = Color(BLUE);
+      Color velColor = Color(GREEN);
       for(uint8_t x = 0; x < 16; x++)
       {
         Point xy = origin + Point(x, 0);
@@ -649,7 +649,7 @@ namespace MatrixOS::MidiCenter
       }
       if(keyInfo->state == HOLD)
       {
-        MatrixOS::UIInterface::TextScroll("-" + std::to_string(decayNum[ui.x]), COLOR_RED);
+        MatrixOS::UIInterface::TextScroll("-" + std::to_string(decayNum[ui.x]), Color(RED));
         return true;
       }
       return false;
@@ -660,7 +660,7 @@ namespace MatrixOS::MidiCenter
       for(uint8_t x = 0; x < 16; x++)
       {
         Point xy = origin + Point(x, 0);
-        Color thisColor = COLOR_CONFIG[x];
+        Color thisColor = COLOR_HIGH_SAT[x];
         if (arpeggiator->configNum == x)
           MatrixOS::LED::SetColor(xy, thisColor);
         else
@@ -674,13 +674,12 @@ namespace MatrixOS::MidiCenter
       if(keyInfo->state == RELEASED && keyInfo->hold == false)
       {
         arpeggiator->SetActiveConfig(ui.x);
-        arpeggiator->activeLabel = arpeggiator->lastLabel;
         VarGet();
         return true;
       }
       if(keyInfo->state == HOLD)
       {
-        MatrixOS::UIInterface::TextScroll("Config " + std::to_string(ui.x + 1), COLOR_CONFIG[ui.x]);
+        MatrixOS::UIInterface::TextScroll("Config " + std::to_string(ui.x + 1), COLOR_HIGH_SAT[ui.x]);
         return true;
       }
       return false;
@@ -730,7 +729,7 @@ namespace MatrixOS::MidiCenter
     void KnobInit()
     {
       for(uint8_t i = 0; i < 8; i++)
-        velocity[i]     = {.lock = true, .data = {.varPtr = nullptr},   .min = 1,   .def = 127,  .color = COLOR_ORANGE};
+        velocity[i]     = {.lock = true, .data = {.varPtr = nullptr},   .min = 1,   .def = 127,  .color = Color(ORANGE)};
 
       type              = {.lock = true, .data = {.varPtr = nullptr},   .min = 0,   .max = 11,   .def = 0,   .color = knobColor[0]};
       rate              = {.lock = true, .data = {.varPtr = nullptr},   .min = 0,   .max = 15,   .def = 4,   .color = knobColor[1]};

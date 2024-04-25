@@ -25,6 +25,13 @@ Color::Color(uint32_t WRGB) {
   B = (WRGB & 0x000000FF);
 }
 
+Color::Color(ColorLabel label) {
+  W = (label & 0xFF000000) >> 24;
+  R = (label & 0x00FF0000) >> 16;
+  G = (label & 0x0000FF00) >> 8;
+  B = (label & 0x000000FF);
+}
+
 Color::Color(uint8_t nR, uint8_t nG, uint8_t nB, uint8_t nW) {
   R = nR;
   G = nG;
@@ -84,7 +91,7 @@ Color Color::Blink_Timer(Timer* timer, uint32_t ms)
 {
   bool cancel = timer->IsLonger(100);
   if (!cancel)
-    return COLOR_WHITE;
+    return Color(WHITE);
   else
     return Color(R, G, B, W);
 }

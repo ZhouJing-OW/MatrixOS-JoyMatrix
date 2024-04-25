@@ -5,10 +5,10 @@ class UIColorSelector : public UIComponent {
  public:
   Color* color;
   std::function<void()> callback;
-  const Color colors[4][4] = {{COLOR_RED,     COLOR_ORANGE,   COLOR_GOLD,     COLOR_YELLOW},
-                              {COLOR_PINK,    COLOR_WHITE,    COLOR_WHITE,    COLOR_GREEN},
-                              {COLOR_VIOLET,  COLOR_WHITE,    COLOR_WHITE,    COLOR_LIME},
-                              {COLOR_PURPLE,  COLOR_BLUE,     COLOR_AZURE,    COLOR_CYAN},};
+  const Color colors[4][4] = {{Color(RED),     Color(ORANGE),   Color(GOLD),     Color(YELLOW)},
+                              {Color(MAGENTA), Color(WHITE),    Color(WHITE),    Color(LAWN)},
+                              {Color(VIOLET),  Color(WHITE),    Color(WHITE),    Color(GREEN)},
+                              {Color(PURPLE),  Color(BLUE),     Color(CYAN),     Color(TURQUOISE)},};
 
   UIColorSelector(Color* color, std::function<void()> callback = nullptr) {
     this->color = color;

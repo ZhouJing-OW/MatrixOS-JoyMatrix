@@ -68,7 +68,7 @@ namespace MatrixOS::MidiCenter
       {
         for(uint8_t x = 0; x < dimension.x; x++)
           for(uint8_t y = 0; y < dimension.y; y++)
-            MatrixOS::LED::SetColor(Point(x, y) + origin, COLOR_BLANK);
+            MatrixOS::LED::SetColor(Point(x, y) + origin, Color(BLANK));
         Color padColor;
         switch(channelConfig->padType[channel])
         {
@@ -86,10 +86,10 @@ namespace MatrixOS::MidiCenter
       {
         for(uint8_t x = 0; x < 16; x++)
         {
-          MatrixOS::LED::SetColor(origin + Point(x, 0), COLOR_BLANK);
-          MatrixOS::LED::SetColor(origin + Point(x, 1), COLOR_BLANK);
+          MatrixOS::LED::SetColor(origin + Point(x, 0), Color(BLANK));
+          MatrixOS::LED::SetColor(origin + Point(x, 1), Color(BLANK));
         }
-        MatrixOS::LED::SetColor(origin + Point(0, 0), COLOR_RED);
+        MatrixOS::LED::SetColor(origin + Point(0, 0), Color(RED));
         ui->Render(origin);
       }
 
@@ -102,8 +102,8 @@ namespace MatrixOS::MidiCenter
       if(largePad) 
       {
         multiPad->dimension = Dimension(16, 4);
-        MatrixOS::LED::SetColor(origin + Point(0, 0), COLOR_RED);
-        MatrixOS::LED::SetColor(origin + Point(0, 1), COLOR_BLANK);
+        MatrixOS::LED::SetColor(origin + Point(0, 0), Color(RED));
+        MatrixOS::LED::SetColor(origin + Point(0, 1), Color(BLANK));
       }
       else multiPad->dimension = Dimension(16, 2);
       multiPad->Render(origin + (largePad ? Point(0,0) : Point(0, 2)));
@@ -124,7 +124,7 @@ namespace MatrixOS::MidiCenter
         
         if (keyInfo->state == HOLD && (largePad || activeUI != NODE_NONE))
         {
-          MatrixOS::UIInterface::TextScroll("Back", COLOR_RED);
+          MatrixOS::UIInterface::TextScroll("Back", Color(RED));
           return true;
         }
       }
@@ -179,7 +179,7 @@ namespace MatrixOS::MidiCenter
     void AppButtonRender(NodeID nodeID, Point xy)
     {
       Color thisColor = nodesInfo[nodeID].color.ToLowBrightness(FindNode(nodeID));
-      Color switchColor = COLOR_WHITE;
+      Color switchColor = Color(WHITE);
 
       MatrixOS::LED::SetColor(xy + Point(0, 0), thisColor);
       MatrixOS::LED::SetColor(xy + Point(1, 0), thisColor);

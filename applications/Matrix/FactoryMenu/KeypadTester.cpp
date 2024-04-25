@@ -58,12 +58,13 @@ class KeyTestUI : public UIComponent
     {
       for (uint8_t x = 0; x < dimension.x; x++) {
         for (uint8_t y = 0; y < dimension.y; y++)
-            MatrixOS::LED::SetColor(Point(x, y), COLOR_BLANK);
-        MatrixOS::LED::SetColor(Point(x, 0), COLOR_CONFIG[x]);
+            MatrixOS::LED::SetColor(Point(x, y), Color(BLANK));
+        MatrixOS::LED::SetColor(Point(x, 0), COLOR_HIGH_SAT[x]);
+        MatrixOS::LED::SetColor(Point(x, 1), COLOR_LOW_SAT[x]);
       }
 
-      MatrixOS::LED::SetColor(Point(0, 1) + origin, COLOR_WHITE);
-      MatrixOS::LED::SetColor(Point(15, 1) + origin, Color(0xFFFFFF).ToLowBrightness(keypad_tested[settingPoint.x][settingPoint.y] == 2));
+      MatrixOS::LED::SetColor(Point(0, 2) + origin, Color(WHITE));
+      MatrixOS::LED::SetColor(Point(15, 2) + origin, Color(0xFFFFFF).ToLowBrightness(keypad_tested[settingPoint.x][settingPoint.y] == 2));
 
       for (uint8_t x = 6; x < 10; x++) {
         for (uint8_t y = 2; y < 4; y++)
@@ -113,10 +114,12 @@ class KeyTestUI : public UIComponent
       if(keyInfo->state == PRESSED)
       {
         if (xy.y == 0)
-          keyColor[settingPoint.x][settingPoint.y] = COLOR_CONFIG[xy.x];
-        else if (xy.x == 0 && xy.y == 1)
-          keyColor[settingPoint.x][settingPoint.y] = COLOR_WHITE;
-        else if (xy.x == 15 && xy.y == 1)
+          keyColor[settingPoint.x][settingPoint.y] = COLOR_HIGH_SAT[xy.x];
+        if (xy.y == 1)
+          keyColor[settingPoint.x][settingPoint.y] = COLOR_LOW_SAT[xy.x];
+        else if (xy.x == 0 && xy.y == 2)
+          keyColor[settingPoint.x][settingPoint.y] = Color(WHITE);
+        else if (xy.x == 15 && xy.y == 2)
         {
           keypad_tested[settingPoint.x][settingPoint.y] = keypad_tested[settingPoint.x][settingPoint.y] == 2 ? 1 : 2;
           return true;
