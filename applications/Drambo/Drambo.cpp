@@ -101,11 +101,8 @@ void Drambo::Tab0(){ // Main
 
 void Drambo::Tab1(){ // Note
   UI tab1("");
-
-  // MatrixOS::KnobCenter::ChannelMode();
-  // MultiPad multiPad(Dimension(16, 4), 4, CH, PAD, DRUM);
-
-  // tab1.AddUIComponent(multiPad, Point(0, 0));
+  MatrixOS::KnobCenter::ChannelMode();
+  MatrixOS::MidiCenter::AddClipSelectorTo(tab1);
 
   CommonUI(tab1);
   tab1.SetLoopFunc([&]() -> void { CommonLoop(tab1); });
@@ -152,7 +149,7 @@ void Drambo::Tab4(){ // Mixer
 
   CommonUI(tab4);
   tab4.SetLoopFunc( [&]() -> void { CommonLoop(tab4); });
-  tab4.SetEndFunc([&]() -> void { CommonEnd(tab4); });
+  tab4.SetEndFunc([&]() -> void { Device::AnalogInput::DisableUpDown(); CommonEnd(tab4); });
   tab4.Start();
 }
 

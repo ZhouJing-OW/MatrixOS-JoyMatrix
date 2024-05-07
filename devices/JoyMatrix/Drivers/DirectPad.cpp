@@ -98,11 +98,9 @@ namespace Device::AnalogInput
     LR_callback = callback;
   }
 
-  void DisableDirectPad()
-  {
-    leftRight = nullptr;
-    upDown = nullptr;
-  }
+  void DisableDirectPad() { leftRight = nullptr; upDown = nullptr;}
+  void DisableLeftRight() { leftRight = nullptr;}
+  void DisableUpDown() { upDown = nullptr;}
 
   int8_t* GetUDPtr() { return upDown; }
 

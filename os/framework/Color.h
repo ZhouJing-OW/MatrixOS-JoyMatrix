@@ -46,6 +46,23 @@ enum ColorLabel : uint32_t {
   DEEPPINK_LS    = 0xE01070,
   MAROON_LS      = 0xE01030,
 
+  RED_HL         = 0xFF4040,
+  TOMATO_HL      = 0xFF6040,
+  ORANGE_HL      = 0xFF8040, 
+  GOLD_HL        = 0xFFC040,
+  YELLOW_HL      = 0xFFFF40,
+  LAWN_HL        = 0x80FF40,
+  GREEN_HL       = 0x40FF40,
+  TURQUOISE_HL   = 0x40FF80,
+  CYAN_HL        = 0x40FFFF,
+  DEEPSKY_HL     = 0x4080FF,
+  BLUE_HL        = 0x4040FF,
+  PURPLE_HL      = 0x6040FF,
+  VIOLET_HL      = 0xA040FF,
+  MAGENTA_HL     = 0xFF40FF,
+  DEEPPINK_HL    = 0xFF40A0,
+  MAROON_HL      = 0xFF4060,
+
 };
 
 class Color {
@@ -113,19 +130,23 @@ const uint8_t led_gamma[256] = {
     169, 171, 173, 175, 177, 180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213, 215, 218,
     220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255};
 
-const ColorLabel COLOR_HIGH_SAT[16] = {
-RED,          TOMATO,       ORANGE,       GOLD,         YELLOW,       LAWN,         GREEN,        TURQUOISE,
-CYAN,         DEEPSKY,      BLUE,         PURPLE,       VIOLET,       MAGENTA,      DEEPPINK,     MAROON,
+static const ColorLabel COLOR_HIGH_S[16] = {
+  RED,          TOMATO,       ORANGE,       GOLD,         YELLOW,       LAWN,         GREEN,        TURQUOISE,
+  CYAN,         DEEPSKY,      BLUE,         PURPLE,       VIOLET,       MAGENTA,      DEEPPINK,     MAROON,
 };
 
-const ColorLabel COLOR_LOW_SAT[16] = {
-RED_LS,       TOMATO_LS,    ORANGE_LS,    GOLD_LS,      YELLOW_LS,    LAWN_LS,      GREEN_LS,     TURQUOISE_LS,
-CYAN_LS,      DEEPSKY_LS,   BLUE_LS,      PURPLE_LS,    VIOLET_LS,    MAGENTA_LS,   DEEPPINK_LS,  MAROON_LS,
+static const  ColorLabel COLOR_LOW_S[16] = {
+  RED_LS,       TOMATO_LS,    ORANGE_LS,    GOLD_LS,      YELLOW_LS,    LAWN_LS,      GREEN_LS,     TURQUOISE_LS,
+  CYAN_LS,      DEEPSKY_LS,   BLUE_LS,      PURPLE_LS,    VIOLET_LS,    MAGENTA_LS,   DEEPPINK_LS,  MAROON_LS,
 };
 
-const ColorLabel COLOR_KNOB_8PAGE [8] = { RED,          DEEPPINK,     VIOLET,       PURPLE,       ORANGE,       GOLD,         YELLOW,       GREEN};
-const ColorLabel COLOR_SEQ_4PAGE  [4] = { GREEN,        LAWN,         YELLOW,       GOLD};
+static const  ColorLabel COLOR_HIGH_L[16] = {
+  RED_HL,       TOMATO_HL,    ORANGE_HL,    GOLD_HL,      YELLOW_HL,    LAWN_HL,      GREEN_HL,     TURQUOISE_HL,
+  CYAN_HL,      DEEPSKY_HL,   BLUE_HL,      PURPLE_HL,    VIOLET_HL,    MAGENTA_HL,   DEEPPINK_HL,  MAROON_HL,  
+};
 
-const ColorLabel COLOR_PIANO_PAD  [2] = { DEEPSKY_LS,   DEEPSKY};  // [0] ragular color [1] root color
-const ColorLabel COLOR_NOTE_PAD   [2] = { PURPLE_LS,    PURPLE};  // [0] ragular color [1] root color
-const ColorLabel COLOR_DRUM_PAD   [2] = { TOMATO_LS,    TOMATO};    // [0] ragular color [1] root color
+static const  ColorLabel COLOR_KNOB_8PAGE [8] = { RED,          DEEPPINK,     VIOLET,       PURPLE,       ORANGE,       GOLD,         YELLOW,       LAWN};
+
+static const  ColorLabel COLOR_PIANO_PAD  [2] = { DEEPSKY_LS,   DEEPSKY};  // [0] ragular color [1] root color
+static const  ColorLabel COLOR_NOTE_PAD   [2] = { PURPLE_LS,    PURPLE};  // [0] ragular color [1] root color
+static const  ColorLabel COLOR_DRUM_PAD   [2] = { TOMATO_LS,    TOMATO};    // [0] ragular color [1] root color

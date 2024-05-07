@@ -66,7 +66,7 @@ class TransBar : public UIComponent {
       }
 
       if (keyInfo->state == RELEASED && keyInfo->hold == false){
-        if(!shift && xy.x == 0 && MatrixOS::UserVar::clockOut){
+        if(!shift && xy.x == 0 && !MatrixOS::UserVar::clockIn){
           if(!state->play) MatrixOS::MidiCenter::ClockStart();
           else MatrixOS::MidiCenter::ClockStop();
           return true;

@@ -31,10 +31,8 @@ void FactoryMenu::KeyPadSettings() {
         if (Device::KeyPad::keypad_custom_setting && Device::KeyPad::keypad_velocity_sensitive)
         {
           Device::KeyPad::keypad_low_threshold =
-              (Fract16)(MatrixOS::UIInterface::NumberSelector16x4((uint16_t)Device::KeyPad::keypad_low_threshold.Get() /
-                                                                     256,
-                                                                 0x00FFFF, "Keypad Low Threshold", 1, 16) *
-                        256);
+              (Fract16)(MatrixOS::UIInterface::NumberSelector16x4((uint16_t)Device::KeyPad::keypad_low_threshold.Get() / 256,
+                                                                 0x00FFFF, "Keypad Low Threshold", 1, 16) * 256);
           Device::KeyPad::keypad_config.low_threshold = Device::KeyPad::keypad_low_threshold;
         }
       });
@@ -47,11 +45,8 @@ void FactoryMenu::KeyPadSettings() {
         if (Device::KeyPad::keypad_custom_setting && Device::KeyPad::keypad_velocity_sensitive)
         {
           Device::KeyPad::keypad_high_threshold =
-              (Fract16)(MatrixOS::UIInterface::NumberSelector16x4((uint16_t)Device::KeyPad::keypad_high_threshold.Get() /
-                                                                     256,
-                                                                 0x00FFFF, "Keypad High Threshold",
-                                                                 1, 255) *
-                        256);
+              (Fract16)(MatrixOS::UIInterface::NumberSelector16x4((uint16_t)Device::KeyPad::keypad_high_threshold.Get() / 256,
+                                                                 0x00FFFF, "Keypad High Threshold", 1, 255) * 256);
           Device::KeyPad::keypad_config.high_threshold = Device::KeyPad::keypad_high_threshold;
         }
       });
@@ -64,8 +59,7 @@ void FactoryMenu::KeyPadSettings() {
         if (Device::KeyPad::keypad_custom_setting)
         {
           Device::KeyPad::keypad_debounce =
-              MatrixOS::UIInterface::NumberSelector16x4((uint16_t)Device::KeyPad::keypad_debounce.Get(), 0x00FFFF,
-                                                       "Keypad Debounce (ms)", 0, 32);
+              MatrixOS::UIInterface::NumberSelector16x4((uint16_t)Device::KeyPad::keypad_debounce.Get(), 0x00FFFF, "Keypad Debounce (ms)", 0, 32);
           Device::KeyPad::keypad_config.debounce = Device::KeyPad::keypad_debounce;
         }
       });

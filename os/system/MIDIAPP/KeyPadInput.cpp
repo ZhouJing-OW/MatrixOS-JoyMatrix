@@ -131,6 +131,7 @@ namespace MatrixOS::MidiCenter
   void PanicChannel(int8_t channel = -1) {
     ClearHold(SEND_NOTE, channel);
     ClearToggle(SEND_NOTE, channel);
+    ClearSeq(channel);
     ClearArp(channel);
 
     uint8_t ch_start = channel == -1 ? 0 : channel;

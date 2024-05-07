@@ -65,6 +65,8 @@ namespace Device
     void SetUpDown(int8_t* up_down, int8_t max, int8_t min = 0, int8_t step = 1, bool loop = false, std::function<void()> callback = nullptr);
     void SetLeftRight(int8_t* left_right, int8_t max, int8_t min = 0, int8_t step = 1, bool loop = false, std::function<void()> callback = nullptr);
     void DisableDirectPad();
+    void DisableLeftRight();
+    void DisableUpDown();
     int8_t* GetUDPtr();
     int8_t* GetLRPtr();
     bool UDIsLonger(uint32_t ms);

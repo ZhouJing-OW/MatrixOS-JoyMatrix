@@ -40,17 +40,16 @@ void MultiPad::OctaveShiftRender(Point origin)
 
 bool MultiPad::OctaveShiftKeyEvent(Point xy, KeyInfo* keyInfo)
 {
-    if (keyInfo->state == PRESSED && xy.y >= dimension.y - 2)
-    { 
-      NotePadConfig* config = padConfig + channelConfig->activePadConfig[channel][*padType];
-      int8_t *octave = &config->octave;
-      uint8_t i = xy.y - (dimension.y - 2);
-      if (i == 0) *octave = (*octave + 1) < 9 ? (*octave + 1) : 9;
-      if (i == 1) *octave = (*octave - 1) > 0 ? (*octave - 1) : 0;
-      octaveTimer.RecordCurrent();
-      octaveViewMode = true;
-      return true;
-    }
-    return false;
+  if (keyInfo->state == PRESSED && xy.y >= dimension.y - 2)
+  { 
+    NotePadConfig* config = padConfig + channelConfig->activePadConfig[channel][*padType];
+    int8_t *octave = &config->octave;
+    uint8_t i = xy.y - (dimension.y - 2);
+    if (i == 0) *octave = (*octave + 1) < 9 ? (*octave + 1) : 9;
+    if (i == 1) *octave = (*octave - 1) > 0 ? (*octave - 1) : 0;
+    octaveTimer.RecordCurrent();
+    octaveViewMode = true;
+    return true;
+  }
   return false;
 }

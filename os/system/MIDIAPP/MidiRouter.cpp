@@ -13,7 +13,7 @@ namespace MatrixOS::MidiCenter
 
   std::map<NodeID, NodeInfo> nodesInfo = {
     {NODE_NONE,   {"",        Color(BLANK),    nullptr     }},
-    {NODE_SEQ,    {"SEQ",     Color(LAWN),    nullptr     }},
+    {NODE_SEQ,    {"SEQ",     Color(LAWN),     nullptr     }},
     {NODE_CHORD,  {"CHORD",   Color(YELLOW),   chordConfig }},
     {NODE_ARP,    {"ARP",     Color(ORANGE),   arpConfig   }},
   };
@@ -82,6 +82,9 @@ namespace MatrixOS::MidiCenter
 
     switch(nodeID)
     {
+      case NODE_SEQ:
+        nodesInChannel[channel].insert({NODE_SEQ, new Sequencer(channel)});
+        break;
       case NODE_CHORD:
         nodesInChannel[channel].insert({NODE_CHORD, new Chorder(channel, chordConfig, configNum)});
         break;

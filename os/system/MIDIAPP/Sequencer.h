@@ -4,34 +4,42 @@
 
 namespace MatrixOS::MidiCenter
 {
-  class Sequencer
+  extern SEQ_DataStore*     seqData;
+
+  class Sequencer : public Node
   {
   public:
-    uint8_t channel;
-    SEQ_DataStore* dataStore;
-    uint8_t current = 0;
-    uint8_t clipNum[16];
-    int16_t playHead[16];
-    std::multimap<uint16_t, SEQ_Note>       Buffer_Notes;       // half tick, note
-    std::multimap<uint16_t, SEQ_Param>      Buffer_Params;      // half tick, param
-    uint32_t halfTick_last;
-    uint16_t halfTick_wait;
+    int16_t playHead = 0;
+    int16_t buffHead = 0;
+    uint8_t clipNum = 0;
+    uint8_t speedTick;
+    std::queue<std::pair<uint32_t, SEQ_Note>> notesQueue; // OnTime, Note
+    double interval = 0;
+    bool firstStepBuff = false;
+    bool noteBuff = false;
+    bool end = true;
 
     void Scan();
 
+    Sequencer(uint8_t channel)
+    {
+      thisNode = NODE_SEQ;
+      this->channel = channel;
+    }
+    void FirstStepBuff();
+
+    const uint8_t speedToHalfTick[10] = {3, 4, 6, 8, 12, 12, 16, 24, 48, 96};
+
   private:
-    void GetBuffer( uint8_t index);
-    void GetAutom();
+    void End();
+    void GetNoteQueue(bool firstStep = false);
+    void MoveHead(int16_t& head);
+    void GetAutomQueue();
     void Trigger();
     void Jump();
     void Chance();
     void Random();
     void Retrig();
-  };
-
-  class SongInfo
-  {
-
   };
   
   class sizeofSequencer
@@ -43,6 +51,8 @@ namespace MatrixOS::MidiCenter
       size = sizeof(SEQ_Param);
       size = sizeof(SEQ_Autom);
       size = sizeof(SEQ_Step);
+      size = sizeof(SEQ_Pattern);
+      size = sizeof(SEQ_Song);
       size = sizeof(Sequencer);
       size = sizeof(SEQ_Clip);
       size = sizeof(SEQ_DataStore);

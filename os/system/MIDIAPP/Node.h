@@ -2,6 +2,9 @@
 #include <map>
 #include <queue>
 
+#define NODES_PER_CHANNEL 4
+#define NODES_MAX_CONFIGS 16
+
 enum NodeID : uint8_t {
   NODE_NONE         = 0x00,
   NODE_ALL          = 0x00,

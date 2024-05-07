@@ -23,7 +23,7 @@ namespace MatrixOS::MidiCenter
   Timer stepTimer;
 
   double tickInterval;
-  uint32_t playStartTime;
+  uint32_t taskCount;
   uint32_t tickCount;
   uint32_t halfTick;
 
@@ -44,7 +44,8 @@ namespace MatrixOS::MidiCenter
           {
             if (!clockIn) break;
             timeReceived = true;
-            tickCount = 0; halfTick = 0;
+            tickCount = 0;
+            halfTick = 0;
             tickTime[0] = MatrixOS::SYS::Millis();
             tickTimer.RecordCurrent();
             stepTimer.RecordCurrent();
@@ -56,7 +57,8 @@ namespace MatrixOS::MidiCenter
           case Sync:
           {
             if (!clockIn) break;
-            tickCount++; halfTick = tickCount * 2;
+            tickCount++;
+            halfTick = tickCount * 2;
             tickTimer.RecordCurrent();
             if (tickCount % 8 == 0) {
               tickTime[tickCount % 24 / 8] = MatrixOS::SYS::Millis();
@@ -76,7 +78,8 @@ namespace MatrixOS::MidiCenter
           {
             if (!clockIn) break;
             timeReceived = false;
-            tickCount = 0; halfTick = 0;
+            tickCount = 0;
+            halfTick = 0;
             transportState.play = false;
             MLOGD("Midi Center", " clock stoped");
             break;
@@ -88,19 +91,23 @@ namespace MatrixOS::MidiCenter
       
       ClockOut();
 
-      if(tickTimer.SinceLastTick() > tickInterval / 2 )
-        halfTick = tickCount * 2 + 1;
-
       Scan_Toggle();
       Scan_Hold();
+      Scan_Seq();
+      Scan_Chord();
       Scan_Arp();
 
-      uint32_t currentTime = xLastWakeTime;
+      if(halfTick == tickCount * 2 && tickTimer.SinceLastTick() >= tickInterval / 2)
+        halfTick = tickCount * 2 + 1;
+
       // if (currentTime != xLastWakeTime) MLOGD("Midi Center", "Task Time: %d, WakeTime: %d", currentTime, xLastWakeTime);
-      uint8_t channelIndex = currentTime % 8 * 2;
-      NodeScan(channelIndex); NodeScan(channelIndex + 1);
       
-      if ((currentTime % (1000 / Device::fps)) == 0) { // scan by fps
+      for(uint8_t channelIndex = 0; channelIndex < 16; channelIndex++)
+      {
+        NodeScan(channelIndex);
+      }
+      
+      if ((taskCount % (1000 / Device::fps)) == 0) { // scan by fps
         Panic();
         MoveHoldToToggle();
         PadColorCheck();
@@ -124,14 +131,21 @@ namespace MatrixOS::MidiCenter
         }
       }
 
-      if((currentTime & 0x3FF) == 0) inputCount = 0;
+      if((taskCount & 0x3FF) == 0) inputCount = 0;
+      taskCount++;
       vTaskDelayUntil(&xLastWakeTime, configTICK_RATE_HZ / midi_center_scanrate);
     }
   }
 
-    void ClockOut()
-  {
-    if(!transportState.play) timeReceived = false;
+  double nextTickTime = 0;
+  void ClockOut() {
+    if(!transportState.play) 
+    {
+      timeReceived = false;
+      if(nextTickTime != 0) ClockStop();
+      return;
+    }
+    
     if(clockIn && timeReceived) return;
 
     if(bpmPrv != bpm.Value()) 
@@ -139,13 +153,14 @@ namespace MatrixOS::MidiCenter
       MatrixOS::FATFS::MarkChanged(projectConfig);
       tickInterval = (60000.0 / 24) / bpm.Value(); 
       bpmPrv = bpm.Value();
-      tickCount = (MatrixOS::SYS::Millis() - playStartTime) / tickInterval;
-      halfTick = tickCount * 2;
     }
 
-    if(transportState.play && MatrixOS::SYS::Millis() >= playStartTime + (uint32_t)(tickInterval * tickCount)) {
-      tickCount = (MatrixOS::SYS::Millis() - playStartTime) / tickInterval + 1;
+    if(nextTickTime == 0) ClockStart();
+
+    if(MatrixOS::SYS::Millis() >= nextTickTime) {
+      tickCount++;
       halfTick = tickCount * 2;
+      nextTickTime += tickInterval;
       if (clockOut) MatrixOS::MIDI::Send(MidiPacket(0, Sync));
       tickTimer.RecordCurrent();
       if(tickCount % 8 == 0)  {
@@ -163,26 +178,37 @@ namespace MatrixOS::MidiCenter
     tickInterval = (60000.0 / 24) / bpm.Value();
     tickCount = 0;
     halfTick = 0;
-    playStartTime = MatrixOS::SYS::Millis();
     transportState.play = true;
-    MatrixOS::MIDI::Send(MidiPacket(0, Start));
+    if(clockOut)
+    {
+      MatrixOS::MIDI::Send(MidiPacket(0, Start));
+      MatrixOS::MIDI::Send(MidiPacket(0, Sync));
+    }
+    nextTickTime = tickInterval + MatrixOS::SYS::Millis();
+    tickTimer.RecordCurrent();
+    stepTimer.RecordCurrent();
     beatTimer.RecordCurrent();
+    MLOGD("Midi Center", "clock started");
   }
 
   void ClockStop()
   {
     tickCount = 0;
+    halfTick = 0;
+    nextTickTime = 0;
     transportState.play = false;
-    MatrixOS::MIDI::Send(MidiPacket(0, Stop));
+    if(clockOut) MatrixOS::MIDI::Send(MidiPacket(0, Stop));
+    MLOGD("Midi Center", "clock stoped");
   }
 
   void Init()
   {
     xTaskCreate(MidiCenterTask, "MidiCenter", configMINIMAL_STACK_SIZE * 6, NULL, configMAX_PRIORITIES - 5, NULL);
+    taskCount = 0;
   }
 
   bool Scan_Toggle()
-  {    
+  {
     if (CNTR_PadToggle.empty()) return false;
     return false;
   }
@@ -205,6 +231,37 @@ namespace MatrixOS::MidiCenter
     return !CNTR_PadHold.empty();
   }
 
+  bool Scan_Seq()
+  {
+    for (auto it = CNTR_Seq.begin(); it != CNTR_Seq.end();)
+    {
+      if (MatrixOS::SYS::Millis() >= it->second)
+      {
+        uint8_t channel = ID_Channel(it->first);
+        MidiRouter(seqInOut[channel], SEND_NOTE, channel, ID_Byte1(it->first), 0);
+        it = CNTR_Seq.erase(it);
+      }
+      else it++;
+    }
+    return !CNTR_Seq.empty();    
+  }
+
+  bool Scan_Chord()
+  {
+    for(auto it = CNTR_Chord.begin(); it != CNTR_Chord.end();)
+    {
+      uint8_t channel = ID_Channel(*it);
+      if(nodesInChannel[channel].find(NODE_CHORD) == nodesInChannel[channel].end())
+      {
+        uint8_t note = ID_Byte1(*it);
+        MidiRouter(NODE_CHORD, SEND_NOTE, channel, note, 0);
+        it = CNTR_Chord.erase(it);
+      }
+      else it++;
+    }
+    return !CNTR_Chord.empty();
+  }
+
   bool Scan_Arp()
   {
     for (auto it = CNTR_Arp.begin(); it != CNTR_Arp.end();)
@@ -224,23 +281,6 @@ namespace MatrixOS::MidiCenter
     memset(padCheck, 0, sizeof(padCheck));
     uint8_t currentChannel = MatrixOS::UserVar::global_channel;
 
-    if (!CNTR_SeqEditStep.empty())
-    {
-      SEQ_Step* step = CNTR_SeqEditStep.front().second;
-      std::vector<SEQ_Note> notes = step->GetNotes();
-      for (uint8_t i = 0; i < notes.size(); i++)
-      {
-        if(notes[i].number <= 127)
-          padCheck[notes[i].number] = IN_SEQ;
-      }
-    }
-
-    for(auto it : CNTR_PadMidiID) 
-    {
-      if (currentChannel == ID_Channel(it))
-        padCheck[ID_Byte1(it)] = IN_INPUT;
-    }
-
     for(auto it : CNTR_Chord)
     {
       if (currentChannel == ID_Channel(it))
@@ -254,6 +294,31 @@ namespace MatrixOS::MidiCenter
         }
         padCheck[ID_Byte1(it)] = IN_CHORD;
       }
+    }
+
+    if (!CNTR_SeqEditStep.empty())
+    {
+      SEQ_Step* step = CNTR_SeqEditStep.front().second;
+      std::vector<SEQ_Note> notes = step->GetNotes();
+      for (uint8_t i = 0; i < notes.size(); i++)
+      {
+        if(notes[i].number <= 127)
+          padCheck[notes[i].number] = IN_SEQ;
+      }
+    }
+    else
+    {
+      for(auto it : CNTR_Seq)
+      {
+        if (currentChannel == ID_Channel(it.first))
+          padCheck[ID_Byte1(it.first)] = IN_SEQ;
+      }
+    }
+
+    for(auto it : CNTR_PadMidiID) 
+    {
+      if (currentChannel == ID_Channel(it))
+        padCheck[ID_Byte1(it)] = IN_INPUT;
     }
 
     for(auto it : CNTR_Arp)
@@ -308,6 +373,9 @@ namespace MatrixOS::MidiCenter
 
   void ClearToggle(int8_t type, int8_t channel)  
     { ClearIDSet(CNTR_PadToggle, NODE_KEYPAD, true, type, channel); }
+
+  void ClearSeq(int8_t channel)     
+    { ClearIDMap<uint16_t, uint32_t, MIDIID_IS_FIRST>(CNTR_Seq, NODE_SEQ, false, -1, channel); }
 
   void ClearChord(int8_t channel)   
     { ClearIDSet(CNTR_Chord, NODE_CHORD, false, -1, channel); }

@@ -2,6 +2,7 @@
 #include "ArpeggiatorUI.h"
 #include "ChorderUI.h"
 #include "SequencerUI.h"
+#include "sequencerUI_Clip.h"
 #include "MidiCenter.h"
 #include <memory>
 
@@ -27,7 +28,7 @@ namespace MatrixOS::MidiCenter
     virtual Dimension GetSize() { return dimension; }
     UIComponent* GetUI() { return ui.get(); }
 
-    void SetNode(NodeID nodeID = NODE_NONE) 
+    void SetUI(NodeID nodeID = NODE_NONE) 
     {
       lastUI = nodeID == NODE_NONE ? activeUI : NODE_NONE;
       largePad = false;
@@ -63,73 +64,55 @@ namespace MatrixOS::MidiCenter
 
     virtual bool Render(Point origin) {
       channel = MatrixOS::UserVar::global_channel;
-      
-      if (Device::KeyPad::fnState.active() || activeUI == NODE_NONE)
+
+      if (Device::KeyPad::fnState.active() && largePad)                             // check FN state
+      { largePad = false; holdFN = true;  } 
+      if (!Device::KeyPad::fnState.active() && holdFN)
+      { largePad = true;  holdFN = false; }
+
+      for(uint8_t x = 0; x < dimension.x; x++)                                      // set all pixel to blank
+        for(uint8_t y = 0; y < dimension.y; y++)
+          MatrixOS::LED::SetColor(Point(x, y) + origin, Color(BLANK));
+      MatrixOS::LED::SetColor(origin, Color(RED));                                  // the back button
+
+      if(ui != nullptr && ui->fullScreen && !Device::KeyPad::fnState.active())      // full screen node
+      { ui->Render(origin); return true; }
+
+      if(largePad && activeUI == NODE_NONE)                                         // full screen keyboard
       {
-        for(uint8_t x = 0; x < dimension.x; x++)
-          for(uint8_t y = 0; y < dimension.y; y++)
-            MatrixOS::LED::SetColor(Point(x, y) + origin, Color(BLANK));
+        multiPad->dimension = Dimension(16, 4);
+        multiPad->Render(origin);
+        return true;
+      }
+
+      if (Device::KeyPad::fnState.active() || activeUI == NODE_NONE)                // node router
+      {
         Color padColor;
         switch(channelConfig->padType[channel])
         {
-          case NOTE_PAD: padColor = COLOR_NOTE_PAD[1]; break;
+          case NOTE_PAD:  padColor = COLOR_NOTE_PAD [1]; break;
           case PIANO_PAD: padColor = COLOR_PIANO_PAD[1]; break;
-          case DRUM_PAD: padColor = COLOR_DRUM_PAD[1]; break;
+          case DRUM_PAD:  padColor = COLOR_DRUM_PAD [1]; break;
         }
+        MatrixOS::LED::SetColor(origin, Color(BLANK));
         MatrixOS::LED::SetColor(origin + Point(0, 1), padColor);
         SeqButtonRender(origin + Point(6, 0));
         AppButtonRender(NODE_ARP, origin + Point(12, 0));
         AppButtonRender(NODE_CHORD, origin + Point(10, 0));
-        
       }
-      else if (ui != nullptr || !largePad)
-      {
-        for(uint8_t x = 0; x < 16; x++)
-        {
-          MatrixOS::LED::SetColor(origin + Point(x, 0), Color(BLANK));
-          MatrixOS::LED::SetColor(origin + Point(x, 1), Color(BLANK));
-        }
-        MatrixOS::LED::SetColor(origin + Point(0, 0), Color(RED));
-        ui->Render(origin);
-      }
+      else if (ui != nullptr)                                          
+        ui->Render(origin);                                                         // half screen ui
+      multiPad->dimension = Dimension(16, 2);                                       // half screen keyboard
+      multiPad->Render(origin + Point(0, 2));
 
-      
-      if (Device::KeyPad::fnState.active() && largePad)
-      { largePad = false; holdFN = true; } 
-      if (!Device::KeyPad::fnState.active() && holdFN)
-      { largePad = true; holdFN = false; }
-
-      if(largePad) 
-      {
-        multiPad->dimension = Dimension(16, 4);
-        MatrixOS::LED::SetColor(origin + Point(0, 0), Color(RED));
-        MatrixOS::LED::SetColor(origin + Point(0, 1), Color(BLANK));
-      }
-      else multiPad->dimension = Dimension(16, 2);
-      multiPad->Render(origin + (largePad ? Point(0,0) : Point(0, 2)));
-
-      
       return true;
     }
 
     virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) { 
-      if (xy == Point(0, 0))
-      {
-        if (keyInfo->state == RELEASED && keyInfo->hold == false)
-        {
-          if(largePad) largePad = false;
-          else SetNode(NODE_NONE);
-          return true;
-        }
-        
-        if (keyInfo->state == HOLD && (largePad || activeUI != NODE_NONE))
-        {
-          MatrixOS::UIInterface::TextScroll("Back", Color(RED));
-          return true;
-        }
-      }
-
-      if (xy == Point(0, 1) && activeUI == NODE_NONE)
+      if(ui != nullptr && ui->fullScreen && !Device::KeyPad::fnState.active())      // full screen Node
+        return ui->KeyEvent(xy, keyInfo);
+      
+      if (xy == Point(0, 1) && activeUI == NODE_NONE)                               // the full screen keyboard button
       {
         if (keyInfo->state == RELEASED && keyInfo->hold == false)
         {
@@ -151,10 +134,10 @@ namespace MatrixOS::MidiCenter
         }
       }
 
-      if (largePad) return multiPad->KeyEvent(xy, keyInfo);
-      if (xy.y > 1) return multiPad->KeyEvent(xy - Point(0, 2), keyInfo);
-
-      if (Device::KeyPad::fnState.active() || activeUI == NODE_NONE)
+      bool ret = false;
+      if (largePad)       ret = multiPad->KeyEvent(xy, keyInfo);                    // full screen keyboard
+      else if (xy.y > 1)  ret = multiPad->KeyEvent(xy - Point(0, 2), keyInfo);      // half screen keyboard
+      else if (Device::KeyPad::fnState.active() || activeUI == NODE_NONE)           // node router
       {
         switch(xy.x)
         {
@@ -170,7 +153,25 @@ namespace MatrixOS::MidiCenter
         }
       }
       else if (ui != nullptr)
-        return ui->KeyEvent(xy, keyInfo);
+        ret =  ui->KeyEvent(xy, keyInfo);
+      if(ret) return ret;
+      
+      if (xy == Point(0, 0))                                                        // the back button for all node
+      {
+        if (keyInfo->state == RELEASED && keyInfo->hold == false)
+        {
+          if(largePad) largePad = false;
+          else SetUI(NODE_NONE);
+          return true;
+        }
+        
+        if (keyInfo->state == HOLD && (largePad || activeUI != NODE_NONE))
+        {
+          MatrixOS::UIInterface::TextScroll("Back", Color(RED));
+          return true;
+        }
+      }
+
       return false;
     }
 
@@ -182,15 +183,15 @@ namespace MatrixOS::MidiCenter
       Color switchColor = Color(WHITE);
 
       MatrixOS::LED::SetColor(xy + Point(0, 0), thisColor);
-      MatrixOS::LED::SetColor(xy + Point(1, 0), thisColor);
+      MatrixOS::LED::SetColor(xy + Point(1, 0), switchColor.ToLowBrightness(FindNode(nodeID)));
       MatrixOS::LED::SetColor(xy + Point(0, 1), thisColor);
-      MatrixOS::LED::SetColor(xy + Point(1, 1), switchColor.ToLowBrightness(FindNode(nodeID)));
+      MatrixOS::LED::SetColor(xy + Point(1, 1), thisColor);
     }
 
     bool AppButtonKeyEvent(NodeID nodeID, Point xy, Point offset, KeyInfo* keyInfo)
     {
       Point ui = xy - offset;
-      if (ui == Point(1, 1))
+      if (ui == Point(1, 0))
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
@@ -208,7 +209,8 @@ namespace MatrixOS::MidiCenter
       {
         if(keyInfo->state == RELEASED && keyInfo->hold == false)
         {
-          SetNode(nodeID);
+          SetUI(nodeID);
+          if(!FindNode(nodeID)) NodeOn(nodeID);
           return true;
         }
         if(keyInfo->state == HOLD)
@@ -233,7 +235,7 @@ namespace MatrixOS::MidiCenter
     {
       if(keyInfo->state == RELEASED && keyInfo->hold == false)
       {
-        SetNode(NODE_SEQ);
+        SetUI(NODE_SEQ);
         return true;
       }
       if(keyInfo->state == HOLD)

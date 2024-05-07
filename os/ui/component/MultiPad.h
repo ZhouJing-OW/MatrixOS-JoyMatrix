@@ -2,6 +2,7 @@
 
 
 #include "MatrixOS.h"
+#include "system/MIDIAPP/MidiCenter.h"
 #include "UIComponent.h"
 #include "UI4pxNoteName.h"
 
@@ -42,6 +43,7 @@ class MultiPad : public UIComponent {
   // Drum Pad
   bool DrumRender(Point origin);
   bool DrumKeyEvent(Point xy, KeyInfo* keyInfo);
+  Color GetPadColor(uint8_t note);
   // octave
   bool OctaveRender(Point origin);
   void OctaveShiftRender(Point origin);
@@ -121,27 +123,28 @@ class MultiPad : public UIComponent {
   }
 
     virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
-
+    
+    bool ret = false;
     if (settingMode && xy.x > dimension.x - 6)
-      return SettingAreaKeyEvent(xy, keyInfo);
+      ret = SettingAreaKeyEvent(xy, keyInfo);
     else if (*padType != DRUM_PAD && xy.x == 0)
-      return OctaveShiftKeyEvent(xy, keyInfo);
+      ret = OctaveShiftKeyEvent(xy, keyInfo);
     else
     {
       switch (*padType)
       {
         case NOTE_PAD:
-          return NoteKeyEvent(xy, keyInfo);
+          ret = NoteKeyEvent(xy, keyInfo);
           break;
         case PIANO_PAD:
-          return PianoKeyEvent(xy, keyInfo);
+          ret = PianoKeyEvent(xy, keyInfo);
           break;
         case DRUM_PAD:
-          return DrumKeyEvent(xy, keyInfo);
+          ret = DrumKeyEvent(xy, keyInfo);
           break;
       }
     }
-    return false;
+    return ret;
     }
 
   void SettingAreaRender(Point origin)

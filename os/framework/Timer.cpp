@@ -37,6 +37,10 @@ void Timer::Reset() {
   previous = 0;
 }
 
+uint32_t Timer::GetTime(){
+  return previous;
+}
+
 
 // namespace MatrixOS::SYS {uint64_t Micros();}
 
@@ -100,7 +104,18 @@ void MicroTimer::Start()
   gptimer_start(gptimer);
   MicroTimer::RecordCurrent();
 }
+
 void MicroTimer::Stop()
 {
   gptimer_stop(gptimer);
+}
+
+void MicroTimer::Reset()
+{
+  previous = 0;
+}
+
+uint64_t MicroTimer::GetTime()
+{
+  return previous;
 }

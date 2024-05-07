@@ -11,7 +11,7 @@ namespace MatrixOS::MidiCenter
   enum Interval : uint8_t 
   {
     I_m2 = 1,   I_M2 = 2,   I_A2 = 3,
-    I_m3 = 3,   I_M3 = 4,
+    I_d3 = 2,   I_m3 = 3,   I_M3 = 4,
     I_d4 = 4,   I_P4 = 5,   I_A4 = 6,
     I_d5 = 6,   I_P5 = 7,   I_A5 = 8,
     I_m6 = 8,   I_M6 = 9,
@@ -184,6 +184,19 @@ namespace MatrixOS::MidiCenter
   {
     srand(MatrixOS::SYS::Millis());
     std::bitset<12> check = keyScale;
+
+    if(check.count() == 7) 
+    {
+      uint8_t i = 1;
+      for (uint8_t n = 1; n < 12; n++)
+        if(check[n]) 
+        { 
+          voice[i] = n; 
+          i++ ; 
+          if (i == 7) return;
+        }
+    }
+
     auto Check   = [&](uint8_t i)->bool { 
       bool random = activeConfig->harmony != 100 ? rand() % 101 > activeConfig->harmony : false;
       bool ret = check[i] || random;
@@ -210,12 +223,7 @@ namespace MatrixOS::MidiCenter
     // check 3ed
     if(!voice[N_3rd]) {
       uint8_t check_m3 = voice[N_2ed] == I_A2 ? 0 : I_m3; // check if 2ed is A2, 3rd can't be m3
-      switch (voice[N_2ed]) 
-      { 
-        case I_m2: Choose (I_M3, check_m3, N_3rd, true); break;
-        case I_M2: Choose (check_m3, I_M3, N_3rd, true); break;
-        default: Choose (I_M3, check_m3, N_3rd);
-      }
+      Choose (I_M3, check_m3, N_3rd);
     }
 
     // check 4th
@@ -234,37 +242,25 @@ namespace MatrixOS::MidiCenter
     }                          
 
     // check 6th
-    if(!voice[N_6th]) {
+    if(!voice[N_6th]) 
+    {
       uint8_t check_m6 = voice[N_5th] == I_A5 ? 0 : I_m6;
       uint8_t check_M6 = (Check(I_M7) | Check(I_m7)) ? I_M6 : 0;
-      switch (voice[N_3rd]) 
-      { 
-        case I_m3: Choose (check_M6, check_m6, N_6th, true); break;
-        case I_M3: Choose (check_m6, check_M6, N_6th, true); break;
-        default: Choose (check_m6, check_M6, N_6th);
-      }
       Choose(check_m6, check_M6, N_6th); 
     }  
 
     // check 7th
-    if(!voice[N_7th]) {
+    if(!voice[N_7th]) 
+    {
       uint8_t check_d7 = (voice[N_6th] == I_M6) ? 0 : I_d7;
-      switch(voice[N_3rd])
-      {
-        case I_m3:
-          Choose(I_M7, check_d7, N_7th, true);
-          Choose(voice[N_7th], I_m7, N_7th, true); break;
-        case I_M3:
-          Choose(check_d7, I_m7, N_7th, true);
-          Choose(voice[N_7th], I_M7, N_7th, true); break;
-        default:
-        {
-          Choose(I_m7, I_M7, N_7th);
-          bool inharmony = rand() % 101 > activeConfig->harmony && rand() % 101 > activeConfig->harmony;
-          if(inharmony && check_d7) voice[N_7th] = I_d7;
-        }
-      }
-    }                                                           
+      Choose(I_m7, I_M7, N_7th);
+      bool inharmony = rand() % 101 > activeConfig->harmony && rand() % 101 > activeConfig->harmony;
+      if(inharmony && check_d7) voice[N_7th] = I_d7;
+    }
+
+    if(!voice[N_3rd]) voice[N_3rd] = Check(I_d3) ? I_d3 : 0;
+    if(!voice[N_5th]) voice[N_5th] = Check(I_d5) ? I_d5 : 0;
+    if(!voice[N_7th]) voice[N_7th] = Check(I_d7) ? I_d7 : 0;                                                           
   }
 
   const uint8_t voicing_3rd_h[9][3] = {    // third 7th+, 5th+, 3rd+, 1st+, 7th, 5th, 3rd, 1st

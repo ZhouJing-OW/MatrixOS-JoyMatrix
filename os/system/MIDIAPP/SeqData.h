@@ -8,8 +8,11 @@
 
 namespace MatrixOS::MidiCenter
 {
+  
   extern ChannelConfig*     channelConfig;
+  class   SEQ_DataStore;
 
+  #define PATTERN_MAX   32
   #define CLIP_MAX      8
   #define BAR_MAX       4
   #define STEP_MAX      16
@@ -20,55 +23,6 @@ namespace MatrixOS::MidiCenter
   #define STEP_ALL      16 * CLIP_MAX * BAR_MAX * STEP_MAX
   #define AUTOM_ALL     16 * CLIP_MAX * AUTOM_MAX
 
-  class   SEQ_DataStore;
-  class   SEQ_Clip
-  {
-  public:
-    uint8_t quantize        = 0;
-    uint8_t barMax          = 1;
-    uint8_t barStepMax      = STEP_MAX;
-    uint8_t speed           = 3;      // 4x, 3x, 2x, 1x, 1/2, 1/3, 1/4, 1/8
-    uint8_t noteLength      = 50;     // 5% - 100%
-  private:
-    std::bitset<BAR_MAX * STEP_MAX>  stepMark;
-    std::bitset<BAR_MAX * AUTOM_MAX> automMark;
-    int16_t stepID [BAR_MAX * STEP_MAX];
-    int16_t automID[BAR_MAX * AUTOM_MAX];
-
-  public:
-    SEQ_Clip() { 
-      memset(stepID,  -1, sizeof(stepID));
-      memset(automID, -1, sizeof(automID));
-      stepMark.reset(); automMark.reset();
-    }
-
-    int16_t StepID (uint8_t BarNum, uint8_t stepNum) const 
-    { 
-      if(BarNum >= BAR_MAX || stepNum >= STEP_MAX) return -1;
-      return stepID [BarNum * STEP_MAX + stepNum]; 
-    }
-    int16_t AutomID(uint8_t BarNum, uint8_t automNum) const 
-    { 
-      if(BarNum >= BAR_MAX || automNum >= AUTOM_MAX) return -1;
-      return automID[BarNum * AUTOM_MAX + automNum]; 
-    }
-    bool Empty() const { return stepMark.none() && automMark.none(); }
-
-  private:
-    void SetStepID(uint8_t BarNum, uint8_t stepNum, int16_t id) 
-    { 
-      stepID[BarNum * STEP_MAX + stepNum] = id;
-      stepMark[BarNum * STEP_MAX + stepNum] = (id != -1);
-    }
-    void SetAutomID(uint8_t BarNum, uint8_t automNum, int16_t id) 
-    { 
-      automID[BarNum * AUTOM_MAX + automNum] = id;
-      automMark[BarNum * AUTOM_MAX + automNum] = (id != -1);
-    }
-
-    friend class SEQ_DataStore;
-  };
-
   class   SEQ_Pos
   {
     int32_t m_pos; // in the song data position
@@ -78,8 +32,8 @@ namespace MatrixOS::MidiCenter
     uint8_t m_number; // step : STEP_MAX or autom:  BAR_MAX * PARAM_MAX
 
   public:
-    bool operator<(const SEQ_Pos& other) const { return m_pos < other.m_pos; }
-    bool operator>(const SEQ_Pos& other) const { return m_pos > other.m_pos; }
+    bool operator< (const SEQ_Pos& other) const { return m_pos <  other.m_pos; }
+    bool operator> (const SEQ_Pos& other) const { return m_pos >  other.m_pos; }
     bool operator==(const SEQ_Pos& other) const { return m_pos == other.m_pos; }
 
     SEQ_Pos(uint8_t channel, uint8_t clip, uint8_t bar, uint8_t number)
@@ -114,20 +68,20 @@ namespace MatrixOS::MidiCenter
     uint8_t BarNum()      { return m_bar;}
     uint8_t Number()      { return m_number; }
   };
- 
+
   struct  SEQ_Note                     
   {
     uint8_t number;  // note
     uint8_t velocity;
     uint8_t gate;    // half tick
-    int8_t  shift;    // half tick -5 to +5
+    int8_t  offset;  // half tick -5 to +5
 
-    SEQ_Note(uint8_t note = 255, uint8_t velocity = MatrixOS::UserVar::defaultVelocity, uint8_t gate = 0, uint8_t shift = 0)
+    SEQ_Note(uint8_t note = 255, uint8_t velocity = MatrixOS::UserVar::defaultVelocity, uint8_t gate = 0, uint8_t offset = 0)
     {
       this->number = note;
       this->velocity = velocity;
       this->gate = gate;
-      this->shift = shift;
+      this->offset = offset;
     }
   };
 
@@ -137,7 +91,10 @@ namespace MatrixOS::MidiCenter
     PARAM_K09,      PARAM_K10,      PARAM_K11,      PARAM_K12,      PARAM_K13,      PARAM_K14,      PARAM_K15,      PARAM_K16,
     PARAM_K17,      PARAM_K18,      PARAM_K19,      PARAM_K20,      PARAM_K21,      PARAM_K22,      PARAM_K23,      PARAM_K24,
     PARAM_K25,      PARAM_K26,      PARAM_K27,      PARAM_K28,      PARAM_K29,      PARAM_K30,      PARAM_K31,      PARAM_K32,
-    PARAM_MOD,      PARAM_PITCH,    COMP_RETRIG,    COMP_HOLD,      COMP_STAY,      COMP_CYCLE,     COMP_CHANCE,    COMP_RANDOM,  
+    PARAM_MOD,      PARAM_B02,      PARAM_B03,      PARAM_B04,      PARAM_B05,      PARAM_B06,      PARAM_B07,      PARAM_B08,
+    PARAM_B09,      PARAM_B10,      PARAM_B11,      PARAM_B12,      PARAM_B13,      PARAM_B14,      PARAM_B15,      PARAM_B16,
+    PARAM_B17,      PARAM_B18,      PARAM_B19,      PARAM_B20,      PARAM_B21,      PARAM_B22,      PARAM_B23,      PARAM_B24,     
+    COMP_RETRIG,    COMP_CYCLE,     PARAM_PITCH,    COMP_RND_TRIG,  COMP_RND_PITCH, COP_RND_VEL,    COMP_RND_PARM,  COMP_RND_COMP
   };
 
   struct  SEQ_Param
@@ -190,7 +147,7 @@ namespace MatrixOS::MidiCenter
    public:
     SEQ_Note noteTemplate = SEQ_Note();
 
-    std::vector<SEQ_Note> GetNotes() const { return Get(notes); }
+    std::vector<SEQ_Note> GetNotes() const {if(NoteEmpty()) { std::vector<SEQ_Note> vec; return vec;}; return Get(notes); }
     bool FindNote(uint8_t note) const {if((note) > 127) return !noteMark.none(); return Find(noteMark, note); }
     bool AddNote(SEQ_Note note) { return Add(noteMark, notes, note); }
     bool DeleteNote(uint8_t note) { return Delete(noteMark, notes, note); }
@@ -199,6 +156,7 @@ namespace MatrixOS::MidiCenter
       this->noteMark = other.noteMark;
       for (uint8_t i = 0; i < NOTE_MAX; i++)
         this->notes[i] = other.notes[i];
+      this->noteTemplate = other.noteTemplate;
       return this;
     }
     void ClearNote()
@@ -208,7 +166,7 @@ namespace MatrixOS::MidiCenter
       noteMark.reset();
     }
 
-    std::vector<SEQ_Param> GetParams() const { return Get(params); }
+    std::vector<SEQ_Param> GetParams() const {if(ParamEmpty()) { std::vector<SEQ_Param> vec; return vec;}; return Get(params); }
     bool FindParam(uint8_t number) const { if((number) > 127) return !noteMark.none(); return Find(paramMark, number); }
     bool AddParam(SEQ_Param param) { return Add(paramMark, params, param); }
     bool DeleteParam(uint8_t number) { return Delete(paramMark, params, number); }
@@ -276,27 +234,27 @@ namespace MatrixOS::MidiCenter
       return set;
     }
 
-    uint8_t GetShift(uint8_t note) const
+    uint8_t GetOffset(uint8_t note) const
     {
-      if (NoteEmpty()) return noteTemplate.shift;
+      if (NoteEmpty()) return noteTemplate.offset;
       for (uint8_t i = 0; i < NOTE_MAX; i++)
       {
         if ((note > 127 && notes[i].number <= 127) || (note <= 127 && notes[i].number == note))
-          return notes[i].shift;
+          return notes[i].offset;
       }
-      return noteTemplate.shift;
+      return noteTemplate.offset;
     }
 
-    bool SetShift(uint8_t note, uint8_t shift)
+    bool SetOffset(uint8_t note, uint8_t offset)
     {
-      noteTemplate.shift = shift;
+      noteTemplate.offset = offset;
       if(NoteEmpty()) return false;
 
       bool set = false;
       for (uint8_t i = 0; i < NOTE_MAX; i++)
       {
         if (notes[i].number <= 127 && (note > 127 || notes[i].number == note))
-        { notes[i].shift = shift; set = true;}
+        { notes[i].offset = offset; set = true;}
       }
       return set;
     }
@@ -314,7 +272,7 @@ namespace MatrixOS::MidiCenter
     std::vector<T> Get(const T (&arr)[N]) const
     {
       std::vector<T> vec;
-      for(uint8_t i = 0; i < N; i++)
+      for(size_t i = 0; i < N; i++)
         if(arr[i].number != 255) vec.push_back(arr[i]);
       return vec;
     }
@@ -371,8 +329,90 @@ namespace MatrixOS::MidiCenter
 
   };
 
+  class   SEQ_Clip
+  {
+  public:
+    uint8_t speed           = 4;          // 4x, 3x, 2x, 1.5x, 1x, 1x, 1/2, 1/3, 1/4, 1/8
+    uint8_t gate            = 50;         // 10% - 100%
+    uint8_t quantize        = 0;          // 0% - 100%
+    uint8_t barMax          = 1;          // 1 - 4
+    uint8_t barStepMax      = STEP_MAX;   // 8 - 16
+   
+  private:
+    std::bitset<BAR_MAX * STEP_MAX>  stepMark;
+    std::bitset<BAR_MAX * AUTOM_MAX> automMark;
+    int16_t stepID [BAR_MAX * STEP_MAX];
+    int16_t automID[BAR_MAX * AUTOM_MAX];
+
+  public:
+    SEQ_Clip() { 
+      memset(stepID,  -1, sizeof(stepID));
+      memset(automID, -1, sizeof(automID));
+      stepMark.reset(); automMark.reset();
+    }
+
+    void CopySettings(const SEQ_Clip& src)
+    {
+      this->quantize = src.quantize;
+      this->barMax = src.barMax;
+      this->barStepMax = src.barStepMax;
+      this->speed = src.speed;
+      this->gate = src.gate;
+    }
+
+    int16_t StepID (uint8_t BarNum, uint8_t stepNum) const 
+    { 
+      if(BarNum >= BAR_MAX || stepNum >= STEP_MAX) return -1;
+      return stepID [BarNum * STEP_MAX + stepNum]; 
+    }
+    int16_t AutomID(uint8_t BarNum, uint8_t automNum) const 
+    { 
+      if(BarNum >= BAR_MAX || automNum >= AUTOM_MAX) return -1;
+      return automID[BarNum * AUTOM_MAX + automNum]; 
+    }
+    bool Empty() const { return stepMark.none() && automMark.none(); }
+
+  private:
+    void SetStepID(uint8_t BarNum, uint8_t stepNum, int16_t id) 
+    { 
+      stepID[BarNum * STEP_MAX + stepNum] = id;
+      stepMark[BarNum * STEP_MAX + stepNum] = (id != -1);
+    }
+    void SetAutomID(uint8_t BarNum, uint8_t automNum, int16_t id) 
+    { 
+      automID[BarNum * AUTOM_MAX + automNum] = id;
+      automMark[BarNum * AUTOM_MAX + automNum] = (id != -1);
+    }
+
+    friend class SEQ_DataStore;
+  };
+
+  class   SEQ_Pattern
+  {
+    public:
+    std::bitset<16> mute;
+    uint8_t ClipNum[16];
+    uint16_t nodesIndex[NODES_MAX_CONFIGS * NODES_PER_CHANNEL];
+    uint8_t repeat;
+  };
+
+  class   SEQ_Song
+  {
+    public:
+    uint8_t editingClip[16];
+    uint8_t playingClip[16];
+    int8_t patternID[PATTERN_MAX];
+
+    SEQ_Song() 
+    { 
+      memset(editingClip, 0, sizeof(editingClip));
+      memset(playingClip, 0, sizeof(playingClip));
+      memset(patternID, -1, sizeof(patternID)); 
+    }
+  };
+
   enum    CapState : uint8_t { CAP_NORMAL, CAP_EDIT, };
-  extern std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep;
+  extern  std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep;
 
   class   SEQ_Capture 
   {
@@ -415,7 +455,7 @@ namespace MatrixOS::MidiCenter
       editingStepEmpty = step->NoteEmpty();
       if (!inputList.empty())
         step->CopyNotes(capStep);
-      CNTR_SeqEditStep.push_back(std::make_pair(pos, step));
+      CNTR_SeqEditStep.push_back({pos, step});
       ChangeState(CAP_EDIT);
     }
 
@@ -426,7 +466,7 @@ namespace MatrixOS::MidiCenter
         SEQ_Step* step = CNTR_SeqEditStep.front().second;
         if(!step) return;
         if (step->FindNote(byte1)) step->DeleteNote(byte1);
-        else step->AddNote(SEQ_Note(byte1, byte2, capStep.noteTemplate.gate, 0));
+        else step->AddNote(SEQ_Note(byte1, byte2, step->noteTemplate.gate, 0));
         return;
       }
       inputList.erase(byte1);
@@ -467,16 +507,20 @@ namespace MatrixOS::MidiCenter
 
   class   SEQ_DataStore
   {
+    SEQ_Song song;
     std::array<SEQ_Clip, 16 * CLIP_MAX> clips;
-    std::map<int16_t, SEQ_Step,  std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Step >>> steps;  // stepID, step
-    std::map<int16_t, SEQ_Autom, std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Autom>>> automs; // automID, autom
-    std::set<int16_t> stepChanged, automChanged; // stepID, automID
+    std::map<int16_t, SEQ_Pattern, std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Pattern>>> patterns; // patternID, pattern
+    std::map<int16_t, SEQ_Step,    std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Step >>>   steps;    // stepID, step
+    std::map<int16_t, SEQ_Autom,   std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Autom>>>   automs;   // automID, autom
+    std::set<int16_t> patternChanged, stepChanged, automChanged; // stepID, automID
+    uint8_t clipCount[16] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     SEQ_Capture capturer;
     bool inited = false;
 
    public:
     void Init()
     {
+      new (&song)   SEQ_Song();
       new (&clips)  std::array<SEQ_Clip, 16 * CLIP_MAX>();
       new (&steps)  std::map<int16_t, SEQ_Step,  std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Step >>>();
       new (&automs) std::map<int16_t, SEQ_Autom, std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Autom>>>();
@@ -488,6 +532,7 @@ namespace MatrixOS::MidiCenter
 
     void Destroy()
     {
+      song.~SEQ_Song();
       clips.~array();
       steps.~map();
       automs.~map();
@@ -498,14 +543,25 @@ namespace MatrixOS::MidiCenter
 
     ~SEQ_DataStore() { if(inited) Destroy(); }
 
+    uint8_t EditingClip(uint8_t channel) { return song.editingClip[channel]; }
+
+    void SetEditingClip(uint8_t channel, uint8_t clipNum) { song.editingClip[channel] = clipNum; }
+
+    uint8_t PlayingClip(uint8_t channel) { return song.playingClip[channel]; }
+
+    SEQ_Pattern* Pattern(uint8_t patternNum) { return &patterns[patternNum]; }
+
+    SEQ_Pattern* InsertPattern(uint8_t patternNum) { return &patterns[patternNum];}
+
+    void DeletePattern(uint8_t patternNum) {}
+
     void Capture(uint8_t channel, uint8_t byte1, uint8_t byte2) { capturer.Capture(channel, byte1, byte2); }
 
     void Capture_ChangeState(CapState state, bool updateCap = false) { capturer.ChangeState(state, updateCap); }
 
     void Capture_UpdateCap(SEQ_Pos position) { if(Step(position)) capturer.GetCap()->CopyNotes(*Step(position)); }
 
-    void Capture_Editing(SEQ_Pos position) 
-    { 
+    void Capture_Editing(SEQ_Pos position) {
       SEQ_Step* step = Step(position, true);
       if(step) capturer.Editing(position, step);
     }
@@ -554,6 +610,8 @@ namespace MatrixOS::MidiCenter
         AddNote(position, SEQ_Note{activeNote, (uint8_t)MatrixOS::UserVar::defaultVelocity});
       else 
         DeleteNote(position, activeNote);
+      
+      capturer.ChangeState(CAP_NORMAL);
     }
 
     void Capture_Clear() { capturer.Clear(); }
@@ -644,12 +702,12 @@ namespace MatrixOS::MidiCenter
           stepChanged.insert(StepID(position));
     }
 
-    uint8_t GetShift(SEQ_Pos position, uint8_t note = 255) {if(Step(position)) return Step(position)->GetShift(note); return 0;}
+    uint8_t GetOffset(SEQ_Pos position, uint8_t note = 255) {if(Step(position)) return Step(position)->GetOffset(note); return 0;}
 
-    void    SetShift(SEQ_Pos position, uint8_t shift, uint8_t note = 255) 
+    void    SetOffset(SEQ_Pos position, uint8_t offset, uint8_t note = 255) 
     {
       if(Step(position)) 
-        if(Step(position)->SetShift(note, shift))
+        if(Step(position)->SetOffset(note, offset))
           stepChanged.insert(StepID(position));
     }
 
@@ -737,20 +795,14 @@ namespace MatrixOS::MidiCenter
     void CopyClip(uint8_t channel_src, uint8_t clip_src, uint8_t channel_dst, uint8_t clip_dst)
     {
       if(channel_src >= 16 || clip_src >= CLIP_MAX) return;
+      if(channel_src == channel_dst && clip_src == clip_dst) return;
       for (uint8_t bar = 0; bar < BAR_MAX; bar++) {
         for (uint8_t s = 0; s < STEP_MAX; s++)
-        {
-          int16_t stepID = Clip(channel_src, clip_src)->StepID(bar, s);
-          if (stepID != -1)
-            CopyStep(Step(stepID)->Position(), SEQ_Pos(channel_dst, clip_dst, bar, s));
-        }
+          CopyStep (SEQ_Pos(channel_src, clip_src, bar, s), SEQ_Pos(channel_dst, clip_dst, bar, s));
         for (uint8_t a = 0; a < PARAM_MAX; a++)
-        {
-          int16_t automID = Clip(channel_src, clip_src)->AutomID(bar, a);
-          if(automID != -1)
-            CopyAutom(Autom(automID)->Position(), SEQ_Pos(channel_dst, clip_dst, bar, a));
-        }
+          CopyAutom(SEQ_Pos(channel_src, clip_src, bar, a), SEQ_Pos(channel_dst, clip_dst, bar, a));
       }
+      Clip(channel_dst, clip_dst)->CopySettings(*Clip(channel_src, clip_src));
     }
 
   private:

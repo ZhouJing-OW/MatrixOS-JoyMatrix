@@ -17,6 +17,7 @@ class Timer {
   uint32_t SinceLastTick();
   void RecordCurrent();
   void Reset();
+  uint32_t GetTime();
 
  private:
   uint32_t previous = 0;
@@ -32,6 +33,8 @@ public:
   void RecordCurrent();
   void Start();
   void Stop();
+  void Reset();
+  uint64_t GetTime();
 
  private:
   gptimer_handle_t gptimer = NULL;

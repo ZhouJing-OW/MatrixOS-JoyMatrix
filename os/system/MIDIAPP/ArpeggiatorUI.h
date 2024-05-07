@@ -63,7 +63,7 @@ namespace MatrixOS::MidiCenter
       if (arpeggiator == nullptr) return true;
 
       VarSet();
-      Color configColor = arpeggiator->activeLabel == 8 ? Color(WHITE) : COLOR_HIGH_SAT[arpeggiator->configNum];
+      Color configColor = arpeggiator->activeLabel == 8 ? Color(WHITE) : COLOR_HIGH_S[arpeggiator->configNum];
       MatrixOS::LED::SetColor(origin + Point(14, 0), configColor);
       // Color timeSyncColor = Color(BLUE);
       // MatrixOS::LED::SetColor(origin + Point(2, 0), timeSyncColor.ToLowBrightness(arpeggiator->config->timeSync));
@@ -122,7 +122,7 @@ namespace MatrixOS::MidiCenter
           return true; 
         }
         if (keyInfo->state == HOLD) {
-          MatrixOS::UIInterface::TextScroll("Config Select", COLOR_HIGH_SAT[arpeggiator->configNum]);
+          MatrixOS::UIInterface::TextScroll("Config Select", COLOR_HIGH_S[arpeggiator->configNum]);
           return true;
         }
       }
@@ -146,7 +146,7 @@ namespace MatrixOS::MidiCenter
           case 8: return ConfigKeyEvent   (xy, settingPos, keyInfo);
         }
       }
-      return true;
+      return false;
     }
 
     void LabelRender(Point origin)
@@ -660,7 +660,7 @@ namespace MatrixOS::MidiCenter
       for(uint8_t x = 0; x < 16; x++)
       {
         Point xy = origin + Point(x, 0);
-        Color thisColor = COLOR_HIGH_SAT[x];
+        Color thisColor = COLOR_HIGH_S[x];
         if (arpeggiator->configNum == x)
           MatrixOS::LED::SetColor(xy, thisColor);
         else
@@ -679,7 +679,7 @@ namespace MatrixOS::MidiCenter
       }
       if(keyInfo->state == HOLD)
       {
-        MatrixOS::UIInterface::TextScroll("Config " + std::to_string(ui.x + 1), COLOR_HIGH_SAT[ui.x]);
+        MatrixOS::UIInterface::TextScroll("Config " + std::to_string(ui.x + 1), COLOR_HIGH_S[ui.x]);
         return true;
       }
       return false;

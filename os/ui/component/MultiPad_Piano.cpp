@@ -1,15 +1,10 @@
 #include "MultiPad.h"
-#include "system/MIDIAPP/MidiCenter.h"
 
 bool MultiPad::PianoRender(Point origin)
 {
   uint16_t pos = channelConfig->activePadConfig[channel][PIANO_PAD];
   NotePadConfig* config = padConfig + pos;
 
-  Color color = COLOR_PIANO_PAD[0];
-  Color rootColor = COLOR_PIANO_PAD[1];
-  Color colorRotate = color.Rotate(-30);
-  Color rootColorRotate = rootColor.Rotate(-10);
   uint8_t n = 0;
   for(int8_t x = 0; x < dimension.x - 1; x++){
     for(int8_t y = 0; y < dimension.y; y++){
@@ -22,12 +17,12 @@ bool MultiPad::PianoRender(Point origin)
         Color thisColor, thisRootColor;
         switch(MatrixOS::MidiCenter::GetPadCheck(pianoMap[n]))
         {
-          case IN_NONE:   thisColor = color;        thisRootColor = rootColor;       break;
-          case IN_INPUT:  thisColor = Color(WHITE);  thisRootColor = Color(WHITE);     break;
-          case IN_SEQ:    thisColor = Color(LAWN);  thisRootColor = Color(LAWN);     break;
-          case IN_ARP:    thisColor = Color(ORANGE); thisRootColor = Color(ORANGE);    break;
-          case IN_CHORD:  thisColor = Color(GOLD);   thisRootColor = Color(GOLD);      break;
-          case IN_VOICE:  thisColor = colorRotate;  thisRootColor = rootColorRotate; break;
+          case IN_NONE:   thisColor = COLOR_PIANO_PAD[0];   thisRootColor = COLOR_PIANO_PAD[1];   break;
+          case IN_INPUT:  thisColor = Color(WHITE);         thisRootColor = Color(WHITE);         break;
+          case IN_SEQ:    thisColor = Color(LAWN_LS);       thisRootColor = Color(LAWN);          break;
+          case IN_ARP:    thisColor = Color(GOLD_LS);       thisRootColor = Color(GOLD_LS);       break;
+          case IN_CHORD:  thisColor = Color(YELLOW_LS);     thisRootColor = Color(YELLOW);        break;
+          case IN_VOICE:  thisColor = Color(BLUE_LS);       thisRootColor = Color(BLUE);          break;
         }
 
         if (pianoMap[n] % 12 == config->rootKey)

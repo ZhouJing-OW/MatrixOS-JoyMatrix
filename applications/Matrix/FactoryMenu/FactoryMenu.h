@@ -27,7 +27,7 @@ class FactoryMenu : public Application {
   // void BurnEFuse();
   void LEDTester();
   void KeyPadTester();
-  void TouchBarTester();
+  // void TouchBarTester();
 
   void KeyPadSettings();
 

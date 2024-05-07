@@ -1,17 +1,14 @@
 #pragma once
 
 #include "MatrixOS.h"
-#include "SeqData.h"
 #include "Node.h"
+#include "SeqData.h"
 #include <math.h>
 #include <cmath>
 #include <vector>
 #include <map>
 #include <set>
 #include "algorithm"
-
-#define NODES_PER_CHANNEL 8
-#define NODES_MAX_CONFIGS 16
 
 enum PadCheck : uint8_t {
   IN_NONE, IN_INPUT, IN_SEQ, IN_ARP, IN_CHORD, IN_VOICE
@@ -34,16 +31,17 @@ namespace MatrixOS::MidiCenter
   extern std::set<uint16_t>             CNTR_PadMidiID;   // midiID
   extern std::map<uint16_t, uint16_t>   CNTR_PadHold;     // keyID, midiID
   extern std::set<uint16_t>             CNTR_PadToggle;   // midiID
-  extern std::map<uint16_t, uint32_t>   CNTR_Seq;         // midiID, length
+  extern std::map<uint16_t, uint32_t>   CNTR_Seq;         // midiID, offTime
   extern std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep;
   extern std::set<uint16_t>             CNTR_Chord;       // midiID
-  extern std::map<uint16_t, uint32_t>   CNTR_Arp;         // midiID, length
+  extern std::map<uint16_t, uint32_t>   CNTR_Arp;         // midiID, offTime
 
   extern PadCheck padCheck[127]; // in globle channel;
 
   extern std::map<NodeID, NodeInfo> nodesInfo;
   extern std::map<NodeID, Node*>    nodesInChannel[16]; // 16 channel router node set
   extern std::map<NodeID, uint8_t>  nodesConfigNum[16];
+  extern NodeID seqInOut[16];
 
   extern uint8_t inputCount;
   extern bool timeReceived;
@@ -53,7 +51,6 @@ namespace MatrixOS::MidiCenter
   extern Timer beatTimer;
   
   extern double tickInterval;
-  extern uint32_t playStartTime;
   extern uint32_t tickCount;
   extern uint32_t halfTick;
 
@@ -61,6 +58,8 @@ namespace MatrixOS::MidiCenter
   
   bool Scan_Hold();
   bool Scan_Toggle();
+  bool Scan_Seq();
+  bool Scan_Chord();
   bool Scan_Arp();
   void PadColorCheck();
   PadCheck GetPadCheck(int8_t byte1);
@@ -69,6 +68,7 @@ namespace MatrixOS::MidiCenter
 
   void ClearHold(int8_t type = -1, int8_t channel = -1);
   void ClearToggle(int8_t type = -1, int8_t channel = -1);
+  void ClearSeq(int8_t channel = -1);
   void ClearChord(int8_t channel = -1);
   void ClearArp(int8_t channel = -1);
 

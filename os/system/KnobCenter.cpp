@@ -20,6 +20,12 @@ namespace MatrixOS::KnobCenter
         }
       }
 
+      if(MatrixOS::MidiCenter::TransState() && MatrixOS::MidiCenter::TransState()->play) 
+      {
+        vTaskDelay(configTICK_RATE_HZ / knob_center_scanrate);
+        continue;
+      }
+
       if (Device::AnalogInput::GetDialPtr() == nullptr && Device::Encoder::GetActEncoder() == 255)  // save changed knob
       {
         if (OpenFile(appName))

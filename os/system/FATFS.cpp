@@ -23,6 +23,7 @@ namespace MatrixOS::FATFS
 
   void Scan()
   {
+    if (MatrixOS::MidiCenter::TransState() && MatrixOS::MidiCenter::TransState()->play) return;
     if (changedVar.empty() || listInManage.empty()) return;
     string suffix = "";
     SaveVarInfo saveInfo;
