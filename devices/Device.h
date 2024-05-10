@@ -37,12 +37,13 @@ namespace Device
   namespace KeyPad
   {
     KeyInfo* GetKey(uint16_t keyID);
-    void Clear();  // Since only Device layer awares the keyInfo buffer, the function's job is to run Clear() on all
-                   // keyInfo
-    uint16_t XY2ID(Point xy);  // Not sure if this is required by Matrix OS, added in for now. return UINT16_MAX if no
-                               // ID is assigned to given XY
-    Point ID2XY(uint16_t keyID);  // Locate XY for given key ID, return Point(INT16_MIN, INT16_MIN) if no XY found for
-                                  // given ID;
+    void Clear();                        // Since only Device layer awares the keyInfo buffer, the function's job is to run Clear() on all
+                                         // keyInfo
+    void ClearPad();
+    uint16_t XY2ID(Point xy);            // Not sure if this is required by Matrix OS, added in for now. return UINT16_MAX if no
+                                         // ID is assigned to given XY
+    Point ID2XY(uint16_t keyID);         // Locate XY for given key ID, return Point(INT16_MIN, INT16_MIN) if no XY found for
+                                         // given ID;
   }
 
     namespace Encoder

@@ -14,6 +14,7 @@ namespace MatrixOS::MidiCenter
     bool fullScreen = false;
     uint8_t channel;
     uint8_t channelPrv;
+    
     std::vector<KnobConfig*> knobPtr;
     NodeID currentNode = NODE_NONE;
 
@@ -23,9 +24,7 @@ namespace MatrixOS::MidiCenter
     virtual void On()
     {
       channel = MatrixOS::UserVar::global_channel;
-      auto it = nodesConfigNum[channel].find(currentNode);
-      uint8_t configNum = it != nodesConfigNum[channel].end() ? it->second : channel;
-      MatrixOS::MidiCenter::NodeInsert(channel, currentNode, configNum);
+      MatrixOS::MidiCenter::NodeInsert(channel, currentNode);
       VarGet();
       if(SetKnobPtr()) {MatrixOS::KnobCenter::AddExtraPage(knobPtr); MatrixOS::KnobCenter::SetPage(4);}
       else MatrixOS::KnobCenter::DisableExtraPage();

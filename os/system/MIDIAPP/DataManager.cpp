@@ -35,6 +35,7 @@ namespace MatrixOS::MidiCenter
     for(uint8_t ch = 0; ch < 16; ch++){
       channelConfig->color[ch] = Color(GREEN);
       channelConfig->padType[ch] = 1;
+      channelConfig->octave[ch] = 3;
       channelConfig->bankLSB[ch] = 0;
       channelConfig->PC[ch] = 0;
       channelConfig->activeNote[ch] = 36;
@@ -108,7 +109,7 @@ namespace MatrixOS::MidiCenter
       
       bpm.SetPtr(&projectConfig->bpm);
       swing.SetPtr(&projectConfig->swing);
-      defaultVelocity.SetValue(MatrixOS::UserVar::defaultVelocity);
+      defVel.SetValue(MatrixOS::UserVar::defaultVelocity);
       brightness.SetValue(std::sqrt((uint8_t)MatrixOS::UserVar::brightness));
 
       appName = name;
@@ -116,13 +117,11 @@ namespace MatrixOS::MidiCenter
         for(uint8_t n = 0; n < NODES_PER_CHANNEL; n++) {
           uint16_t index = nodesIndex[ch * NODES_PER_CHANNEL + n];
           NodeID nodeID = NodeID(index >> 8 & 0xFF);
-          uint8_t num = index & 0xFF;
+          uint8_t configNum = index & 0xFF;
           if(nodeID != NODE_NONE)
-            NodeInsert(ch, nodeID, num);
+            NodeInsert(ch, nodeID, configNum);
         }
       }
-
-      midiAppUI->SetUI(NODE_SEQ);
     };
 
     if (MatrixOS::FATFS::VarManager(name, ROUTER_SUFFIX, saveVarList) == false) {

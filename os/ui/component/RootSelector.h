@@ -32,7 +32,7 @@ class RootSelector : public UIComponent {
     {
       for(uint8_t y = 0; y < dimension.y; y++)
       {
-        uint8_t octave = config->octave + octaveOffset + (x / 7) + ((dimension.y - y - 1) / 2) * (dimension.x / 7);
+        uint8_t octave = 3 + octaveOffset + (x / 7) + ((dimension.y - y - 1) / 2) * (dimension.x / 7);
         uint8_t note = pianoNote[(dimension.y + y) % 2][x % 7] + octave * 12;
         Point xy = origin + Point(x, y);
 
@@ -54,7 +54,7 @@ class RootSelector : public UIComponent {
   }
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
-    uint8_t octave = config->octave + octaveOffset + (xy.x / 7) + ((dimension.y - xy.y - 1) / 2) * (dimension.x / 7); 
+    uint8_t octave = 3 + octaveOffset + (xy.x / 7) + ((dimension.y - xy.y - 1) / 2) * (dimension.x / 7); 
     uint8_t note = pianoNote[(dimension.y + xy.y) % 2][xy.x % 7] + octave * 12;
     uint8_t channel = MatrixOS::UserVar::global_channel;
 

@@ -38,7 +38,7 @@ class NotePreView : public UIComponent {
   void GenerateKeymap() {
     noteMap.reserve(dimension.Area());
 
-    uint8_t root = 12 * config->octave + config->rootKey;
+    uint8_t root = 12 * 3 + config->rootKey;
     uint8_t nextNote = root;
     uint8_t rootCount = 0;
     for (int8_t y = 0; y < dimension.y; y++)

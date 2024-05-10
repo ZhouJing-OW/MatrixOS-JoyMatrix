@@ -155,7 +155,8 @@ namespace Device::KeyPad
     return false;
   }
 
-  void Clear() {
+  void Clear() 
+  {
     if(!Alt())
       fnState.Clear();
     LRockerState.Clear();
@@ -170,9 +171,17 @@ namespace Device::KeyPad
         keypadState[x][y].Clear(); }
       }
     }
-
     // for (uint8_t i = 0; i < touchbar_size; i++)
     // { touchbarState[i].Clear(); }
+  }
+
+  void ClearPad()
+  {
+    for (uint8_t x = 0; x < x_size; x++) {
+      for (uint8_t y = 0; y < y_size; y++) { 
+        keypadState[x][y].Clear();
+      }
+    }
   }
 
   KeyInfo* GetKey(uint16_t keyID) {

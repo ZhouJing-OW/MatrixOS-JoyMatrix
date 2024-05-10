@@ -34,6 +34,7 @@ void Drambo::Setup() {
 
 void Drambo::TabS(){
   UI tabS("Setting", Color(BLUE));
+  Device::KeyPad::ClearPad();
   std::vector<KnobConfig*> sysKnobs = MatrixOS::MidiCenter::GetSysKnobs();
   MatrixOS::KnobCenter::SetKnobBar(sysKnobs);
 
@@ -155,6 +156,7 @@ void Drambo::Tab4(){ // Mixer
 
 void Drambo::Pop(){
   UI pop("");
+  Device::KeyPad::ClearPad();
   uint8_t chn = MatrixOS::UserVar::global_channel;
 
   UIPlusMinus ProgramBank(&CH->bankLSB[chn], 127, 1, Color(TURQUOISE), false, false,
@@ -173,7 +175,7 @@ void Drambo::Pop(){
   pop.AddUIComponent(ccBtn, Point(4, 1));
 
   MatrixOS::KnobCenter::AddKnobBarTo(pop);
-  pop.SetLoopFunc([&]() -> void { if(Device::KeyPad::AltExit()) pop.Exit(); });
+  pop.SetLoopFunc([&]() -> void { if(Device::KeyPad::AltExit()) { Device::KeyPad::ClearPad(); pop.Exit();} });
   pop.Start();
 }
 

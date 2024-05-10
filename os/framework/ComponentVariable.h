@@ -10,7 +10,8 @@ struct SaveVarInfo {
 struct ProjectConfig
 {
   int16_t bpm = 120;
-  int16_t swing = 0;
+  int16_t swing = 50;
+  int16_t defaultVelocity = 127;
   bool loop = false;
 };
 
@@ -45,6 +46,7 @@ struct ChannelConfig {
   int8_t muteCC = 118;
   int8_t soloCC = 119;
   int8_t padType[16]; // PianoPad \ NotePad \ DrumPad
+  int8_t octave[16];
   uint8_t activePadConfig[16][3];
   uint8_t activeNote[16];
   bool channelMute[16];
@@ -64,7 +66,6 @@ struct NotePadConfig {
   int8_t type = NOTE_PAD;
   int8_t channel = 0;
   int8_t rootKey = 0;
-  int8_t octave = 3;
   int8_t overlap = 4;
   uint16_t scale = CHROMATIC;
 };

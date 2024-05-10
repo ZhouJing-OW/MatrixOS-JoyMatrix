@@ -8,8 +8,8 @@
 
 namespace MatrixOS::MidiCenter
 {
-  
   extern ChannelConfig*     channelConfig;
+  extern TransportState     transportState;
   class   SEQ_DataStore;
 
   #define PATTERN_MAX   32
@@ -412,6 +412,7 @@ namespace MatrixOS::MidiCenter
   };
 
   enum    CapState : uint8_t { CAP_NORMAL, CAP_EDIT, };
+  enum    CapBlock : bool    { UNBLOCK,    BLOCK,    };
   extern  std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep;
 
   class   SEQ_Capture 
@@ -422,17 +423,18 @@ namespace MatrixOS::MidiCenter
     bool editingStepEmpty = true;
 
    public:
-    void Capture(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    CapBlock Capture(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
-      if(channel != MatrixOS::UserVar::global_channel) return;
+      if(channel != MatrixOS::UserVar::global_channel) return UNBLOCK;
 
       switch(state)
       {
         case CAP_NORMAL:
-          NormalCapture(channel, byte1, byte2); break;
+          return NormalCapture(channel, byte1, byte2);
         case CAP_EDIT:
-          EditCapture(channel, byte1, byte2); break;
+          return EditCapture(channel, byte1, byte2);
       }
+      return UNBLOCK;
     }
 
     void ChangeState(CapState changeState , bool updateCap = false)
@@ -459,30 +461,36 @@ namespace MatrixOS::MidiCenter
       ChangeState(CAP_EDIT);
     }
 
-    void EditCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    CapBlock EditCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if (byte2 > 0) 
       {
         SEQ_Step* step = CNTR_SeqEditStep.front().second;
-        if(!step) return;
+        if(!step) return CapBlock(transportState.play); // when play, block input
         if (step->FindNote(byte1)) step->DeleteNote(byte1);
         else step->AddNote(SEQ_Note(byte1, byte2, step->noteTemplate.gate, 0));
-        return;
+        return CapBlock(transportState.play);
       }
-      inputList.erase(byte1);
+      if (inputList.find(byte1) != inputList.end())
+      {
+        inputList.erase(byte1);
+        return UNBLOCK;
+      }
+      return CapBlock(transportState.play);
     }
 
-    void NormalCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    CapBlock NormalCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if (byte2 > 0) 
       {
         if (inputList.empty()) capStep.ClearNote();
         inputList.emplace(byte1);
         capStep.AddNote(SEQ_Note(byte1, byte2, capStep.noteTemplate.gate, 0));
-        return;
+        return UNBLOCK;
       }
       inputList.erase(byte1);
       capStep.DeleteNote(byte1);
+      return UNBLOCK;
     }
 
     void Clear(bool resetState = true)
@@ -555,7 +563,7 @@ namespace MatrixOS::MidiCenter
 
     void DeletePattern(uint8_t patternNum) {}
 
-    void Capture(uint8_t channel, uint8_t byte1, uint8_t byte2) { capturer.Capture(channel, byte1, byte2); }
+    CapBlock Capture(uint8_t channel, uint8_t byte1, uint8_t byte2) { return capturer.Capture(channel, byte1, byte2); }
 
     void Capture_ChangeState(CapState state, bool updateCap = false) { capturer.ChangeState(state, updateCap); }
 

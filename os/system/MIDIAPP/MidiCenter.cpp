@@ -7,15 +7,15 @@ namespace MatrixOS::MidiCenter
   TransportState transportState;
   int16_t bpmPrv = 120;
   int16_t swingPrv = 50;
-  int16_t tempDefVel = MatrixOS::UserVar::defaultVelocity;
-  int16_t tempBright = std::sqrt((uint8_t)MatrixOS::UserVar::brightness);
+  int16_t defVelPrv = MatrixOS::UserVar::defaultVelocity;
+  int16_t brightnessPrv = std::sqrt((uint8_t)MatrixOS::UserVar::brightness);
 
-  KnobConfig  bpm                 = {.lock = true, .data = {.varPtr = &bpmPrv},      .min = 20,  .max = 300,   .def = 120, .color = Color(PURPLE)};
-  KnobConfig  swing               = {.lock = true, .data = {.varPtr = &swingPrv},    .max = 100, .def = 50,    .color = Color(GOLD)};
-  KnobConfig  defaultVelocity     = {.lock = true, .data = {.varPtr = &tempDefVel},  .min = 1,   .def = 127,   .color = Color(LAWN)};
-  KnobConfig  brightness          = {.lock = true, .data = {.varPtr = &tempBright},  .min = 2,   .max = 12,    .def = 4, .color = Color(WHITE)};
+  KnobConfig  bpm                 = {.lock = true, .data = {.varPtr = &bpmPrv},        .min = 20,  .max = 300,   .def = 120, .color = Color(PURPLE)};
+  KnobConfig  swing               = {.lock = true, .data = {.varPtr = &swingPrv},      .max = 100, .def = 50,    .color = Color(GOLD)};
+  KnobConfig  defVel              = {.lock = true, .data = {.varPtr = &defVelPrv},     .min = 1,   .def = 127,   .color = Color(LAWN)};
+  KnobConfig  brightness          = {.lock = true, .data = {.varPtr = &brightnessPrv}, .min = 2,   .max = 12,    .def = 4, .color = Color(WHITE)};
 
-  std::vector<KnobConfig*> sysKnobs = {&bpm, &swing, &defaultVelocity, &brightness};
+  std::vector<KnobConfig*> sysKnobs = {&bpm, &swing, &defVel, &brightness};
   
   bool timeReceived = false;
   Timer tickTimer;
@@ -122,8 +122,8 @@ namespace MatrixOS::MidiCenter
             swingPrv = swing.Value();
             MatrixOS::FATFS::MarkChanged(projectConfig);
           }
-          if(defaultVelocity.Value() != MatrixOS::UserVar::defaultVelocity) {
-            MatrixOS::UserVar::defaultVelocity.Set(defaultVelocity.Value()); 
+          if(defVel.Value() != MatrixOS::UserVar::defaultVelocity) {
+            MatrixOS::UserVar::defaultVelocity.Set(defVel.Value()); 
           }
           if(std::pow(brightness.Value(), 2) != MatrixOS::UserVar::brightness) {
             MatrixOS::UserVar::brightness.Set(std::pow(brightness.Value(), 2)); 

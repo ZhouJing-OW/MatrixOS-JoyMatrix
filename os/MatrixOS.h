@@ -83,7 +83,7 @@ namespace MatrixOS
     bool Get(KeyEvent* keyEvent_dest, uint32_t timeout_ms = 0);
     KeyInfo* GetKey(Point keyXY);
     KeyInfo* GetKey(uint16_t keyID);
-    void Clear();              // Don't handle any keyEvent till their next Press event (So no Release, Hold, etc)
+    void Clear(); // Don't handle any keyEvent till their next Press event (So no Release, Hold, etc)
     void ClearList();          // Clear the current KeyEvent queue
     uint16_t XY2ID(Point xy);  // Not sure if this is required by Matrix OS, added in for now. return UINT16_MAX if no
                                // ID is assigned to given XY

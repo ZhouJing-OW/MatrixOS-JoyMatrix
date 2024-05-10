@@ -30,7 +30,7 @@ bool MultiPad::PianoRender(Point origin)
         else if (bitRead(c_aligned_scale_map, pianoMap[n] % 12))
           MatrixOS::LED::SetColor(xy, thisColor.Blink_Key(Device::KeyPad::fnState));
         else 
-          MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness().Blink_Key(Device::KeyPad::fnState));
+          MatrixOS::LED::SetColor(xy, thisColor.Scale(64).Blink_Key(Device::KeyPad::fnState));
       }
       else 
         MatrixOS::LED::SetColor(xy, Color(BLANK));
@@ -79,7 +79,7 @@ void MultiPad::GeneratePianoMap()
       for(int8_t y = 0; y < dimension.y; y++){
         {
           int8_t octaveshift = x - config->shift < 0 ? -1 : ((x - config->shift) / 7);
-          int8_t octave = config->octave + octaveshift + ((dimension.y - y - 1) / 2 - 1) + ((dimension.x - 1) / 7 - 1);
+          int8_t octave = channelConfig->octave[channel] + octaveshift + ((dimension.y - y - 1) / 2 - 1) + ((dimension.x - 1) / 7 - 1);
           int8_t note;
           if (pianoNote[(dimension.y + y) % 2][(x - config->shift + 7) % 7] == -1)
             note = -1;

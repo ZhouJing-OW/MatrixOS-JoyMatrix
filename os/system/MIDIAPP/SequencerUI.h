@@ -52,7 +52,7 @@ namespace MatrixOS::MidiCenter
     const char      tripletName[8]        = "Triplet";
           BtnFunc   TripletBtn            = [&]()->void { ChangeUIMode(TRIPLET);};
 
-    const Color     settingBtnColor       = Color(BLUE_LS);
+    const Color     settingBtnColor       = Color(VIOLET);
     const Point     settingBtnPos         = Point(15, 0);
     const char      settingBtnName[8]     = "Setting";
           BtnFunc   settingBtn            = [&]()->void { ChangeUIMode(SETTING);};
@@ -69,7 +69,7 @@ namespace MatrixOS::MidiCenter
     //-----------------------------------EDITING-----------------------------------//
 
     const Color settingColor[4]       = {GREEN,      LAWN,       TURQUOISE,  BLUE};
-    const Color LabelColor[4]         = {BLUE,       BLUE,       BLUE,       BLUE};
+    const Color LabelColor[4]         = {VIOLET,     VIOLET,     VIOLET,     VIOLET};
     const char  settingName[4][9]     = {"Speed",    "Gate",     "Quantize", "Step/bar"};
     const Color speedColor[10]        = {GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN,      GREEN,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL };
     const char  speedName[10][5]      = {"4x",       "3x",       "2x",       "1.5x",     "1x",       "1x",       "2/3",      "1/2",      "1/4",      "1/8"};

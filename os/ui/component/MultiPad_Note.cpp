@@ -29,7 +29,7 @@ bool MultiPad::NoteRender(Point origin)
         {
           uint8_t inScale = InScale(note);  // Check if the note is in scale.
           if (inScale == 0)
-            MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness().Blink_Key(Device::KeyPad::fnState)); 
+            MatrixOS::LED::SetColor(xy, thisColor.Scale(64).Blink_Key(Device::KeyPad::fnState)); 
           else if (inScale == 1)
             MatrixOS::LED::SetColor(xy, thisColor.Blink_Key(Device::KeyPad::fnState)); 
           else if (inScale == 2)
@@ -80,7 +80,7 @@ void MultiPad::GenerateNoteMap() {
     Dimension noteMapArea = Dimension(dimension.x - 1, dimension.y);
     noteMap.reserve(noteMapArea.Area());
     NotePadConfig* config = padConfig + channelConfig->activePadConfig[channel][NOTE_PAD];
-    uint8_t root = 12 * config->octave + config->rootKey;
+    uint8_t root = 12 * channelConfig->octave[channel] + config->rootKey;
     uint8_t nextNote = root;
     uint8_t rootCount = 0;
     for (int8_t y = 0; y < noteMapArea.y; y++)

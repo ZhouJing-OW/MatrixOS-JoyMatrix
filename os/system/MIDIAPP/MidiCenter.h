@@ -16,8 +16,8 @@ enum PadCheck : uint8_t {
 
 namespace MatrixOS::MidiCenter
 {
-  extern int16_t bpmPrv, swingPrv, defaultVelocityPrv, brightnessPrv;
-  extern KnobConfig bpm, swing, defaultVelocity, brightness;
+  extern int16_t    bpmPrv,      swingPrv,    defVelPrv,   drightnessPrv;
+  extern KnobConfig bpm,         swing,       defVel   ,   brightness;
 
   extern TransportState     transportState;
   extern ProjectConfig*     projectConfig;
@@ -28,13 +28,13 @@ namespace MatrixOS::MidiCenter
   extern ArpConfig*         arpConfig;
   extern ChorderConfig*     chordConfig;
   
-  extern std::set<uint16_t>             CNTR_PadMidiID;   // midiID
-  extern std::map<uint16_t, uint16_t>   CNTR_PadHold;     // keyID, midiID
-  extern std::set<uint16_t>             CNTR_PadToggle;   // midiID
-  extern std::map<uint16_t, uint32_t>   CNTR_Seq;         // midiID, offTime
-  extern std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep;
-  extern std::set<uint16_t>             CNTR_Chord;       // midiID
-  extern std::map<uint16_t, uint32_t>   CNTR_Arp;         // midiID, offTime
+  extern std::set<uint16_t>                           CNTR_PadMidiID;   // midiID
+  extern std::map<uint16_t, uint16_t>                 CNTR_PadHold;     // keyID, midiID
+  extern std::set<uint16_t>                           CNTR_PadToggle;   // midiID
+  extern std::map<uint16_t, uint32_t>                 CNTR_Seq;         // midiID, offTime
+  extern std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep; // SEQ_Pos, SEQ_Step*
+  extern std::set<uint16_t>                           CNTR_Chord;       // midiID
+  extern std::map<uint16_t, uint32_t>                 CNTR_Arp;         // midiID, offTime
 
   extern PadCheck padCheck[127]; // in globle channel;
 
@@ -75,7 +75,7 @@ namespace MatrixOS::MidiCenter
   void MidiRouter(NodeID from, uint8_t type, uint8_t channel, uint8_t byte1, uint8_t byte2);
   void Send_On(int8_t type, int8_t channel, int8_t byte1, int8_t byte2);
   void Send_Off(int8_t type, int8_t channel, int8_t byte1);
-  void NodeInsert(uint8_t channel, NodeID nodeID, uint8_t configNum = 0);
+  void NodeInsert(uint8_t channel, NodeID nodeID, int8_t configNum = -1);
   void NodeDelete(uint8_t channel, NodeID nodeID);
 
   bool RequestService(string name, ChannelConfig*& CH_Config);
