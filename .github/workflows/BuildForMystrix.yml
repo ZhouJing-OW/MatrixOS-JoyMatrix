@@ -51,11 +51,13 @@ jobs:
     - name: Get the current date
       id: get_date
       run: echo "CURRENT_DATE=$(date +'%Y-%-m-%-d')" >> $GITHUB_ENV
+
+    
       
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: MatrixOS-Mystrix.uf2
-        path: MatrixOS-Mystrix-nightly-${{ env.CURRENT_DATE }}-${{ env.COMMIT_HASH }}.uf2
+        name: MatrixOS-Mystrix-nightly-${{ env.CURRENT_DATE }}-${{ env.COMMIT_HASH }}.uf2
+        path: build/Mystrix/MatrixOS-Mystrix.uf2
         
     
