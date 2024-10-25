@@ -54,7 +54,7 @@ jobs:
       
     - name: Rename file using date and commit hash
       run: |
-        OLD_FILENAME="build/Mystrix/MatrixOS-Mystrix.ext"
+        OLD_FILENAME="build/Mystrix/MatrixOS-Mystrix.uf2"
         NEW_FILENAME="build/Mystrix/MatrixOS-Mystrix-nightly-${{ env.CURRENT_DATE }}-${{ env.COMMIT_HASH }}.uf2"
         mv "$OLD_FILENAME" "$NEW_FILENAME"
         echo "Renamed $OLD_FILENAME to $NEW_FILENAME"
