@@ -36,6 +36,15 @@ namespace MatrixOS::MidiCenter
     
     if(seqData && seqInOut[channel] > (from | 0x0F) && seqInOut[channel] < to)
     {
+      if (transportState.play && transportState.record && CNTR_SeqEditStep.empty())
+      {
+        auto it = nodesInChannel[channel].find(NODE_SEQ);
+        if(it != nodesInChannel[channel].end())
+        {
+          Sequencer* seq = (Sequencer*)it->second;
+          seq->Record(channel, byte1, byte2);
+        }
+      }
       if(seqData->Capture(channel, byte1, byte2) == BLOCK) return;
     }
 

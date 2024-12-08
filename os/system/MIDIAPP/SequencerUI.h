@@ -512,7 +512,6 @@ namespace MatrixOS::MidiCenter
           if(editing.step == stepNum && keyInfo->state == RELEASED)
           {
             ResetEditing();
-
             if(keyInfo->shortHold)
             {
               ResetEditing();

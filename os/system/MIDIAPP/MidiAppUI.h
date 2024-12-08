@@ -27,6 +27,7 @@ namespace MatrixOS::MidiCenter
       memset(activeUI,  NODE_SEQ,   sizeof(activeUI));
       memset(lastUI,    NODE_NONE,  sizeof(lastUI));
       memset(largePad,  false,      sizeof(largePad));
+      SetUI(NODE_SEQ);
     }
 
     virtual Dimension GetSize() { return dimension; }

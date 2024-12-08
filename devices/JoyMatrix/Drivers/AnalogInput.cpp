@@ -125,7 +125,7 @@ namespace Device::AnalogInput
     if (change > 0x1FFE) change = 0x1FFE;
     if (change < - 0x1FFE) change = - 0x1FFE;
 
-    uint16_t pitch = 0x1FFF + change;
+    // uint16_t pitch = 0x1FFF + change;
     // if (pitch != lastPitch){
     //   int8_t channel = MatrixOS::UserVar::global_channel;
     //   //MLOGD("Pitch Wheel", "lx:%d, ly:%d, pitch:%d, ch:%d", lx, ly, pitch, channel);

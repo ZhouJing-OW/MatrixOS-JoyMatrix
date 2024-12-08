@@ -196,8 +196,7 @@ namespace MatrixOS::MidiCenter
       if (currentStep >= config->patternLength)
         currentStep = 0;
     bool pattern = bitRead(config->pattern, currentStep);
-    srand((unsigned)MatrixOS::SYS::Millis());
-    bool random = rand() % 101 <= config->chance;
+    bool random = sys_random() % 101 <= config->chance;
     return pattern && random;
   }
 

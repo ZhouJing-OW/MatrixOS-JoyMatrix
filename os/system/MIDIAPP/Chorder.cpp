@@ -182,7 +182,6 @@ namespace MatrixOS::MidiCenter
 
   void Chorder::CheckVoices(uint8_t* voice)
   {
-    srand(MatrixOS::SYS::Millis());
     std::bitset<12> check = keyScale;
 
     if(check.count() == 7) 
@@ -198,11 +197,11 @@ namespace MatrixOS::MidiCenter
     }
 
     auto Check   = [&](uint8_t i)->bool { 
-      bool random = activeConfig->harmony != 100 ? rand() % 101 > activeConfig->harmony : false;
+      bool random = activeConfig->harmony != 100 ? sys_random() % 101 > activeConfig->harmony : false;
       bool ret = check[i] || random;
       return i ? ret : false; 
     };
-    auto Rand    = [&](bool harmony)->bool { return harmony ? rand() % 101 > activeConfig->harmony : rand() % 2;};
+    auto Rand    = [&](bool harmony)->bool { return harmony ? sys_random() % 101 > activeConfig->harmony : sys_random() % 2;};
     auto Choose  = [&](uint8_t i1, uint8_t i2, uint8_t n, bool harmony = false) { 
       uint8_t check = Check(i1) | (Check(i2) << 1);
       switch (check) {
@@ -254,7 +253,7 @@ namespace MatrixOS::MidiCenter
     {
       uint8_t check_d7 = (voice[N_6th] == I_M6) ? 0 : I_d7;
       Choose(I_m7, I_M7, N_7th);
-      bool inharmony = rand() % 101 > activeConfig->harmony && rand() % 101 > activeConfig->harmony;
+      bool inharmony = sys_random() % 101 > activeConfig->harmony && sys_random() % 101 > activeConfig->harmony;
       if(inharmony && check_d7) voice[N_7th] = I_d7;
     }
 
@@ -326,8 +325,8 @@ namespace MatrixOS::MidiCenter
           bass.insert_or_assign(std::abs(thisBass - lastBass), i);
           treble.insert_or_assign(std::abs(thisTreble - lastTreble), i);
         }
-        if (rand() % 2) bass.erase(bass.begin()); 
-        if (rand() % 2) treble.erase(treble.begin());
+        if (sys_random() % 2) bass.erase(bass.begin()); 
+        if (sys_random() % 2) treble.erase(treble.begin());
         if (treble.begin()->second != 0 && bass.begin()->second > treble.begin()->second - 1) 
           bass.begin()->second = treble.begin()->second - 1;
         autoBass = bass.begin()->second * num; 
@@ -337,7 +336,7 @@ namespace MatrixOS::MidiCenter
         {if (config->randomDrop) bassIndex = autoBass == -1 ? dropNow * num : autoBass;}
       else 
         bassIndex = dropNow * num;
-      if(config->randomTreble) trebleIndex = autoTreble == -1 ? rand() % (num - (autoBass == 0 ? 0 : autoBass - 1)) : autoTreble;
+      if(config->randomTreble) trebleIndex = autoTreble == -1 ? sys_random() % (num - (autoBass == 0 ? 0 : autoBass - 1)) : autoTreble;
       return bassIndex + trebleIndex;
     };
 
@@ -357,10 +356,8 @@ namespace MatrixOS::MidiCenter
       return (autoBass == -1 ? dropNow : autoBass);
     };
 
-    srand(MatrixOS::SYS::Millis());
-
     if(drop) dropNow = drop;
-    else if(config->randomDrop) dropNow = rand() % (3 + config->seventh);
+    else if(config->randomDrop) dropNow = sys_random() % (3 + config->seventh);
     else dropNow = 0;
 
     uint32_t voiceBits = 0;  // {++7, ++5, ++3, ++1},{+7, +5, +3, +1},{7, 5, 3, 1},{-7, -5, -3, -1},{--7, --5, --3, --1}
