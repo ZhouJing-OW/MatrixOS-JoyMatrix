@@ -1,5 +1,3 @@
-//#define min(a,b) ((a)<(b)?(a):(b))
-//#define max(a,b) ((a)>(b)?(a):(b))
 
 #define bitRead(input, bit) (((input) >> (bit)) & 0b00000001)
 
@@ -7,4 +5,4 @@
 
 #define minOfThree(a, b, c) ((a < b && a < c) ? a : (b < a && b < c) ? b : c)
 
-
+#define sys_random() (esp_random())

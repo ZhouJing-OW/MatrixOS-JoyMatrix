@@ -8,6 +8,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <esp_random.h>
 #include "algorithm"
 
 enum PadCheck : uint8_t {
@@ -51,8 +52,9 @@ namespace MatrixOS::MidiCenter
   extern Timer beatTimer;
   
   extern double tickInterval;
+  extern double quarterInterval;
   extern uint32_t tickCount;
-  extern uint32_t halfTick;
+  extern uint32_t quarterTick;
 
   void MoveHoldToToggle();
   

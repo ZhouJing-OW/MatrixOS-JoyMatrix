@@ -32,9 +32,20 @@ namespace MatrixOS::MidiCenter
   {
     projectConfig = new ProjectConfig;
     channelConfig = new ChannelConfig;
+    uint8_t padType[16] = { PIANO_PAD, 
+                            DRUM_PAD, DRUM_PAD, DRUM_PAD, DRUM_PAD, 
+                            NOTE_PAD, NOTE_PAD, NOTE_PAD, NOTE_PAD,
+                            PIANO_PAD, PIANO_PAD, PIANO_PAD, PIANO_PAD,
+                            PIANO_PAD, PIANO_PAD, PIANO_PAD};
+    Color color[16]     = { Color(PURPLE), 
+                            Color(ORANGE), Color(ORANGE), Color(ORANGE), Color(ORANGE), 
+                            Color(VIOLET), Color(VIOLET), Color(VIOLET), Color(VIOLET), 
+                            Color(CYAN), Color(CYAN), Color(CYAN), Color(CYAN),
+                            Color(GREEN), Color(GREEN), Color(PURPLE)};
+
     for(uint8_t ch = 0; ch < 16; ch++){
-      channelConfig->color[ch] = Color(GREEN);
-      channelConfig->padType[ch] = 1;
+      channelConfig->color[ch] = color[ch];
+      channelConfig->padType[ch] = padType[ch];
       channelConfig->octave[ch] = 3;
       channelConfig->bankLSB[ch] = 0;
       channelConfig->PC[ch] = 0;
@@ -43,14 +54,6 @@ namespace MatrixOS::MidiCenter
         channelConfig->activePadConfig[ch][n] = 0;
       }
     }
-    channelConfig->padType[1]  = DRUM_PAD;
-    channelConfig->padType[2]  = DRUM_PAD;
-    channelConfig->color[0]  = Color(PURPLE);
-    channelConfig->color[1]  = Color(ORANGE);
-    channelConfig->color[2]  = Color(ORANGE);
-    channelConfig->color[13] = Color(CYAN);
-    channelConfig->color[14] = Color(CYAN);
-    channelConfig->color[15] = Color(PURPLE);
 
     notePadConfig = new NotePadConfig[4];
     notePadConfig[0] = {.overlap = 4, .scale = MAJOR};

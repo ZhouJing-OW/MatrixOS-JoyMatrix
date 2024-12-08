@@ -23,9 +23,10 @@ namespace MatrixOS::MidiCenter
   Timer stepTimer;
 
   double tickInterval;
+  double quarterInterval;
   uint32_t taskCount;
   uint32_t tickCount;
-  uint32_t halfTick;
+  uint32_t quarterTick;
 
   bool clockOut;
   bool clockIn;
@@ -45,7 +46,7 @@ namespace MatrixOS::MidiCenter
             if (!clockIn) break;
             timeReceived = true;
             tickCount = 0;
-            halfTick = 0;
+            quarterTick = 0;
             tickTime[0] = MatrixOS::SYS::Millis();
             tickTimer.RecordCurrent();
             stepTimer.RecordCurrent();
@@ -58,7 +59,7 @@ namespace MatrixOS::MidiCenter
           {
             if (!clockIn) break;
             tickCount++;
-            halfTick = tickCount * 2;
+            quarterTick = tickCount * 4;
             tickTimer.RecordCurrent();
             if (tickCount % 8 == 0) {
               tickTime[tickCount % 24 / 8] = MatrixOS::SYS::Millis();
@@ -68,6 +69,7 @@ namespace MatrixOS::MidiCenter
                 uint32_t inputBPM = std::round(60000.0 / (middleOfThree(tickTime[1] - tickTime[0], tickTime[2] - tickTime[1], tickTime[3] - tickTime[2]) * 3));
                 bpm.SetValue(inputBPM);
                 tickInterval = (60000.0 / 24) / inputBPM;
+                quarterInterval = tickInterval / 4;
                 // MLOGD("Midi Center", "BPM: %d", inputBPM);
                 beatTimer.RecordCurrent();
               }
@@ -79,7 +81,7 @@ namespace MatrixOS::MidiCenter
             if (!clockIn) break;
             timeReceived = false;
             tickCount = 0;
-            halfTick = 0;
+            quarterTick = 0;
             transportState.play = false;
             MLOGD("Midi Center", " clock stoped");
             break;
@@ -97,8 +99,8 @@ namespace MatrixOS::MidiCenter
       Scan_Chord();
       Scan_Arp();
 
-      if(halfTick == tickCount * 2 && tickTimer.SinceLastTick() >= tickInterval / 2)
-        halfTick = tickCount * 2 + 1;
+      if(transportState.play)
+        quarterTick = tickCount * 4 + int(tickTimer.SinceLastTick() / quarterInterval);
 
       // if (currentTime != xLastWakeTime) MLOGD("Midi Center", "Task Time: %d, WakeTime: %d", currentTime, xLastWakeTime);
       
@@ -115,6 +117,7 @@ namespace MatrixOS::MidiCenter
         clockOut = MatrixOS::UserVar::clockOut;
         clockIn  = MatrixOS::UserVar::clockIn;
         tickInterval = (60000.0 / 24) / bpm.Value();
+        quarterInterval = tickInterval / 4;
         
         if(projectConfig != nullptr) // sync knobs to user var
         { 
@@ -151,7 +154,8 @@ namespace MatrixOS::MidiCenter
     if(bpmPrv != bpm.Value()) 
     {
       MatrixOS::FATFS::MarkChanged(projectConfig);
-      tickInterval = (60000.0 / 24) / bpm.Value(); 
+      tickInterval = (60000.0 / 24) / bpm.Value();
+      quarterInterval = tickInterval / 4;
       bpmPrv = bpm.Value();
     }
 
@@ -159,7 +163,7 @@ namespace MatrixOS::MidiCenter
 
     if(MatrixOS::SYS::Millis() >= nextTickTime) {
       tickCount++;
-      halfTick = tickCount * 2;
+      quarterTick = tickCount * 4;
       nextTickTime += tickInterval;
       if (clockOut) MatrixOS::MIDI::Send(MidiPacket(0, Sync));
       tickTimer.RecordCurrent();
@@ -176,8 +180,9 @@ namespace MatrixOS::MidiCenter
   void ClockStart()
   {
     tickInterval = (60000.0 / 24) / bpm.Value();
+    quarterInterval = tickInterval / 4;
     tickCount = 0;
-    halfTick = 0;
+    quarterTick = 0;
     transportState.play = true;
     if(clockOut)
     {
@@ -194,7 +199,7 @@ namespace MatrixOS::MidiCenter
   void ClockStop()
   {
     tickCount = 0;
-    halfTick = 0;
+    quarterTick = 0;
     nextTickTime = 0;
     transportState.play = false;
     if(clockOut) MatrixOS::MIDI::Send(MidiPacket(0, Stop));
@@ -299,11 +304,11 @@ namespace MatrixOS::MidiCenter
     if (!CNTR_SeqEditStep.empty())
     {
       SEQ_Step* step = CNTR_SeqEditStep.front().second;
-      std::vector<SEQ_Note> notes = step->GetNotes();
+      std::vector<const SEQ_Note*> notes = step->GetNotes();
       for (uint8_t i = 0; i < notes.size(); i++)
       {
-        if(notes[i].number <= 127)
-          padCheck[notes[i].number] = IN_SEQ;
+        if(notes[i]->note <= 127)
+          padCheck[notes[i]->note] = IN_SEQ;
       }
     }
     else

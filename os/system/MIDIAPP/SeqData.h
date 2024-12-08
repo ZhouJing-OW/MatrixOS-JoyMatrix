@@ -8,9 +8,10 @@
 
 namespace MatrixOS::MidiCenter
 {
-  extern ChannelConfig*     channelConfig;
-  extern TransportState     transportState;
+  extern  ChannelConfig*     channelConfig;
+  extern  TransportState     transportState;
   class   SEQ_DataStore;
+  extern  SEQ_DataStore* seqData;
 
   #define PATTERN_MAX   32
   #define CLIP_MAX      8
@@ -69,39 +70,100 @@ namespace MatrixOS::MidiCenter
     uint8_t Number()      { return m_number; }
   };
 
+  enum    PARAM_TYPE : uint8_t
+  {
+    PARAM_K00,      PARAM_K01,      PARAM_K02,      PARAM_K03,      PARAM_K04,      PARAM_K05,      PARAM_K06,      PARAM_K07,
+    PARAM_K08,      PARAM_K09,      PARAM_K10,      PARAM_K11,      PARAM_K12,      PARAM_K13,      PARAM_K14,      PARAM_K15,
+    PARAM_K16,      PARAM_K17,      PARAM_K18,      PARAM_K19,      PARAM_K20,      PARAM_K21,      PARAM_K22,      PARAM_K23,
+    PARAM_K24,      PARAM_K25,      PARAM_K26,      PARAM_K27,      PARAM_K28,      PARAM_K29,      PARAM_K30,      PARAM_K31,
+    PARAM_K32,      PARAM_K33,      PARAM_K34,      PARAM_K35,      PARAM_K36,      PARAM_K37,      PARAM_K38,      PARAM_K39,
+    PARAM_K40,      PARAM_K41,      PARAM_K42,      PARAM_K43,      PARAM_K44,      PARAM_K45,      PARAM_K46,      PARAM_K47,
+    PARAM_K48,      PARAM_K49,      PARAM_K50,      PARAM_K51,      PARAM_K52,      PARAM_K53,      PARAM_K54,      PARAM_K55,
+    PARAM_K56,      PARAM_K57,      PARAM_K58,      PARAM_K59,      PARAM_K60,      PARAM_K61,      PARAM_K62,      PARAM_K63,
+  };
+
+  enum    COMP_TYPE : uint8_t
+  {
+    COMP_CYCLE,     COMP_RETRIG,    COMP_CHANCE,    COMP_FLAM,      COMP_OCTAVE,    COMP_PITCH,     COMP_STRUM,     COMP_ARP,   
+  };
+
   struct  SEQ_Note                     
   {
-    uint8_t number;  // note
+    uint8_t note;
     uint8_t velocity;
-    uint8_t gate;    // half tick
-    int8_t  offset;  // half tick -5 to +5
+    uint8_t gate;    
+    int8_t  offset;
+    int8_t  tair;    // 127 : use clip setting.
 
-    SEQ_Note(uint8_t note = 255, uint8_t velocity = MatrixOS::UserVar::defaultVelocity, uint8_t gate = 0, uint8_t offset = 0)
+    uint8_t cycleStep;
+    uint8_t cycleLength;
+    uint8_t retrig;
+    uint8_t retrigDecay;
+    uint8_t chance;
+    uint8_t flamVel;
+    uint8_t flamTime;
+    bool    randomPitch;
+    int8_t  octaveShift;
+    int8_t  pitchShift;
+    
+
+    SEQ_Note(uint8_t note = 255, uint8_t velocity = MatrixOS::UserVar::defaultVelocity, uint8_t gate = 0, int8_t offset = 0, int8_t tair = 127)
     {
-      this->number = note;
+      CompInit();
+      this->note = note;
       this->velocity = velocity;
       this->gate = gate;
       this->offset = offset;
+      this->tair = tair;
     }
-  };
 
-  enum    PARAM_TYPE : uint8_t
-  {
-    PARAM_K01,      PARAM_K02,      PARAM_K03,      PARAM_K04,      PARAM_K05,      PARAM_K06,      PARAM_K07,      PARAM_K08,
-    PARAM_K09,      PARAM_K10,      PARAM_K11,      PARAM_K12,      PARAM_K13,      PARAM_K14,      PARAM_K15,      PARAM_K16,
-    PARAM_K17,      PARAM_K18,      PARAM_K19,      PARAM_K20,      PARAM_K21,      PARAM_K22,      PARAM_K23,      PARAM_K24,
-    PARAM_K25,      PARAM_K26,      PARAM_K27,      PARAM_K28,      PARAM_K29,      PARAM_K30,      PARAM_K31,      PARAM_K32,
-    PARAM_MOD,      PARAM_B02,      PARAM_B03,      PARAM_B04,      PARAM_B05,      PARAM_B06,      PARAM_B07,      PARAM_B08,
-    PARAM_B09,      PARAM_B10,      PARAM_B11,      PARAM_B12,      PARAM_B13,      PARAM_B14,      PARAM_B15,      PARAM_B16,
-    PARAM_B17,      PARAM_B18,      PARAM_B19,      PARAM_B20,      PARAM_B21,      PARAM_B22,      PARAM_B23,      PARAM_B24,     
-    COMP_RETRIG,    COMP_CYCLE,     PARAM_PITCH,    COMP_RND_TRIG,  COMP_RND_PITCH, COP_RND_VEL,    COMP_RND_PARM,  COMP_RND_COMP
+    void            CompInit()
+    {
+      this->chance = 100;
+      this->cycleLength = 1;
+      this->cycleStep = 0b00000001;
+      this->retrigDecay = true;
+      this->retrig = 1;
+      this->flamVel = 0;
+      this->flamTime = 0;
+      this->randomPitch = false;
+      this->octaveShift = 0;
+      this->pitchShift = 0;
+    }
+
+    void            CopyComp (const SEQ_Note& other)
+    {
+      this->chance          = other.chance;
+      this->cycleLength     = other.cycleLength;
+      this->cycleStep       = other.cycleStep;
+      this->retrig          = other.retrig;
+      this->randomPitch     = other.randomPitch;
+      this->octaveShift     = other.octaveShift;
+      this->pitchShift      = other.pitchShift;
+      this->flamTime        = other.flamTime;
+    }
+
+    bool            FindComp(COMP_TYPE type) const
+    {
+      switch(type)
+      {
+        case COMP_CYCLE:     return cycleLength != 1;
+        case COMP_RETRIG:    return retrig != 1;
+        case COMP_CHANCE:    return chance != 100;
+        case COMP_FLAM:      return flamTime;
+        case COMP_OCTAVE:    return octaveShift;
+        case COMP_PITCH:     return pitchShift;
+        default: break;
+      }
+      return false;
+    }
+
   };
 
   struct  SEQ_Param
   {
-    uint8_t number   = 255;  // param type
-    int8_t byte1     = -1;   // -1 : The component is applied to every note in the step.
-    int8_t byte2     = 0;
+    uint8_t type    = 255;  // param type
+    int16_t byte2   = 0;    // value
   };
 
   class   SEQ_ClipItem
@@ -139,6 +201,7 @@ namespace MatrixOS::MidiCenter
 
   class   SEQ_Step  : public SEQ_ClipItem
   {
+
     SEQ_Note notes[NOTE_MAX];
     SEQ_Param params[PARAM_MAX];
     std::bitset<128> noteMark;
@@ -146,12 +209,77 @@ namespace MatrixOS::MidiCenter
     
    public:
     SEQ_Note noteTemplate = SEQ_Note();
+    int8_t strumType = -1, strumSpeed = 0, arpConfig = -1;
 
-    std::vector<SEQ_Note> GetNotes() const {if(NoteEmpty()) { std::vector<SEQ_Note> vec; return vec;}; return Get(notes); }
-    bool FindNote(uint8_t note) const {if((note) > 127) return !noteMark.none(); return Find(noteMark, note); }
-    bool AddNote(SEQ_Note note) { return Add(noteMark, notes, note); }
-    bool DeleteNote(uint8_t note) { return Delete(noteMark, notes, note); }
-    SEQ_Step* CopyNotes(const SEQ_Step& other)
+    bool            Empty() const { return noteMark.none() && paramMark.none(); } 
+
+    //------------------------------------NOTE-------------------------------------//
+
+    std::vector
+    <const SEQ_Note*>      GetNotes() 
+    {
+      std::vector<const SEQ_Note*> vec;
+      if(NoteEmpty())  return vec;
+      for(size_t i = 0; i < NOTE_MAX; i++)
+        if(notes[i].note != 255) vec.push_back(notes + i);
+      return vec;
+    }
+
+    bool            NoteEmpty() const { return noteMark.none(); }
+
+    uint8_t         NoteCount() const { return noteMark.count(); }
+
+    bool            NoteFull()  const { return noteMark.all(); }
+
+    bool            FindNote(uint8_t note) const {if((note) > 127) return !noteMark.none(); return noteMark.test(note); }
+
+    bool            AddNote(SEQ_Note note) 
+    { 
+      if(note.note >= 128) return false;
+
+      uint8_t emptyIndex = 255;
+      for(uint8_t i = 0; i < NOTE_MAX; i++)
+      {
+        if(notes[i].note == note.note && note.offset == notes[i].offset)
+        {
+          notes[i] = note;
+          return true;
+        }
+        else if(notes[i].note == 255 && emptyIndex == 255)
+          emptyIndex = i;
+      }
+
+      if(emptyIndex != 255)
+      {
+        notes[emptyIndex] = note;
+        noteMark.set(note.note);
+        return true;
+      }
+
+      return false;
+    }
+
+    bool            DeleteNote(uint8_t note, int8_t offsetPos = 127) 
+    { 
+      if(note >= 128) return false;
+
+      uint8_t count = 0;
+      uint8_t deleted = 0;
+      for(uint8_t i = 0; i < NOTE_MAX; i++)
+      {
+        if(notes[i].note == note && (offsetPos > 60 || notes[i].offset == offsetPos))
+        {
+          notes[i].note = 255;
+          noteMark.reset(note);
+          deleted++;
+        }
+          count++;
+      }
+      if(deleted == count) noteMark.reset(note);
+      return deleted > 0;
+    }
+
+    SEQ_Step*       CopyNotes(const SEQ_Step& other)
     {
       this->noteMark = other.noteMark;
       for (uint8_t i = 0; i < NOTE_MAX; i++)
@@ -159,43 +287,48 @@ namespace MatrixOS::MidiCenter
       this->noteTemplate = other.noteTemplate;
       return this;
     }
-    void ClearNote()
+
+    void            ClearNote()
     {
       for(uint8_t i = 0; i < NOTE_MAX ; i++ )
         notes[i] = SEQ_Note();
       noteMark.reset();
     }
 
-    std::vector<SEQ_Param> GetParams() const {if(ParamEmpty()) { std::vector<SEQ_Param> vec; return vec;}; return Get(params); }
-    bool FindParam(uint8_t number) const { if((number) > 127) return !noteMark.none(); return Find(paramMark, number); }
-    bool AddParam(SEQ_Param param) { return Add(paramMark, params, param); }
-    bool DeleteParam(uint8_t number) { return Delete(paramMark, params, number); }
-    SEQ_Step*  CopyParam(const SEQ_Step& other)
-    {
-      this->paramMark = other.paramMark;
-      for (uint8_t i = 0; i < PARAM_MAX; i++)
-        this->params[i] = other.params[i];
-      return this;
-    }
-    void ClearParam()
-    {
-      for(uint8_t i = 0; i < PARAM_MAX; i++)
-        params[i] = SEQ_Param();
-      paramMark.reset();
-    }
-
-    uint8_t GetVelocity(uint8_t note) const 
+    uint8_t         GetVelocity(uint8_t note, int8_t offsetPos) const 
     {
       if (NoteEmpty()) return noteTemplate.velocity;
       for (uint8_t i = 0; i < NOTE_MAX; i++)
       {
-        if ((note > 127 && notes[i].number <= 127) || (note <= 127 && notes[i].number == note))
+        if (((note > 127 && notes[i].note <= 127) || (note <= 127 && notes[i].note == note)) && (offsetPos > 60 || notes[i].offset == offsetPos))
           return notes[i].velocity;
       }
       return noteTemplate.velocity;
     }
 
-    bool SetVelocity(uint8_t note, uint8_t velocity)
+    uint8_t         GetGate(uint8_t note) const
+    {
+      if (NoteEmpty()) return noteTemplate.gate;
+      for (uint8_t i = 0; i < NOTE_MAX; i++)
+      {
+        if ((note > 127 && notes[i].note <= 127) || (note <= 127 && notes[i].note == note))
+          return notes[i].gate;
+      }
+      return noteTemplate.gate;
+    }
+
+    uint8_t         GetOffset(uint8_t note) const
+    {
+      if (NoteEmpty()) return noteTemplate.offset;
+      for (uint8_t i = 0; i < NOTE_MAX; i++)
+      {
+        if ((note > 127 && notes[i].note <= 127) || (note <= 127 && notes[i].note == note))
+          return notes[i].offset;
+      }
+      return noteTemplate.offset;
+    }
+
+    bool            SetVelocity(uint8_t note, uint8_t velocity, int8_t offsetPos)
     {
       noteTemplate.velocity = velocity;
       if(NoteEmpty()) return false;
@@ -203,24 +336,13 @@ namespace MatrixOS::MidiCenter
       bool set = false;
       for (uint8_t i = 0; i < NOTE_MAX; i++)
       {
-        if (notes[i].number <= 127 && (note > 127 || notes[i].number == note))
+        if ((notes[i].note <= 127 && (note > 127 || notes[i].note == note)) && (offsetPos > 60 || notes[i].offset == offsetPos))
         { notes[i].velocity = velocity; set = true; }
       }
       return set;
     }
 
-    uint8_t GetGate(uint8_t note) const
-    {
-      if (NoteEmpty()) return noteTemplate.gate;
-      for (uint8_t i = 0; i < NOTE_MAX; i++)
-      {
-        if ((note > 127 && notes[i].number <= 127) || (note <= 127 && notes[i].number == note))
-          return notes[i].gate;
-      }
-      return noteTemplate.gate;
-    }
-
-    bool SetGate(uint8_t note, uint8_t gate)
+    bool            SetGate(uint8_t note, uint8_t gate, int8_t tair = 127)
     {
       noteTemplate.gate = gate;
       if(NoteEmpty()) return false;
@@ -228,103 +350,188 @@ namespace MatrixOS::MidiCenter
       bool set = false;
       for (uint8_t i = 0; i < NOTE_MAX; i++)
       {
-        if (notes[i].number <= 127 && (note > 127 || notes[i].number == note))
-        { notes[i].gate = gate; set = true; }
+        if (notes[i].note <= 127 && (note > 127 || notes[i].note == note))
+        { 
+          notes[i].gate = gate;
+          notes[i].tair = tair <= 100 ? tair : 127;
+          set = true; 
+        }
       }
       return set;
     }
 
-    uint8_t GetOffset(uint8_t note) const
-    {
-      if (NoteEmpty()) return noteTemplate.offset;
-      for (uint8_t i = 0; i < NOTE_MAX; i++)
-      {
-        if ((note > 127 && notes[i].number <= 127) || (note <= 127 && notes[i].number == note))
-          return notes[i].offset;
-      }
-      return noteTemplate.offset;
-    }
-
-    bool SetOffset(uint8_t note, uint8_t offset)
+    bool            SetOffset(uint8_t note, uint8_t offset)
     {
       noteTemplate.offset = offset;
       if(NoteEmpty()) return false;
-
+      std::set<uint8_t> exist;
       bool set = false;
       for (uint8_t i = 0; i < NOTE_MAX; i++)
       {
-        if (notes[i].number <= 127 && (note > 127 || notes[i].number == note))
-        { notes[i].offset = offset; set = true;}
+        if (notes[i].note <= 127 && (note > 127 || notes[i].note == note))
+        { 
+          if(exist.find(notes[i].note) != exist.end())
+          {
+            notes[i] = SEQ_Note();
+            continue;
+          }
+          notes[i].offset = offset; 
+          exist.insert(notes[i].note);
+          set = true;
+        }
       }
       return set;
     }
 
-    bool Empty() const { return noteMark.none() && paramMark.none(); } 
-    bool NoteEmpty() const { return noteMark.none(); }
-    uint8_t NoteCount() const {return noteMark.count();}
-    
-    bool ParamEmpty() const { return paramMark.none(); }
-    bool NoteFull() const { return noteMark.all(); }
-    bool ParamFull() const { return paramMark.all(); }
+    //------------------------------------COMP-------------------------------------//
 
-  private:
-    template <typename T, size_t N>
-    std::vector<T> Get(const T (&arr)[N]) const
+    bool            FindStepComp(COMP_TYPE type) const
     {
-      std::vector<T> vec;
-      for(size_t i = 0; i < N; i++)
-        if(arr[i].number != 255) vec.push_back(arr[i]);
+      switch(type)
+      {
+        case COMP_CYCLE:     return noteTemplate.cycleLength  != 1;
+        case COMP_RETRIG:    return noteTemplate.retrig       != 1;
+        case COMP_CHANCE:    return noteTemplate.chance       != 100;
+        case COMP_FLAM:      return noteTemplate.flamTime     != 0;
+        case COMP_OCTAVE:    return noteTemplate.octaveShift  != 0;
+        case COMP_PITCH:     return noteTemplate.pitchShift   != 0;
+        case COMP_STRUM:     return strumType                 >= 0;
+        case COMP_ARP:       return arpConfig                 >= 0;
+      }
+      return false;
+    }
+
+    void            InitChance() { InitComp(&SEQ_Note::chance, uint8_t(100)); }
+
+    void            InitCycle() { InitComp(&SEQ_Note::cycleLength, uint8_t(1)); InitComp(&SEQ_Note::cycleStep, uint8_t(0b00000001)); }
+
+    void            InitRetrig() { InitComp(&SEQ_Note::retrig, uint8_t(1)); InitComp(&SEQ_Note::retrigDecay, uint8_t(0));}
+
+    void            InitFlam() { InitComp(&SEQ_Note::flamTime, uint8_t(0)); InitComp(&SEQ_Note::flamVel, uint8_t(0)); }
+
+    void            InitOctaveShift() { InitComp(&SEQ_Note::octaveShift, int8_t(0));}
+
+    void            InitPitchShift() { InitComp(&SEQ_Note::pitchShift, int8_t(0));}
+
+    void            SetChance(uint8_t chance, uint8_t note = 255) { SetComp(&SEQ_Note::chance, chance, uint8_t(100), note); }
+
+    void            SetCycleLength(uint8_t length, uint8_t note = 255) { SetComp(&SEQ_Note::cycleLength, length, uint8_t(1), note); }
+
+    void            SetCycleStep(uint8_t CycleStep, uint8_t note = 255) { SetComp(&SEQ_Note::cycleStep, CycleStep, uint8_t(0b00000001), note); }
+
+    void            SetRetrig(uint8_t retrig, uint8_t note = 255) { SetComp(&SEQ_Note::retrig, retrig, uint8_t(1), note); };
+
+    void            SetRetrigDecay(uint8_t retrigDecay, uint8_t note = 255) { SetComp(&SEQ_Note::retrigDecay, retrigDecay, uint8_t(0), note); }
+
+    void            SetFlamTime(uint8_t flamTime, uint8_t note = 255) { SetComp(&SEQ_Note::flamTime, flamTime, uint8_t(0), note); }
+
+    void            SetFlamVel(uint8_t flamVel, uint8_t note = 255) { SetComp(&SEQ_Note::flamVel, flamVel, uint8_t(0), note); }
+
+    void            SetRandomPitch(bool randomPitch, uint8_t note = 255) { SetComp(&SEQ_Note::randomPitch, randomPitch, false, note); }
+
+    void            SetOctaveShift(int8_t octaveShift, uint8_t note = 255) { SetComp(&SEQ_Note::octaveShift, octaveShift, int8_t(0), note); }
+
+    void            SetPitchShift(int8_t pitchShift, uint8_t note = 255) { SetComp(&SEQ_Note::pitchShift, pitchShift, int8_t(0), note); }
+
+    template <typename T>
+    void            InitComp(T SEQ_Note::*comp, T defaultValue)
+    {
+      noteTemplate.*comp = defaultValue;
+      for(uint8_t i = 0; i < NOTE_MAX; i++)
+        notes[i].*comp = defaultValue;
+    } 
+
+    template <typename T>
+    void            SetComp(T SEQ_Note::*comp, T value, T defaultValue, uint8_t note = 255)
+    {
+      if(note == 255) 
+      {
+        noteTemplate.*comp = value;
+        for(uint8_t i = 0; i < NOTE_MAX; i++)
+          notes[i].*comp = static_cast<T>(defaultValue);
+      }
+      else
+      {
+        for(uint8_t i = 0; i < NOTE_MAX; i++)
+          if(notes[i].note == note) notes[i].*comp = value;
+        noteTemplate.*comp = static_cast<T>(defaultValue);
+      }
+    }
+
+    //------------------------------------PARAM------------------------------------//
+
+    std::vector
+    <SEQ_Param>     GetParams()  const 
+    {
+      std::vector<SEQ_Param> vec;
+      if(ParamEmpty())  return vec;
+      for(size_t i = 0; i < NOTE_MAX; i++)
+        if(params[i].type != 255) vec.push_back(params[i]);
       return vec;
     }
 
-    template <size_t M> 
-    bool Find(const std::bitset<M>& map, uint8_t number) const 
-    { 
-      if(number >= M ) return false; 
-      return map.test(number); 
-    }
+    bool            ParamEmpty() const { return paramMark.none(); }
 
-    template <typename T, size_t N, size_t M>
-    bool Add(std::bitset<M>& map, T (&arr)[N], T item)
-    {
-      if(item.number >= M) return false;
+    uint8_t         ParamCount() const { return paramMark.count(); }
+
+    bool            ParamFull()  const { return paramMark.all(); }
+
+    bool            FindParam(uint8_t type) const { if((type) > 127) return !noteMark.none(); return paramMark.test(type);  }
+
+    bool            AddParam(SEQ_Param param) 
+    { 
+      if(param.type >= 64) return false;
 
       uint8_t emptyIndex = 255;
-      for(uint8_t i = 0; i < N; i++)
+      for(uint8_t i = 0; i < PARAM_MAX; i++)
       {
-        if(arr[i].number == item.number)
+        if(params[i].type == param.type)
         {
-          arr[i] = item;
+          params[i] = param;
           return true;
         }
-        else if(arr[i].number == 255 && emptyIndex == 255)
+        else if(params[i].type == 255 && emptyIndex == 255)
           emptyIndex = i;
       }
 
       if(emptyIndex != 255)
       {
-        arr[emptyIndex] = item;
-        map.set(item.number);
+        params[emptyIndex] = param;
+        paramMark.set(param.type);
         return true;
       }
 
       return false;
     }
 
-    template <typename T, size_t N, size_t M>
-    bool Delete(std::bitset<M>& map, T (&arr)[N], uint8_t number)
-    {
-      if(number >= M) return false;
-      for(uint8_t i = 0; i < N; i++)
+    bool            DeleteParam(uint8_t type, uint8_t note) 
+    { 
+      if(type >= 64) return false;
+      for(uint8_t i = 0; i < PARAM_MAX; i++)
       {
-        if(arr[i].number == number)
+        if(params[i].type == type)
         {
-          arr[i].number = 255;
-          map.reset(number);
+          params[i].type = 255;
+          paramMark.reset(type);
           return true;
         }
       }
-      return false;
+      return false; 
+    }
+
+    SEQ_Step*       CopyParam(const SEQ_Step& other)
+    {
+      this->paramMark = other.paramMark;
+      for (uint8_t i = 0; i < PARAM_MAX; i++)
+        this->params[i] = other.params[i];
+      return this;
+    }
+
+    void            ClearParam()
+    {
+      for(uint8_t i = 0; i < PARAM_MAX; i++)
+        params[i] = SEQ_Param();
+      paramMark.reset();
     }
 
   };
@@ -333,8 +540,9 @@ namespace MatrixOS::MidiCenter
   {
   public:
     uint8_t speed           = 4;          // 4x, 3x, 2x, 1.5x, 1x, 1x, 1/2, 1/3, 1/4, 1/8
-    uint8_t gate            = 50;         // 10% - 100%
-    uint8_t quantize        = 0;          // 0% - 100%
+    uint8_t direction       = 0;          // -->, <--, <->, Random
+    uint8_t tair            = 50;         // 10% - 100%
+    uint8_t quantize        = 100;        // 0% - 100%
     uint8_t barMax          = 1;          // 1 - 4
     uint8_t barStepMax      = STEP_MAX;   // 8 - 16
    
@@ -351,34 +559,37 @@ namespace MatrixOS::MidiCenter
       stepMark.reset(); automMark.reset();
     }
 
-    void CopySettings(const SEQ_Clip& src)
+    void            CopySettings(const SEQ_Clip& src)
     {
       this->quantize = src.quantize;
       this->barMax = src.barMax;
       this->barStepMax = src.barStepMax;
       this->speed = src.speed;
-      this->gate = src.gate;
+      this->tair = src.tair;
     }
 
-    int16_t StepID (uint8_t BarNum, uint8_t stepNum) const 
+    int16_t         StepID (uint8_t BarNum, uint8_t stepNum) const 
     { 
       if(BarNum >= BAR_MAX || stepNum >= STEP_MAX) return -1;
       return stepID [BarNum * STEP_MAX + stepNum]; 
     }
-    int16_t AutomID(uint8_t BarNum, uint8_t automNum) const 
+
+    int16_t         AutomID(uint8_t BarNum, uint8_t automNum) const 
     { 
       if(BarNum >= BAR_MAX || automNum >= AUTOM_MAX) return -1;
       return automID[BarNum * AUTOM_MAX + automNum]; 
     }
-    bool Empty() const { return stepMark.none() && automMark.none(); }
+
+    bool            Empty() const { return stepMark.none() && automMark.none(); }
 
   private:
-    void SetStepID(uint8_t BarNum, uint8_t stepNum, int16_t id) 
+    void            SetStepID(uint8_t BarNum, uint8_t stepNum, int16_t id) 
     { 
       stepID[BarNum * STEP_MAX + stepNum] = id;
       stepMark[BarNum * STEP_MAX + stepNum] = (id != -1);
     }
-    void SetAutomID(uint8_t BarNum, uint8_t automNum, int16_t id) 
+
+    void            SetAutomID(uint8_t BarNum, uint8_t automNum, int16_t id) 
     { 
       automID[BarNum * AUTOM_MAX + automNum] = id;
       automMark[BarNum * AUTOM_MAX + automNum] = (id != -1);
@@ -414,7 +625,6 @@ namespace MatrixOS::MidiCenter
   enum    CapState : uint8_t { CAP_NORMAL, CAP_EDIT, };
   enum    CapBlock : bool    { UNBLOCK,    BLOCK,    };
   extern  std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep;
-
   class   SEQ_Capture 
   {
     SEQ_Step capStep = SEQ_Step();
@@ -423,7 +633,7 @@ namespace MatrixOS::MidiCenter
     bool editingStepEmpty = true;
 
    public:
-    CapBlock Capture(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    CapBlock        Capture(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if(channel != MatrixOS::UserVar::global_channel) return UNBLOCK;
 
@@ -437,31 +647,7 @@ namespace MatrixOS::MidiCenter
       return UNBLOCK;
     }
 
-    void ChangeState(CapState changeState , bool updateCap = false)
-    {
-      switch(changeState)
-      {
-        case CAP_NORMAL:
-          inputList.clear(); 
-          if(updateCap && !CNTR_SeqEditStep.empty())
-            capStep.CopyNotes(*(CNTR_SeqEditStep.begin()->second));
-          CNTR_SeqEditStep.clear();
-          break;
-        case CAP_EDIT: break;
-      }
-      this->state = changeState;
-    }
-
-    void Editing(SEQ_Pos pos, SEQ_Step* step)
-    {
-      editingStepEmpty = step->NoteEmpty();
-      if (!inputList.empty())
-        step->CopyNotes(capStep);
-      CNTR_SeqEditStep.push_back({pos, step});
-      ChangeState(CAP_EDIT);
-    }
-
-    CapBlock EditCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    CapBlock        EditCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if (byte2 > 0) 
       {
@@ -479,7 +665,7 @@ namespace MatrixOS::MidiCenter
       return CapBlock(transportState.play);
     }
 
-    CapBlock NormalCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    CapBlock        NormalCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if (byte2 > 0) 
       {
@@ -488,12 +674,36 @@ namespace MatrixOS::MidiCenter
         capStep.AddNote(SEQ_Note(byte1, byte2, capStep.noteTemplate.gate, 0));
         return UNBLOCK;
       }
-      inputList.erase(byte1);
-      capStep.DeleteNote(byte1);
+        inputList.erase(byte1);
+        capStep.DeleteNote(byte1);
       return UNBLOCK;
     }
 
-    void Clear(bool resetState = true)
+    void            ChangeState(CapState changeState , bool updateCap = false)
+    {
+      switch(changeState)
+      {
+        case CAP_NORMAL:
+          inputList.clear(); 
+          if(updateCap && !CNTR_SeqEditStep.empty())
+            capStep.CopyNotes(*(CNTR_SeqEditStep.begin()->second));
+          CNTR_SeqEditStep.clear();
+          break;
+        case CAP_EDIT: break;
+      }
+      this->state = changeState;
+    }
+
+    void            Editing(SEQ_Pos pos, SEQ_Step* step)
+    {
+      editingStepEmpty = step->NoteEmpty();
+      if (!inputList.empty())
+        step->CopyNotes(capStep);
+      CNTR_SeqEditStep.push_back({pos, step});
+      ChangeState(CAP_EDIT);
+    }
+
+    void            Clear(bool resetState = true)
     {
       if(resetState) state = CAP_NORMAL;
       CNTR_SeqEditStep.clear();
@@ -502,15 +712,15 @@ namespace MatrixOS::MidiCenter
       editingStepEmpty = true;
     }
 
-    void EndEditing()
+    void            EndEditing()
     {
       state = CAP_NORMAL;
       CNTR_SeqEditStep.clear();
     }
 
-    bool EditingStepEmpty() const { return editingStepEmpty; }
+    bool            EditingStepEmpty() const { return editingStepEmpty; }
 
-    SEQ_Step* GetCap(){return &capStep;}
+    SEQ_Step*       GetCap(){return &capStep;}
   };
 
   class   SEQ_DataStore
@@ -521,7 +731,7 @@ namespace MatrixOS::MidiCenter
     std::map<int16_t, SEQ_Step,    std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Step >>>   steps;    // stepID, step
     std::map<int16_t, SEQ_Autom,   std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Autom>>>   automs;   // automID, autom
     std::set<int16_t> patternChanged, stepChanged, automChanged; // stepID, automID
-    uint8_t clipCount[16] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    std::set<SEQ_Step*> compEdit;
     SEQ_Capture capturer;
     bool inited = false;
 
@@ -532,8 +742,10 @@ namespace MatrixOS::MidiCenter
       new (&clips)  std::array<SEQ_Clip, 16 * CLIP_MAX>();
       new (&steps)  std::map<int16_t, SEQ_Step,  std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Step >>>();
       new (&automs) std::map<int16_t, SEQ_Autom, std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Autom>>>();
-      new (&stepChanged)  std::set<int16_t>();
-      new (&automChanged) std::set<int16_t>();
+      new (&patternChanged) std::set<int16_t>();
+      new (&stepChanged)    std::set<int16_t>();
+      new (&automChanged)   std::set<int16_t>();
+      new (&compEdit)       std::set<SEQ_Step*>();
       new (&capturer) SEQ_Capture();
       inited = true;
     }
@@ -544,37 +756,374 @@ namespace MatrixOS::MidiCenter
       clips.~array();
       steps.~map();
       automs.~map();
+      patternChanged.~set();
       stepChanged.~set();
       automChanged.~set();
+      compEdit.~set();
       capturer.~SEQ_Capture();
     }
 
     ~SEQ_DataStore() { if(inited) Destroy(); }
 
-    uint8_t EditingClip(uint8_t channel) { return song.editingClip[channel]; }
+    //------------------------------------NOTE-------------------------------------//
 
-    void SetEditingClip(uint8_t channel, uint8_t clipNum) { song.editingClip[channel] = clipNum; }
+    void            AddNote(SEQ_Pos position, SEQ_Note note, bool markChange = true) 
+    { 
+      auto step = Step(position,true);
+      if(step)
+      {
+        (step->AddNote)(note);
+        if(markChange) stepChanged.insert(StepID(position));
+      }
+    }
 
-    uint8_t PlayingClip(uint8_t channel) { return song.playingClip[channel]; }
+    void            AddNotes(SEQ_Pos position, std::vector<SEQ_Note> notes)
+    {
+      for(uint8_t i = 0; i < notes.size() && i < STEP_MAX; i++)
+        AddNote(position, notes[i], false);
+      stepChanged.insert(StepID(position));
+    }
 
-    SEQ_Pattern* Pattern(uint8_t patternNum) { return &patterns[patternNum]; }
+    void            DeleteNote(SEQ_Pos position, uint8_t note, int8_t offset = 127, bool deleteEmptyStep = true) 
+    { 
+      auto step = Step(position);
+      if(step) 
+      {
+        (step->DeleteNote)(note, offset);
+        if(deleteEmptyStep && step->Empty()) DeleteStep(position);
+        stepChanged.insert(StepID(position));
+      }
+    }
 
-    SEQ_Pattern* InsertPattern(uint8_t patternNum) { return &patterns[patternNum];}
+    void            ClearNote(SEQ_Pos position, bool deleteEmptyStep = true) 
+    { 
+      SEQ_Step* step = Step(position);
+      if(step) 
+      {
+        (step->ClearNote)(); 
+        if(deleteEmptyStep && step->Empty()) DeleteStep(position);
+        stepChanged.insert(StepID(position));
+      }
+    }
 
-    void DeletePattern(uint8_t patternNum) {}
+    bool            FindNoteInBar(uint8_t channel, uint8_t clipNum, uint8_t barNum, uint8_t note = 255)
+    {
+      for(uint8_t i = 0; i < STEP_MAX; i++)
+      {
+        SEQ_Pos pos(channel, clipNum, barNum, i);
+        if(FindNote(pos, note)) return true;
+      }
+      return false;
+    }
 
-    CapBlock Capture(uint8_t channel, uint8_t byte1, uint8_t byte2) { return capturer.Capture(channel, byte1, byte2); }
+    bool            FindNote(SEQ_Pos position, uint8_t note = 255) {if(Step(position)) return Step(position)->FindNote(note); return false;}
 
-    void Capture_ChangeState(CapState state, bool updateCap = false) { capturer.ChangeState(state, updateCap); }
+    bool            NoteEmpty(SEQ_Pos position) { if(Step(position)) return Step(position)->NoteEmpty(); return true;}
 
-    void Capture_UpdateCap(SEQ_Pos position) { if(Step(position)) capturer.GetCap()->CopyNotes(*Step(position)); }
+    uint8_t         NoteCount(SEQ_Pos position, uint8_t note = 255) 
+    {
+      if(!Step(position)) return 0;
+      if(note > 127)return Step(position)->NoteCount();
+      return Step(position)->FindNote(note);
+    }
 
-    void Capture_Editing(SEQ_Pos position) {
+    uint8_t         GetVelocity(SEQ_Pos position, uint8_t note = 255, int8_t offsetPos = 127) {if(Step(position)) return Step(position)->GetVelocity(note, offsetPos); return MatrixOS::UserVar::defaultVelocity;}
+
+    uint8_t         GetGate(SEQ_Pos position, uint8_t note = 255) {if(Step(position)) return Step(position)->GetGate(note); return 0;}
+
+    uint8_t         GetOffset(SEQ_Pos position, uint8_t note = 255) {if(Step(position)) return Step(position)->GetOffset(note); return 0;}
+
+    void            SetVelocity(SEQ_Pos position, uint8_t velocity, uint8_t note = 255, int8_t offsetPos = 127) 
+    { 
+      if(Step(position)) 
+        if(Step(position)->SetVelocity(note, velocity, offsetPos))
+          stepChanged.insert(StepID(position));
+    }
+
+    void            SetGate(SEQ_Pos position, uint8_t gate, uint8_t note = 255, int8_t tair = 127) 
+    {
+      if(Step(position)) 
+        if (Step(position)->SetGate(note, gate, tair))
+          stepChanged.insert(StepID(position));
+    }
+
+    void            SetOffset(SEQ_Pos position, uint8_t offset, uint8_t note = 255) 
+    {
+      if(Step(position)) 
+        if(Step(position)->SetOffset(note, offset))
+          stepChanged.insert(StepID(position));
+    }
+
+    //------------------------------------COMP-------------------------------------//
+
+    bool            Comp_InEditing() { return !compEdit.empty(); }
+
+    void            Comp_AddEdit(SEQ_Pos position)
+    {
+      SEQ_Step* step = Step(position);
+      if(step && !step->NoteEmpty())
+        compEdit.insert(step);
+    }
+
+    void            Comp_DelEdit(SEQ_Pos position)
+    {
+      SEQ_Step* step = Step(position);
+      if(step && compEdit.find(step) != compEdit.end())
+      {
+        stepChanged.insert(StepID(position));
+        compEdit.erase(step);
+      }
+    }
+
+    void            Comp_EndEditing()
+    {
+      for (auto step : compEdit)
+        stepChanged.insert(StepID(step->Position()));
+      compEdit.clear();
+    } 
+
+    void            Comp_InitChance() { Comp_Init(&SEQ_Step::InitChance); }
+
+    void            Comp_InitCycle() { Comp_Init(&SEQ_Step::InitCycle); }
+
+    void            Comp_InitRetrig() { Comp_Init(&SEQ_Step::InitRetrig); }
+
+    void            Comp_InitFlam() { Comp_Init(&SEQ_Step::InitFlam); }
+
+    void            Comp_InitOctaveShift() { Comp_Init(&SEQ_Step::InitOctaveShift); }
+
+    void            Comp_InitPitchShift() { Comp_Init(&SEQ_Step::InitPitchShift); }
+
+    void            Comp_SetChance(uint8_t chance, uint8_t note = 255) { Comp_Set(&SEQ_Step::SetChance, chance, note); }
+
+    void            Comp_SetCycleLength(uint8_t length, uint8_t note = 255) { Comp_Set(&SEQ_Step::SetCycleLength, length, note); }
+
+    void            Comp_SetCycleStep(uint8_t CycleStep, uint8_t note = 255) { Comp_Set(&SEQ_Step::SetCycleStep, CycleStep, note); }
+
+    void            Comp_SetRetrig(uint8_t retrig, uint8_t note = 255) { Comp_Set(&SEQ_Step::SetRetrig, retrig, note); }
+
+    void            Comp_SetRetrigDecay(uint8_t retrigDecay, uint8_t note = 255) { Comp_Set(&SEQ_Step::SetRetrigDecay, retrigDecay, note); }
+
+    void            Comp_SetFlamTime(uint8_t flamTime, uint8_t note = 255) { Comp_Set(&SEQ_Step::SetFlamTime, flamTime, note); }
+
+    void            Comp_SetFlamVel(uint8_t flamVel, uint8_t note = 255) { Comp_Set(&SEQ_Step::SetFlamVel, flamVel, note); }
+
+    void            Comp_SetRandomPitch(bool randomPitch, uint8_t note = 255) { Comp_Set(&SEQ_Step::SetRandomPitch, randomPitch, note); }
+
+    void            Comp_SetOctaveShift(int8_t octaveShift, uint8_t note = 255) { Comp_Set(&SEQ_Step::SetOctaveShift, octaveShift, note); }
+
+    void            Comp_SetPitchShift(int8_t pitchShift, uint8_t note = 255) { Comp_Set(&SEQ_Step::SetPitchShift, pitchShift, note); }
+
+    template <typename F>
+    void            Comp_Init(F SEQ_Step::*comp)
+    {
+      for (auto step : compEdit)
+        (step->*comp)();
+    }
+
+    template <typename F, typename T>
+    void            Comp_Set(F SEQ_Step::*comp, T value, uint8_t note = 255)
+    {
+      for (auto step : compEdit)
+        (step->*comp)(value, note);
+    }
+
+    //------------------------------------PARAM------------------------------------//
+
+    void            AddParam(SEQ_Pos position, SEQ_Param param, bool markChange = true) 
+    { 
+      auto step = Step(position,true);
+      if(step)
+      {
+        (step->AddParam)(param);
+        if(markChange) stepChanged.insert(StepID(position));
+      }
+    }
+
+    void            AddParams(SEQ_Pos position, std::vector<SEQ_Param> params)
+    {
+      for(uint8_t i = 0; i < params.size() && i < PARAM_MAX; i++)
+        AddParam(position, params[i], false);
+      stepChanged.insert(StepID(position));
+    }
+
+    void            DeleteParam(SEQ_Pos position, uint8_t type, uint8_t note = 255, bool deleteEmptyStep = true) 
+    { 
+      auto step = Step(position);
+      if(step) 
+      {
+        (step->DeleteParam)(type, note);
+        if(deleteEmptyStep && step->Empty()) DeleteStep(position);
+        stepChanged.insert(StepID(position));
+      }
+    }
+
+    void            ClearParam(SEQ_Pos position, bool deleteEmptyStep = true) 
+    { 
+      SEQ_Step* step = Step(position);
+      if(step) 
+      {
+        (step->ClearParam)(); 
+        if(deleteEmptyStep && step->Empty()) DeleteStep(position);
+        stepChanged.insert(StepID(position));
+      }
+    }
+    
+    bool            ParamEmpty(SEQ_Pos position) { if(Step(position)) return Step(position)->ParamEmpty(); return true;}
+
+    //------------------------------------STEP-------------------------------------//
+
+    SEQ_Step*       Step(SEQ_Pos position, bool AddNew = false) 
+    {
+      
+      int16_t stepID = StepID(position);
+      if (stepID == -1) return AddNew ? AddStep(SEQ_Step(), position) : nullptr;
+      auto it = steps.find(stepID);
+      if (it == steps.end()) return AddNew ? AddStep(SEQ_Step(), position) : nullptr;
+      return &it->second;
+    };
+
+    SEQ_Step*       AddStep(SEQ_Step step, SEQ_Pos position) { return Add(position, step, steps, stepChanged, &SEQ_Clip::SetStepID, &SEQ_Clip::StepID);}
+
+    void            DeleteStep(SEQ_Pos position) { Delete(position, steps, stepChanged, &SEQ_Clip::SetStepID, &SEQ_Clip::StepID); }
+
+    void            CopyStep(SEQ_Pos src, SEQ_Pos dst)
+    {
+      if(src == dst) return;
+      int16_t stepID = StepID(src);
+      if (stepID < 0) { DeleteStep(dst); return; }
+
+      auto it = steps.find(stepID);
+      if(it == steps.end()) return;
+
+      SEQ_Step* stepDst = Step(dst, true);
+      if(!stepDst) return;
+
+      stepDst->CopyNotes(it->second);
+      stepDst->CopyParam(it->second);
+      stepChanged.insert(StepID(dst));
+    }
+
+    //------------------------------------AUTOM------------------------------------//
+
+    SEQ_Autom*      Autom(SEQ_Pos position, bool AddNew = false) 
+    {
+      int16_t automID = StepID(position);
+      auto it = automs.find(automID);
+      if(it == automs.end())
+        return AddNew ? AddAutom(SEQ_Autom(), position) : nullptr;
+      return &it->second;
+    }
+
+    SEQ_Autom*      AddAutom(SEQ_Autom autom, SEQ_Pos position) { return Add(position, autom, automs, automChanged, &SEQ_Clip::SetAutomID, &SEQ_Clip::AutomID); }
+
+    void            DeleteAutom(SEQ_Pos position) { Delete(position, automs, automChanged, &SEQ_Clip::SetAutomID, &SEQ_Clip::AutomID); }
+
+    void            CopyAutom(SEQ_Pos src, SEQ_Pos dst)
+    {
+      if(src == dst) return;
+      int16_t automID = AutomID(src);
+      if (automID < 0) { DeleteAutom(dst); return; }
+
+      auto it = automs.find(automID);
+      if(it == automs.end()) return;
+
+      SEQ_Autom* automDst = Autom(dst, true);
+      if(!automDst) return;
+
+      automDst->CopyAutom(it->second);
+      automChanged.insert(AutomID(dst));
+    }
+
+    //------------------------------------BAR--------------------------------------//
+
+    void            CopyBar(SEQ_Pos src, SEQ_Pos dst)
+    {
+      // MLOGD("SEQ Copy From","Channel %d. Clip %d. Bar %d.", src.ChannelNum(), src.ClipNum(), src.BarNum());
+      // MLOGD("SEQ Copy To  ","Channel %d. Clip %d. Bar %d.", dst.ChannelNum(), dst.ClipNum(), dst.BarNum());
+      if(src == dst) return;
+      for (uint8_t s = 0; s < STEP_MAX;  s++)
+      { CopyStep (SEQ_Pos(src.ChannelNum(), src.ClipNum(), src.BarNum(), s), SEQ_Pos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), s)); }
+      for (uint8_t a = 0; a < AUTOM_MAX; a++)
+      { CopyAutom(SEQ_Pos(src.ChannelNum(), src.ClipNum(), src.BarNum(), a), SEQ_Pos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), a)); }
+    }
+
+    void            ClearBar(SEQ_Pos pos) 
+    { 
+      for (uint8_t s = 0; s < STEP_MAX;  s++) 
+      { DeleteStep (SEQ_Pos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), s)); }
+      for (uint8_t a = 0; a < AUTOM_MAX; a++)
+      { DeleteAutom(SEQ_Pos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), a)); }
+    }
+
+    //------------------------------------CLIP-------------------------------------//
+
+    SEQ_Clip*       Clip(uint8_t channel, uint8_t clipNum) { 
+      if(channel >= 16 || clipNum >= CLIP_MAX) return nullptr;
+      return &clips[channel * CLIP_MAX + clipNum]; 
+    };
+
+    bool            ClipEmpty(uint8_t channel, uint8_t clipNum) { return Clip(channel, clipNum)->Empty(); }
+
+    uint8_t         EditingClip(uint8_t channel) { return song.editingClip[channel]; }
+
+    uint8_t         PlayingClip(uint8_t channel) { return song.playingClip[channel]; }
+
+    void            SetEditingClip(uint8_t channel, uint8_t clipNum) { song.editingClip[channel] = clipNum; }
+
+    void            ClearClip(uint8_t channel, uint8_t clipNum)
+    {
+      if(channel >= 16 || clipNum >= CLIP_MAX) return;
+      for (uint8_t bar = 0; bar < BAR_MAX; bar++) {
+        for (uint8_t s = 0; s < STEP_MAX; s++)
+        {
+          int16_t stepID = Clip(channel, clipNum)->StepID(bar, s);
+          if (stepID != -1)
+            DeleteStep(Step(stepID)->Position());
+        }
+        for (uint8_t a = 0; a < AUTOM_ALL; a++) {
+          int16_t automID = Clip(channel, clipNum)->AutomID(bar, a);
+          if (automID != -1)
+            DeleteAutom(Autom(automID)->Position());
+        }
+      }
+    }
+
+    void            CopyClip(uint8_t channel_src, uint8_t clip_src, uint8_t channel_dst, uint8_t clip_dst)
+    {
+      if(channel_src >= 16 || clip_src >= CLIP_MAX) return;
+      if(channel_src == channel_dst && clip_src == clip_dst) return;
+      for (uint8_t bar = 0; bar < BAR_MAX; bar++) {
+        for (uint8_t s = 0; s < STEP_MAX; s++)
+          CopyStep (SEQ_Pos(channel_src, clip_src, bar, s), SEQ_Pos(channel_dst, clip_dst, bar, s));
+        for (uint8_t a = 0; a < PARAM_MAX; a++)
+          CopyAutom(SEQ_Pos(channel_src, clip_src, bar, a), SEQ_Pos(channel_dst, clip_dst, bar, a));
+      }
+      Clip(channel_dst, clip_dst)->CopySettings(*Clip(channel_src, clip_src));
+    }
+
+    //------------------------------------PATTERN----------------------------------//
+
+    SEQ_Pattern*    Pattern(uint8_t patternNum) { return &patterns[patternNum]; }
+
+    SEQ_Pattern*    InsertPattern(uint8_t patternNum) { return &patterns[patternNum];}
+
+    void            DeletePattern(uint8_t patternNum) {}
+
+    //------------------------------------CAPTURE----------------------------------//
+
+    CapBlock        Capture(uint8_t channel, uint8_t byte1, uint8_t byte2) { return capturer.Capture(channel, byte1, byte2); }
+
+    void            Capture_ChangeState(CapState state, bool updateCap = false) { capturer.ChangeState(state, updateCap); }
+
+    void            Capture_UpdateCap(SEQ_Pos position) { if(Step(position)) capturer.GetCap()->CopyNotes(*Step(position)); }
+
+    void            Capture_Editing(SEQ_Pos position) {
       SEQ_Step* step = Step(position, true);
       if(step) capturer.Editing(position, step);
     }
 
-    void Capture_SaveHold(SEQ_Pos position)
+    void            Capture_SaveHold(SEQ_Pos position)
     {
       SEQ_Step* step = Step(position);
       if(!step) return;
@@ -590,7 +1139,7 @@ namespace MatrixOS::MidiCenter
       capturer.ChangeState(CAP_NORMAL, true);
     }
 
-    void Capture_SaveClick(SEQ_Pos position)
+    void            Capture_SaveClick(SEQ_Pos position)
     {
       if(!capturer.EditingStepEmpty())
       {
@@ -610,7 +1159,7 @@ namespace MatrixOS::MidiCenter
       capturer.ChangeState(CAP_NORMAL);
     }
 
-    void Capture_SaveSingle(SEQ_Pos position)
+    void            Capture_SaveSingle(SEQ_Pos position)
     {
       uint8_t channel = MatrixOS::UserVar::global_channel;
       uint8_t activeNote = channelConfig->activeNote[channel];
@@ -622,204 +1171,19 @@ namespace MatrixOS::MidiCenter
       capturer.ChangeState(CAP_NORMAL);
     }
 
-    void Capture_Clear() { capturer.Clear(); }
+    void            Capture_Clear() { capturer.Clear(); }
 
-    uint8_t Capture_CapCount() { return capturer.GetCap()->NoteCount(); }
+    uint8_t         Capture_CapCount() { return capturer.GetCap()->NoteCount(); }
 
-    void Capture_EndEditing() { capturer.EndEditing(); }
-
-    SEQ_Clip*   Clip(uint8_t channel, uint8_t clipNum) { 
-      if(channel >= 16 || clipNum >= CLIP_MAX) return nullptr;
-      return &clips[channel * CLIP_MAX + clipNum]; 
-    };
-
-    SEQ_Step*   Step(SEQ_Pos position, bool AddNew = false) 
-    {
-      
-      int16_t stepID = StepID(position);
-      if (stepID == -1) return AddNew ? AddStep(SEQ_Step(), position) : nullptr;
-      auto it = steps.find(stepID);
-      if (it == steps.end()) return AddNew ? AddStep(SEQ_Step(), position) : nullptr;
-      return &it->second;
-    };
-
-    SEQ_Step*   AddStep(SEQ_Step step, SEQ_Pos position) { return Add(position, step, steps, stepChanged, &SEQ_Clip::SetStepID, &SEQ_Clip::StepID);}
-
-    void        DeleteStep(SEQ_Pos position) { Delete(position, steps, stepChanged, &SEQ_Clip::SetStepID, &SEQ_Clip::StepID); }
-
-    SEQ_Autom*  Autom(SEQ_Pos position, bool AddNew = false) 
-    {
-      int16_t automID = StepID(position);
-      auto it = automs.find(automID);
-      if(it == automs.end())
-        return AddNew ? AddAutom(SEQ_Autom(), position) : nullptr;
-      return &it->second;
-    }
-
-    SEQ_Autom*  AddAutom(SEQ_Autom autom, SEQ_Pos position) { return Add(position, autom, automs, automChanged, &SEQ_Clip::SetAutomID, &SEQ_Clip::AutomID); }
-
-    void        DeleteAutom(SEQ_Pos position) { Delete(position, automs, automChanged, &SEQ_Clip::SetAutomID, &SEQ_Clip::AutomID); }
-    
-    void    AddNotes(SEQ_Pos position, std::vector<SEQ_Note> notes)
-    {
-      for(uint8_t i = 0; i < notes.size() && i < STEP_MAX; i++)
-        AddNote(position, notes[i], false);
-      stepChanged.insert(StepID(position));
-    }
-
-    void    ClearNote(SEQ_Pos position, bool deleteEmptyStep = true) { ClearSub(position, &SEQ_Step::ClearNote, deleteEmptyStep); }
-
-    bool    FindNote(SEQ_Pos position, uint8_t note = 255) {if(Step(position)) return Step(position)->FindNote(note); return false;}
-
-    bool    FindNote(uint8_t channel, uint8_t clipNum, uint8_t barNum, uint8_t note = 255)
-    {
-      for(uint8_t i = 0; i < STEP_MAX; i++)
-      {
-        SEQ_Pos pos(channel, clipNum, barNum, i);
-        if(FindNote(pos, note)) return true;
-      }
-      return false;
-    }
-
-    bool    ClipEmpty(uint8_t channel, uint8_t clipNum) { return Clip(channel, clipNum)->Empty(); }
-
-    bool    NoteEmpty(SEQ_Pos position) { if(Step(position)) return Step(position)->NoteEmpty(); return true;}
-
-    uint8_t NoteCount(SEQ_Pos position, uint8_t note = 255) 
-    {
-      if(!Step(position)) return 0;
-      if(note > 127)return Step(position)->NoteCount();
-      return Step(position)->FindNote(note);
-    }
-
-    uint8_t GetVelocity(SEQ_Pos position, uint8_t note = 255) {if(Step(position)) return Step(position)->GetVelocity(note); return MatrixOS::UserVar::defaultVelocity;}
-
-    void    SetVelocity(SEQ_Pos position, uint8_t velocity, uint8_t note = 255) 
-    { 
-      if(Step(position)) 
-        if(Step(position)->SetVelocity(note, velocity))
-          stepChanged.insert(StepID(position));
-    }
-
-    uint8_t GetGate(SEQ_Pos position, uint8_t note = 255) {if(Step(position)) return Step(position)->GetGate(note); return 0;}
-
-    void    SetGate(SEQ_Pos position, uint8_t gate, uint8_t note = 255) 
-    {
-      if(Step(position)) 
-        if (Step(position)->SetGate(note, gate))
-          stepChanged.insert(StepID(position));
-    }
-
-    uint8_t GetOffset(SEQ_Pos position, uint8_t note = 255) {if(Step(position)) return Step(position)->GetOffset(note); return 0;}
-
-    void    SetOffset(SEQ_Pos position, uint8_t offset, uint8_t note = 255) 
-    {
-      if(Step(position)) 
-        if(Step(position)->SetOffset(note, offset))
-          stepChanged.insert(StepID(position));
-    }
-
-    void    AddParams(SEQ_Pos position, std::vector<SEQ_Param> params)
-    {
-      for(uint8_t i = 0; i < params.size() && i < PARAM_MAX; i++)
-        AddParam(position, params[i], false);
-      stepChanged.insert(StepID(position));
-    }
-
-    void    ClearParam(SEQ_Pos position, bool deleteEmptyStep = true) { ClearSub(position, &SEQ_Step::ClearParam, deleteEmptyStep); }
-    
-    bool    ParamEmpty(SEQ_Pos position) { if(Step(position)) return Step(position)->ParamEmpty(); return true;}
-
-    void CopyStep(SEQ_Pos src, SEQ_Pos dst)
-    {
-      if(src == dst) return;
-      int16_t stepID = StepID(src);
-      if (stepID < 0) { DeleteStep(dst); return; }
-
-      auto it = steps.find(stepID);
-      if(it == steps.end()) return;
-
-      SEQ_Step* stepDst = Step(dst, true);
-      if(!stepDst) return;
-
-      stepDst->CopyNotes(it->second);
-      stepDst->CopyParam(it->second);
-      stepChanged.insert(StepID(dst));
-    }
-
-    void CopyAutom(SEQ_Pos src, SEQ_Pos dst)
-    {
-      if(src == dst) return;
-      int16_t automID = AutomID(src);
-      if (automID < 0) { DeleteAutom(dst); return; }
-
-      auto it = automs.find(automID);
-      if(it == automs.end()) return;
-
-      SEQ_Autom* automDst = Autom(dst, true);
-      if(!automDst) return;
-
-      automDst->CopyAutom(it->second);
-      automChanged.insert(AutomID(dst));
-    }
-
-    void CopyBar(SEQ_Pos src, SEQ_Pos dst)
-    {
-      // MLOGD("SEQ Copy From","Channel %d. Clip %d. Bar %d.", src.ChannelNum(), src.ClipNum(), src.BarNum());
-      // MLOGD("SEQ Copy To  ","Channel %d. Clip %d. Bar %d.", dst.ChannelNum(), dst.ClipNum(), dst.BarNum());
-      if(src == dst) return;
-      for (uint8_t s = 0; s < STEP_MAX;  s++)
-      { CopyStep (SEQ_Pos(src.ChannelNum(), src.ClipNum(), src.BarNum(), s), SEQ_Pos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), s)); }
-      for (uint8_t a = 0; a < AUTOM_MAX; a++)
-      { CopyAutom(SEQ_Pos(src.ChannelNum(), src.ClipNum(), src.BarNum(), a), SEQ_Pos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), a)); }
-    }
-
-    void ClearBar(SEQ_Pos pos) 
-    { 
-      for (uint8_t s = 0; s < STEP_MAX;  s++) 
-      { DeleteStep (SEQ_Pos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), s)); }
-      for (uint8_t a = 0; a < AUTOM_MAX; a++)
-      { DeleteAutom(SEQ_Pos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), a)); }
-    }
-
-    void ClearClip(uint8_t channel, uint8_t clipNum)
-    {
-      if(channel >= 16 || clipNum >= CLIP_MAX) return;
-      for (uint8_t bar = 0; bar < BAR_MAX; bar++) {
-        for (uint8_t s = 0; s < STEP_MAX; s++)
-        {
-          int16_t stepID = Clip(channel, clipNum)->StepID(bar, s);
-          if (stepID != -1)
-            DeleteStep(Step(stepID)->Position());
-        }
-        for (uint8_t a = 0; a < AUTOM_ALL; a++) {
-          int16_t automID = Clip(channel, clipNum)->AutomID(bar, a);
-          if (automID != -1)
-            DeleteAutom(Autom(automID)->Position());
-        }
-      }
-    }
-
-    void CopyClip(uint8_t channel_src, uint8_t clip_src, uint8_t channel_dst, uint8_t clip_dst)
-    {
-      if(channel_src >= 16 || clip_src >= CLIP_MAX) return;
-      if(channel_src == channel_dst && clip_src == clip_dst) return;
-      for (uint8_t bar = 0; bar < BAR_MAX; bar++) {
-        for (uint8_t s = 0; s < STEP_MAX; s++)
-          CopyStep (SEQ_Pos(channel_src, clip_src, bar, s), SEQ_Pos(channel_dst, clip_dst, bar, s));
-        for (uint8_t a = 0; a < PARAM_MAX; a++)
-          CopyAutom(SEQ_Pos(channel_src, clip_src, bar, a), SEQ_Pos(channel_dst, clip_dst, bar, a));
-      }
-      Clip(channel_dst, clip_dst)->CopySettings(*Clip(channel_src, clip_src));
-    }
+    void            Capture_EndEditing() { capturer.EndEditing(); }
 
   private:
-    inline int16_t StepID (SEQ_Pos position) { return Clip(position.ChannelNum(), position.ClipNum())->StepID (position.BarNum(), position.Number()); }
-    inline int16_t AutomID(SEQ_Pos position) { return Clip(position.ChannelNum(), position.ClipNum())->AutomID(position.BarNum(), position.Number()); }
+    inline int16_t  StepID (SEQ_Pos position) { return Clip(position.ChannelNum(), position.ClipNum())->StepID (position.BarNum(), position.Number()); }
+    inline int16_t  AutomID(SEQ_Pos position) { return Clip(position.ChannelNum(), position.ClipNum())->AutomID(position.BarNum(), position.Number()); }
 
     template<typename T>
-    T* Add(SEQ_Pos position, T item, std::map<int16_t, T, std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, T>>>& items, 
-      std::set<int16_t>& changedItems, void (SEQ_Clip::*setID)(uint8_t, uint8_t, int16_t), int16_t (SEQ_Clip::*getID)(uint8_t, uint8_t) const)
+    T*              Add(SEQ_Pos position, T item, std::map<int16_t, T, std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, T>>>& items, 
+    std::set<int16_t>& changedItems, void (SEQ_Clip::*setID)(uint8_t, uint8_t, int16_t), int16_t (SEQ_Clip::*getID)(uint8_t, uint8_t) const)
     {
       item.SetPos(position);
       int16_t ID = (Clip(position.ChannelNum(), position.ClipNum())->*getID)(position.BarNum(), position.Number());
@@ -840,8 +1204,8 @@ namespace MatrixOS::MidiCenter
     }
 
     template<typename T>
-    void Delete(SEQ_Pos position, std::map<int16_t, T, std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, T>>>& items,
-      std::set<int16_t>& changedItems, void (SEQ_Clip::*setID)(uint8_t, uint8_t, int16_t), int16_t (SEQ_Clip::*getID)(uint8_t, uint8_t) const)
+    void            Delete(SEQ_Pos position, std::map<int16_t, T, std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, T>>>& items,
+    std::set<int16_t>& changedItems, void (SEQ_Clip::*setID)(uint8_t, uint8_t, int16_t), int16_t (SEQ_Clip::*getID)(uint8_t, uint8_t) const)
     {
       int16_t ID = (Clip(position.ChannelNum(), position.ClipNum())->*getID)(position.BarNum(), position.Number());
       if(ID < 0) return;
@@ -861,43 +1225,5 @@ namespace MatrixOS::MidiCenter
             position.ChannelNum(), position.ClipNum(), position.BarNum(),position.Number(), ID);
     }
 
-    void AddNote(SEQ_Pos position, SEQ_Note note, bool markChange = true) { AddSub(position, note, &SEQ_Step::AddNote, markChange); }
-    void AddParam(SEQ_Pos position, SEQ_Param param, bool markChange = true) { AddSub(position, param, &SEQ_Step::AddParam, markChange); }
-    template<typename T>
-    void AddSub(SEQ_Pos position, T item, bool (SEQ_Step::*addFunc)(T), bool markChange) 
-    {
-      auto step = Step(position,true);
-      if(step)
-      {
-        (step->*addFunc)(item);
-        if(markChange) stepChanged.insert(StepID(position));
-      }
-    }
-
-    void DeleteNote(SEQ_Pos position, uint8_t note, bool deleteEmptyStep = true) { DeleteSub(position, note, &SEQ_Step::DeleteNote, deleteEmptyStep); }
-    void DeleteParam(SEQ_Pos position, uint8_t number, bool deleteEmptyStep = true) { DeleteSub(position, number, &SEQ_Step::DeleteParam, deleteEmptyStep); }
-    template<typename T>
-    void DeleteSub(SEQ_Pos position, T item, bool (SEQ_Step::*deleteFunc)(T), bool deleteEmptyStep) 
-    {
-      auto step = Step(position);
-      if(step) 
-      {
-        (step->*deleteFunc)(item);
-        if(deleteEmptyStep && step->Empty()) DeleteStep(position);
-        stepChanged.insert(StepID(position));
-      }
-    }
-
-    void ClearSub(SEQ_Pos position, void (SEQ_Step::*clearFunc)(), bool deleteEmptyStep)
-    {
-      SEQ_Step* step = Step(position);
-      if(step) 
-      {
-        (step->*clearFunc)(); 
-        if(deleteEmptyStep && step->Empty()) DeleteStep(position);
-        stepChanged.insert(StepID(position));
-      }
-    }
- 
   };
 }

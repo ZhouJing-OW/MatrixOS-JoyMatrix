@@ -10,7 +10,7 @@ namespace MatrixOS::MidiCenter
 
   class SequencerUI : public NodeUI {
     
-    enum SeqUIMode : uint8_t {NORMAL, TRIPLET, SETTING};
+    enum SeqUIMode : uint8_t {NORMAL, TRIPLET, SETTING, COMPONENT};
 
     //-----------------------------------NORMAL-----------------------------------//
 
@@ -31,7 +31,7 @@ namespace MatrixOS::MidiCenter
           Color     ReduceBarColor()      { return clip->barMax > 1 ? reduceBarColor : Color(BLANK);}
           BtnFunc   ReduceBarBtn          = [&]()->void {
                                               ResetEditing(true);
-                                              if(clip->barMax > 1) clip->barMax -= 1;
+                                              if(clip->barMax > 1) {clip->barMax -= 1; seqData->ClearBar(SEQ_Pos(channel, clipNum, clip->barMax, 0)); }
                                               if(barNum >= clip->barMax) barNum = clip->barMax - 1;
                                           };
 
@@ -57,6 +57,9 @@ namespace MatrixOS::MidiCenter
     const char      settingBtnName[8]     = "Setting";
           BtnFunc   settingBtn            = [&]()->void { ChangeUIMode(SETTING);};
 
+
+    //-----------------------------------EDITING------------------------------------//
+    
     const Color     OffsetColor           = Color(YELLOW);
           Point     OffsetLPos1()         { return Point(0,  editing.point.y > 0 ? editing.point.y - 1 : 1);}
           Point     OffsetLPos2()         { return Point(14, editing.point.y > 0 ? editing.point.y - 1 : 1);}
@@ -66,13 +69,13 @@ namespace MatrixOS::MidiCenter
           Point     OffsetRPos2()         { return Point(15, editing.point.y > 0 ? editing.point.y - 1 : 1);}
           BtnFunc   OffsetRBtn            = [&]()->void { seqData->SetOffset(editing.pos, std::min(seqData->GetOffset(editing.pos) + 1 , 5)); };
 
-    //-----------------------------------EDITING-----------------------------------//
+    //-----------------------------------SETTING------------------------------------//
 
     const Color settingColor[4]       = {GREEN,      LAWN,       TURQUOISE,  BLUE};
-    const Color LabelColor[4]         = {VIOLET,     VIOLET,     VIOLET,     VIOLET};
+    const Color setLabelColor[4]      = {VIOLET,     VIOLET,     VIOLET,     VIOLET};
     const char  settingName[4][9]     = {"Speed",    "Gate",     "Quantize", "Step/bar"};
-    const Color speedColor[10]        = {GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN,      GREEN,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL };
-    const char  speedName[10][5]      = {"4x",       "3x",       "2x",       "1.5x",     "1x",       "1x",       "2/3",      "1/2",      "1/4",      "1/8"};
+    const Color speedColor[10]        = {GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN,      GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL };
+    const char  speedName[10][5]      = {"4x",       "3x",       "2x",       "1.5x",     "1x",       "2/3",      "1/2",      "1/4",      "1/8",      "1/16" };
 
     const Point     settingLabelPos       = Point(6, 0);            const Dimension settingLabelArea      = Dimension(4, 1);
     const Point     speedSetPos           = Point(3, 1);            const Dimension speedSetArea          = Dimension(10, 1);
@@ -84,6 +87,12 @@ namespace MatrixOS::MidiCenter
     const Point     backBtnPos            = Point(15, 0);
     const char      backBtnName[5]        = "Back";
           BtnFunc   backBtn               = [&]()->void { ChangeUIMode(NORMAL);};
+
+    //-----------------------------------COMPONENT-----------------------------------//
+
+    const Color compColor[8]          = {TURQUOISE, CYAN,      DEEPSKY,   MAROON,    PURPLE,    VIOLET,    GOLD,      YELLOW};
+    const Color compLabelColor[8]     = {TURQUOISE, TURQUOISE, TURQUOISE, TURQUOISE, PURPLE,    PURPLE,    GOLD,      YELLOW};
+    const char  compName[8][9]        = {"Cycle"  , "Retrig",  "Chance",  "Flam",    "OCTAVE",  "PITCH",   "STURM",   "ARP"};
 
     //-------------------------------------------------------------------------------//      
 
@@ -108,6 +117,7 @@ namespace MatrixOS::MidiCenter
     int8_t      scroll        = -1;
     uint8_t     scrollMax     = 1;
     uint8_t     settingLabel  = 0;
+    uint8_t     compLabel     = 0; 
     PadType     lastPadType   = PIANO_PAD;
     bool        largeSeq      = false;
     bool        monoMode      = false;
@@ -123,12 +133,11 @@ namespace MatrixOS::MidiCenter
 
   public : SequencerUI() {
     channel = MatrixOS::UserVar::global_channel;
-    channelPrv = channel;
+    channelPrv = 255;
     if (channelConfig->padType[channel] == DRUM_PAD)
       monoMode = true;
     else
       monoMode = false;
-    sequencer = (Sequencer*)GetNodePtr(NODE_SEQ);
   }
 
     ~SequencerUI() { seqData->Capture_EndEditing(); Device::AnalogInput::DisableUpDown();}
@@ -137,7 +146,7 @@ namespace MatrixOS::MidiCenter
     virtual bool SetKnobPtr() { knobPtr.clear(); return false; }
     virtual Dimension GetSize() { return dimension; }
 
-    virtual void ChangeUIMode(SeqUIMode mode) 
+    void ChangeUIMode(SeqUIMode mode) 
     {
       switch(mode)
       { 
@@ -148,6 +157,9 @@ namespace MatrixOS::MidiCenter
         case SETTING: 
           settingLabel = 0;
           Device::AnalogInput::DisableUpDown();
+          break;
+        case COMPONENT:
+          compLabel = 0;
           break;
       }
 
@@ -176,7 +188,7 @@ namespace MatrixOS::MidiCenter
         case TRIPLET:  
           break;
         case SETTING:
-          LabelRender (settingLabelArea, origin, settingLabelPos, settingName, LabelColor, settingLabel, true);
+          LabelRender (settingLabelArea, origin, settingLabelPos, settingName, setLabelColor, settingLabel, true);
           ButtonRender(origin, backBtnPos, backBtnColor);
           switch(settingLabel)
           {
@@ -184,7 +196,7 @@ namespace MatrixOS::MidiCenter
               LabelRender(speedSetArea, origin, speedSetPos, speedName, speedColor, clip->speed);
               break;
             case 1:
-              ValueBarRender(gateSetArea, origin, gateSetPos, settingColor[1], Color(settingColor[1]).ToLowBrightness(), clip->gate, 10, 100);
+              ValueBarRender(gateSetArea, origin, gateSetPos, settingColor[1], Color(settingColor[1]).ToLowBrightness(), clip->tair, 10, 100);
               break;
             case 2:
               ValueBarRender(quantizeSetArea, origin, quantizeSetPos, settingColor[2], Color(settingColor[2]).ToLowBrightness(), clip->quantize, 0, 100, Color(RED).Scale(8));
@@ -193,6 +205,8 @@ namespace MatrixOS::MidiCenter
               SeqRender(origin, seqPos);
               break;
           }
+        case COMPONENT:
+          break;
       }
       
 
@@ -235,7 +249,7 @@ namespace MatrixOS::MidiCenter
               break;
             case 1:
               if(InArea(xy, gateSetPos, gateSetArea))
-                return ValueBarKeyEvent(gateSetArea, xy, gateSetPos, keyInfo, settingColor[1], clip->gate, 10, 100);
+                return ValueBarKeyEvent(gateSetArea, xy, gateSetPos, keyInfo, settingColor[1], clip->tair, 10, 100);
               break;
             case 2:
               if(InArea(xy, quantizeSetPos, quantizeSetArea))
@@ -246,6 +260,8 @@ namespace MatrixOS::MidiCenter
                 return SeqKeyEvent(xy, seqPos, keyInfo);
               break;
           }
+          return false;
+        case COMPONENT:
           return false;
       }
       return false;
@@ -293,7 +309,19 @@ namespace MatrixOS::MidiCenter
         }
       }
 
-      if(editing.point == Point(0xFFF, 0xFFF))  return;    
+      if (seqData->Comp_InEditing())                                                      // Check component editing
+        ChangeUIMode(COMPONENT);
+      else if (mode == COMPONENT)
+        ChangeUIMode(NORMAL);
+
+      //--------------------------------------EDITING--------------------------------------//
+
+      if(editing.point == Point(0xFFF, 0xFFF))  
+      {
+        // if(sequencer && transportState.play && !largeSeq)                                  // Check playHead
+        //   barNum = sequencer->playHead / STEP_MAX;
+        return; 
+      }
                   
       if(!Device::KeyPad::GetKey(Device::KeyPad::XY2ID(editing.point - origin))->active()) // Check editing point button release
       {
@@ -335,7 +363,7 @@ namespace MatrixOS::MidiCenter
       if(!editing.noteCount) Device::AnalogInput::DisableDial();      
     }
 
-    virtual void LargeSeq()
+    void LargeSeq()
     {
       largeSeq = true;
       uint8_t barMax = clip->barMax;
@@ -346,7 +374,7 @@ namespace MatrixOS::MidiCenter
       ResetUI();
     }
 
-    virtual void SmallSeq()
+    void SmallSeq()
     {
       largeSeq = false;
       fullScreen = false;
@@ -356,7 +384,7 @@ namespace MatrixOS::MidiCenter
       ResetUI();
     }
 
-    virtual void ResetUI()
+    void ResetUI()
     {
       mode = NORMAL;
       barNum = 0;
@@ -432,8 +460,17 @@ namespace MatrixOS::MidiCenter
       {
         if(keyInfo->state == RELEASED)
         {
-          if (stepNum % STEP_MAX >= 8) clip->barStepMax = stepNum % STEP_MAX + 1;
+          if (stepNum % STEP_MAX >= 2) clip->barStepMax = stepNum % STEP_MAX + 1;
+          else clip->barStepMax = 3;
           if (editing.step >= 0) GateRenderMap(seqData->GetGate(editing.pos, editing.note));
+          return true;
+        }
+        if(keyInfo->state == HOLD)
+        {
+          if (xy.x >= 2)
+            MatrixOS::UIInterface::TextScroll(std::to_string(xy.x + 1) + "/Bar", Color(BLUE));
+          else
+            MatrixOS::UIInterface::TextScroll("3/Bar", Color(BLUE));
           return true;
         }
         return true;
@@ -478,11 +515,13 @@ namespace MatrixOS::MidiCenter
 
             if(keyInfo->shortHold)
             {
+              ResetEditing();
               seqData->Capture_SaveHold(pos);
               return true;
             }
 
             seqData->Capture_SaveClick(pos);
+            ResetEditing();
             return true;
           }
 
@@ -517,11 +556,14 @@ namespace MatrixOS::MidiCenter
     {
       for (uint8_t x = 0; x < BAR_MAX; x++)
       {
-        bool hasNote = seqData->FindNote(channel, clipNum, x);
+        bool hasNote = seqData->FindNoteInBar(channel, clipNum, x);
         bool hasBar = x < clip->barMax;
-        Color thisColor =  barColor[hasBar + hasBar * hasNote];
-        if (x == barNum) thisColor = Color(WHITE).Blink_Color(x == barCopyFrom, thisColor);
-        MatrixOS::LED::SetColor(origin + offset + Point(x, 0), thisColor);
+        bool playing = sequencer && transportState.play && sequencer->playHead / STEP_MAX == x;
+        
+        Color thisColor = x == barNum ? Color(WHITE) : barColor[hasBar + hasBar * hasNote];
+        Color playingColor = playing ? playHeadColor[transportState.record] : thisColor;
+        thisColor = thisColor.Blink_Color(x == barCopyFrom, Color(CYAN));
+        MatrixOS::LED::SetColor(origin + offset + Point(x, 0), playing ? playingColor : thisColor);
       }
     }
 
@@ -633,7 +675,11 @@ namespace MatrixOS::MidiCenter
       editing.noteCount = 0;
       editing.time = 0;
       Device::AnalogInput::DisableDial();
-      if(EndEditing) seqData->Capture_EndEditing();
+      if(EndEditing) 
+      {
+        seqData->Comp_EndEditing();
+        seqData->Capture_EndEditing();
+      }
     }
   };
 }

@@ -64,10 +64,10 @@ namespace Device::AnalogInput
     {L_rocker_x_direction, L_rocker_y_direction, R_rocker_x_direction, R_rocker_y_direction, L_pressure_direction, R_pressure_direction, B_fader_direction};
   adc_oneshot_unit_handle_t adc_handle[2];
 
-  AnalogConfig LX = { .name = "LX",  .max = 3120,  .min = 850,   .middle = 1990, };
-  AnalogConfig LY = { .name = "LY",  .max = 3050,  .min = 1050,  .middle = 2150, };
-  AnalogConfig RX = { .name = "RX",  .max = 3200,  .min = 980,   .middle = 2130, };
-  AnalogConfig RY = { .name = "RY",  .max = 2950,  .min = 960,   .middle = 1770, };
+  AnalogConfig LX = { .name = "LX",  .max = 2900,  .min = 900,   .middle = 1910, };
+  AnalogConfig LY = { .name = "LY",  .max = 3100,  .min = 1500,  .middle = 2340, };
+  AnalogConfig RX = { .name = "RX",  .max = 3200,  .min = 900,   .middle = 2110, };
+  AnalogConfig RY = { .name = "RY",  .max = 3100,  .min = 900,   .middle = 2010, };
   AnalogConfig LP = { .name = "LP",  .max = 2950,  .min = 1050,  .middle = 1880, };
   AnalogConfig RP = { .name = "RP",  .max = 2950,  .min = 1050,  .middle = 1880, };
   AnalogConfig BF = { .name = "BF",  .max = 2950,  .min = 1050,  .middle = 1880, };
@@ -126,12 +126,12 @@ namespace Device::AnalogInput
     if (change < - 0x1FFE) change = - 0x1FFE;
 
     uint16_t pitch = 0x1FFF + change;
-    if (pitch != lastPitch){
-      int8_t channel = MatrixOS::UserVar::global_channel;
-      //MLOGD("Pitch Wheel", "lx:%d, ly:%d, pitch:%d, ch:%d", lx, ly, pitch, channel);
-      lastPitch = pitch;
-      MatrixOS::MIDI::Send(MidiPacket(0, PitchChange, channel, pitch));
-    }
+    // if (pitch != lastPitch){
+    //   int8_t channel = MatrixOS::UserVar::global_channel;
+    //   //MLOGD("Pitch Wheel", "lx:%d, ly:%d, pitch:%d, ch:%d", lx, ly, pitch, channel);
+    //   lastPitch = pitch;
+    //   MatrixOS::MIDI::Send(MidiPacket(0, PitchChange, channel, pitch));
+    // }
   }
 
   void ModWheel()
