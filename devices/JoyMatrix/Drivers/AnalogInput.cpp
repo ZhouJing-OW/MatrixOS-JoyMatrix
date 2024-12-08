@@ -125,13 +125,13 @@ namespace Device::AnalogInput
     if (change > 0x1FFE) change = 0x1FFE;
     if (change < - 0x1FFE) change = - 0x1FFE;
 
-    // uint16_t pitch = 0x1FFF + change;
-    // if (pitch != lastPitch){
-    //   int8_t channel = MatrixOS::UserVar::global_channel;
-    //   //MLOGD("Pitch Wheel", "lx:%d, ly:%d, pitch:%d, ch:%d", lx, ly, pitch, channel);
-    //   lastPitch = pitch;
-    //   MatrixOS::MIDI::Send(MidiPacket(0, PitchChange, channel, pitch));
-    // }
+    uint16_t pitch = 0x1FFF + change;
+    if (pitch != lastPitch){
+      int8_t channel = MatrixOS::UserVar::global_channel;
+      //MLOGD("Pitch Wheel", "lx:%d, ly:%d, pitch:%d, ch:%d", lx, ly, pitch, channel);
+      lastPitch = pitch;
+      MatrixOS::MIDI::Send(MidiPacket(0, PitchChange, channel, pitch));
+    }
   }
 
   void ModWheel()
@@ -163,8 +163,8 @@ namespace Device::AnalogInput
 
   inline uint16_t GetRaw(string input)
   {
-    if (input == "LX") {return reading[0];}      // left X
-    else if (input == "LY") {return reading[1];} // left Y
+    if (input == "LX") {return 1910 /*reading[0]*/;}      // left X
+    else if (input == "LY") {return 2340 /*reading[1]*/;} // left Y
     else if (input == "RX") {return reading[2];} // right X
     else if (input == "RY") {return reading[3];} // right Y
     else if (input == "LP") {return reading[4];} // left pressure

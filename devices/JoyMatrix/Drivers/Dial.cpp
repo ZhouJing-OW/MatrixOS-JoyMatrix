@@ -137,6 +137,7 @@ namespace Device::AnalogInput
         dialPtr.erase(it);
         return;
       }
+      // MLOGD("Dial", "keyID = %d, value = %d", it->first, it->second->Value());
     }
   }
 
