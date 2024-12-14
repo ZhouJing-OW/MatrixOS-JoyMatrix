@@ -38,13 +38,13 @@ namespace MatrixOS::MidiCenter
     const Color     autoGrouthColor       = Color(ORANGE);
     const Point     autoGrouthBtnPos      = Point(10, 0);
     const char      autoGrouthName[12]    = "Auto Grouth";
-          Color     AutoGrouthColor()     { return Color(autoGrouthColor).ToLowBrightness(transportState.autoGrouth);}
+          Color     AutoGrouthColor()     { return Color(autoGrouthColor).DimIfNot(transportState.autoGrouth);}
           BtnFunc   AutoGrouthBtn         = [&]()->void {transportState.autoGrouth = !transportState.autoGrouth;};
 
     // const Color     monoModeColor         = Color(CYAN);
     // const Point     monoModeBtnPos        = Point(1, 0);
     // const char      monoModeName[10]      = "Mono Mode";
-    //       Color     MonoModeColor()       { return Color(monoModeColor).ToLowBrightness(monoMode);};
+    //       Color     MonoModeColor()       { return Color(monoModeColor).DimIfNot(monoMode);};
     //       BtnFunc   monoModeBtn           = [&]()->void { ResetEditing(true); monoMode = !monoMode;};
 
     const Color     tripletColor          = Color(VIOLET);
@@ -83,7 +83,7 @@ namespace MatrixOS::MidiCenter
     const Point     quantizeSetPos        = Point(2, 1);            const Dimension quantizeSetArea       = Dimension(11, 1);
     const Point     stepSetPos            = Point(0, 1);            const Dimension stepSetArea           = Dimension(16, 1);
 
-    const Color     backBtnColor          = Color(BLUE).ToLowBrightness();
+    const Color     backBtnColor          = Color(BLUE).DimIfNot();
     const Point     backBtnPos            = Point(15, 0);
     const char      backBtnName[5]        = "Back";
           BtnFunc   backBtn               = [&]()->void { ChangeUIMode(NORMAL);};
@@ -196,10 +196,10 @@ namespace MatrixOS::MidiCenter
               LabelRender(speedSetArea, origin, speedSetPos, speedName, speedColor, clip->speed);
               break;
             case 1:
-              ValueBarRender(gateSetArea, origin, gateSetPos, settingColor[1], Color(settingColor[1]).ToLowBrightness(), clip->tair, 10, 100);
+              ValueBarRender(gateSetArea, origin, gateSetPos, settingColor[1], Color(settingColor[1]).DimIfNot(), clip->tair, 10, 100);
               break;
             case 2:
-              ValueBarRender(quantizeSetArea, origin, quantizeSetPos, settingColor[2], Color(settingColor[2]).ToLowBrightness(), clip->quantize, 0, 100, Color(RED).Scale(8));
+              ValueBarRender(quantizeSetArea, origin, quantizeSetPos, settingColor[2], Color(settingColor[2]).DimIfNot(), clip->quantize, 0, 100, Color(RED).Scale(8));
               break;
             case 3:
               SeqRender(origin, seqPos);

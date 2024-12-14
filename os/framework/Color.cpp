@@ -61,10 +61,18 @@ Color Color::Scale(uint8_t value, uint8_t lowest, uint8_t highest, uint8_t brigh
   return Color(scale8_video(R, scale), scale8_video(G, scale), scale8_video(B, scale)); // Use scale_video to ensure it doesn't get completely removed
 }
 
-Color Color::ToLowBrightness(bool cancel, uint8_t scale) {
-  if (!cancel)
+Color Color::Dim(uint8_t scale) {
+  return Scale(scale); 
+}
+
+Color Color::DimIfNot(bool not_dim, uint8_t scale) {
+  if (!not_dim)
   { return Scale(scale); }
   return Color(R, G, B, W);
+}
+
+Color Color::Gamma() {
+  return Color(led_gamma[R], led_gamma[G], led_gamma[B]);
 }
 
 Color Color::Mix(Color color2, float ratio) {
@@ -123,18 +131,6 @@ Color Color::Blink_Color(bool active, Color color) {
   return Color(R, G, B, W);
 }
 
-Color Color::Breathe(bool active, uint32_t startTime, uint16_t timeLength) {
-  if(active) {
-    int16_t breathe = (MatrixOS::SYS::Millis() - startTime) % timeLength;
-    bool invert = (breathe >= timeLength / 2);
-    breathe = invert ? timeLength - breathe : breathe;
-    breathe = (int16_t)((((255 - COLOR_LOW_STATE_SCALE) / (float)timeLength) * breathe) + COLOR_LOW_STATE_SCALE);
-    breathe = (breathe > 255) ? 255 : breathe;
-    return Scale(breathe);
-  }
-  return Color(R, G, B, W);
-}
-
 uint8_t Color::scale8(uint8_t i, uint8_t scale) {
   return ((uint16_t)i * (uint16_t)scale) >> 8;
 }
@@ -179,4 +175,12 @@ void Color::RgbToHsv(Color rgb, float* h, float* s, float* v)
   *h *= 1.0/6; // degrees
   if (*h < 0)
     *h += 1.0;
+}
+
+Color Color::Crossfade(Color color1, Color color2, Fract16 ratio) {
+  uint8_t r = ratio.to8bits();
+  uint8_t newR = (color1.R * (255 - r) + color2.R * r) >> 8;
+  uint8_t newG = (color1.G * (255 - r) + color2.G * r) >> 8;
+  uint8_t newB = (color1.B * (255 - r) + color2.B * r) >> 8;
+  return Color(newR, newG, newB);
 }

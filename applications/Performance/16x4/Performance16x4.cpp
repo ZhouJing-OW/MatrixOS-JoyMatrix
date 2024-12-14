@@ -48,9 +48,9 @@ Point Performance::NoteToXY(uint8_t note) {
   {
     case 0:
     {
-      if (note > 35 && note < 100)
+      if (note > 10 && note < 89)
       {
-        uint8_t xy_raw = user1_keymap_optimized[note - 36];
+        uint8_t xy_raw = user1_keymap_optimized[note - 11 - (note / 10 - 1) * 2];
         return Point(xy_raw >> 4, xy_raw & 0x0f);
       }
       break;

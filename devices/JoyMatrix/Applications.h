@@ -3,13 +3,12 @@
 // SYSTEM_APPLICATION
 #include "applications/Shell/Shell.h"
 #include "applications/Performance/Performance.h"
-#include "applications/CustomKeymap/CustomKeymap.h"
+#include "applications/CustomControlMap/CustomControlMap.h"
 
 // USER APPLICATION
 #include "applications/Drambo/Drambo.h"
 // #include "applications/MainPad/MainPad.h"
 // #include "applications/Lighting/Lighting.h"
-#include "applications/HIDtest/HIDtest.h"
 
 // BOOT ANIMATION
 #include "applications/Matrix/MatrixBoot/MatrixBoot.h"

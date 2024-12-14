@@ -72,7 +72,7 @@ namespace MatrixOS::SYS
     KEYPAD::Init();
     LED::Init();
     MIDI::Init();
-    MidiCenter::Init();
+    HID::Init();
     
 
     inited = true;

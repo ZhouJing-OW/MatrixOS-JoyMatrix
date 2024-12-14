@@ -101,14 +101,18 @@ namespace MatrixOS::MidiCenter
 
   bool RequestService(string name, ChannelConfig*& CH_Config)
   {
-    auto ServiceStart = [&](){
+    auto ServiceStart = [&]() {
+
+      MidiCenterStart();
+
       midiAppUI = new MidiAppUI;
       clipSelector = new ClipSelector;
       multiPad = new MultiPad(Dimension(16, 2), 4, channelConfig, notePadConfig, drumPadConfig);
       MatrixOS::KnobCenter::SetColor(channelConfig->color);
       CH_Config = channelConfig;
       seqData = (SEQ_DataStore*)heap_caps_malloc(sizeof(SEQ_DataStore), MALLOC_CAP_SPIRAM);
-      if(seqData) seqData->Init();
+      if(seqData)
+        seqData->Init();
       
       bpm.SetPtr(&projectConfig->bpm);
       swing.SetPtr(&projectConfig->swing);
@@ -116,8 +120,10 @@ namespace MatrixOS::MidiCenter
       brightness.SetValue(std::sqrt((uint8_t)MatrixOS::UserVar::brightness));
 
       appName = name;
-      for(uint8_t ch = 0; ch < 16; ch++) {
-        for(uint8_t n = 0; n < NODES_PER_CHANNEL; n++) {
+      for(uint8_t ch = 0; ch < 16; ch++)
+      {
+        for(uint8_t n = 0; n < NODES_PER_CHANNEL; n++)
+        {
           uint16_t index = nodesIndex[ch * NODES_PER_CHANNEL + n];
           NodeID nodeID = NodeID(index >> 8 & 0xFF);
           uint8_t configNum = index & 0xFF;
@@ -155,6 +161,8 @@ namespace MatrixOS::MidiCenter
     Color* color = nullptr;
     MatrixOS::KnobCenter::SetColor(color);
     MatrixOS::FATFS::VarManageEnd(ROUTER_SUFFIX);
+
+    MidiCenterStop();
   }
 
   void AddMidiAppTo(UI &ui, Point point) { if(midiAppUI != nullptr) ui.AddUIComponent(*midiAppUI, point); }

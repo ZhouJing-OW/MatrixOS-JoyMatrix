@@ -11,5 +11,5 @@ class UIButtonDimmable : public UIButton {
     this->dim_func = dim_func;
   }
 
-  virtual Color GetColor() { return color.ToLowBrightness(dim_func()); }
+  virtual Color GetColor() { return color.DimIfNot(dim_func()); }
 };

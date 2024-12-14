@@ -62,6 +62,8 @@ class SavedVariable {
     return true;
   }
 
+  bool Save() { return Set(value); }
+
   T Get() {
     if (!Loaded())  // If not yet loaded, it will try to update current cache with NVS data
     { Load(); }
@@ -128,11 +130,16 @@ class SavedVariable {
     Set(value + 1);
     return *value;
   };
+
   T operator--(int) {
     T temp_value = value;
     Set(value - 1);
     return temp_value;
   };
 
+  T* operator&() { return &Get(); }
+
   operator T() { return Get(); }
+  
+  operator T*() { return &Get(); }
 };

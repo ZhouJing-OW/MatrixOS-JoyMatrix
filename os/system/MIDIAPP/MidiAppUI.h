@@ -199,11 +199,11 @@ namespace MatrixOS::MidiCenter
 
     void AppButtonRender(NodeID nodeID, Point xy)
     {
-      Color thisColor = nodesInfo[nodeID].color.ToLowBrightness(FindNode(nodeID));
+      Color thisColor = nodesInfo[nodeID].color.DimIfNot(FindNode(nodeID));
       Color switchColor = Color(WHITE);
 
       MatrixOS::LED::SetColor(xy + Point(0, 0), thisColor);
-      MatrixOS::LED::SetColor(xy + Point(1, 0), switchColor.ToLowBrightness(FindNode(nodeID)));
+      MatrixOS::LED::SetColor(xy + Point(1, 0), switchColor.DimIfNot(FindNode(nodeID)));
       MatrixOS::LED::SetColor(xy + Point(0, 1), thisColor);
       MatrixOS::LED::SetColor(xy + Point(1, 1), thisColor);
     }

@@ -50,7 +50,7 @@ public:
           else
           {
             Color thisColor = *(color + i);
-            MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
           }
         }
         else

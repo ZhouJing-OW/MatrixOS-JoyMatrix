@@ -32,7 +32,7 @@ class UIItemSelector : public UIComponent {
       if (item > count)
       { MatrixOS::LED::SetColor(xy, Color(0)); }
       else
-      { MatrixOS::LED::SetColor(xy, color.ToLowBrightness(items[item] == *output)); }
+      { MatrixOS::LED::SetColor(xy, color.DimIfNot(items[item] == *output)); }
     }
     return true;
   }

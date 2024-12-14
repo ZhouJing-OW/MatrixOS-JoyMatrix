@@ -46,7 +46,7 @@ namespace MatrixOS::MidiCenter
             if(thisClip == editingClip)
               MatrixOS::LED::SetColor(xy, thisColor.Blink_Color(true, blinkColor));
             else
-              MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+              MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
           }
           else
           {

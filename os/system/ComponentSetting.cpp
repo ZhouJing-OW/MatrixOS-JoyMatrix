@@ -30,9 +30,9 @@ namespace MatrixOS::Component {
             [&]() -> void { if(active != 0) *number.value = ((int16_t)*number.value + 10 < 127) ? *number.value + 10 : 127;});
         UIButtonWithColorFunc plus_1("+1",[&]() -> Color { return (active != 0) ? Color(WHITE) : Color(BLANK);}, 
             [&]() -> void { if(active != 0) *number.value += (*number.value < 127); });
-        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
+        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).DimIfNot() : Color(BLANK);}, 
             [&]() -> void { if(active != 0) *number.value -= (*number.value > 0); });
-        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
+        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).DimIfNot() : Color(BLANK);}, 
             [&]() -> void { if(active != 0) *number.value = ((int16_t)*number.value - 10 > 0) ? *number.value - 10 : 0; });
 
         UIColorSelector colors(&con->color[n], [&]() -> void { active = 0;activeColor = con->color[n]; number.value = &channel;});
@@ -114,7 +114,7 @@ namespace MatrixOS::Component {
                     case 5: con->max        = (con->max + 1 < 127) ? con->max + 1 : 127; break; //max
                 }
             });
-        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
+        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).DimIfNot() : Color(BLANK);}, 
             [&]() -> void {
                 switch(active) {
                     case 1: con->data.channel    = (con->data.channel - 1 > 0) ? con->data.channel - 1 : 0; break; // channel
@@ -124,7 +124,7 @@ namespace MatrixOS::Component {
                     case 5: con->max        = (con->max - 1 > con->min) ? con->max - 1 : con->min; if(con->def > con->max) con->def = con->max; break; //max
                 }
             });
-        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
+        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).DimIfNot() : Color(BLANK);}, 
             [&]() -> void {
                 switch(active) {
                     case 1: con->data.channel    = (con->data.channel - 10 > 0) ? con->data.channel - 10 : 0; break; // channel
@@ -174,7 +174,7 @@ namespace MatrixOS::Component {
         MidiButtonConfig* con = firstCon + pos;
         UI buttonSetting(name, con->color);
 
-        UI4pxNumberWithColorFunc numberChannel  ([&]() -> Color { return chBtnColor.ToLowBrightness(!con->globalChannel); }, 3, &con->channel, true);
+        UI4pxNumberWithColorFunc numberChannel  ([&]() -> Color { return chBtnColor.DimIfNot(!con->globalChannel); }, 3, &con->channel, true);
         UI4pxNumberWithColorFunc numberByte1    ([&]() -> Color { return typeColor[con->type]; }, 3, &con->byte1);
         UI4pxNumberWithColorFunc numberByte2    ([&]() -> Color { return con->color; }, 3, &con->byte2);
 
@@ -214,14 +214,14 @@ namespace MatrixOS::Component {
                     case 2: con->byte1      += (con->byte1 < 127);      break;
                     case 3: con->byte2      += (con->byte2 < 127);      break;
                 }; });
-        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
+        UIButtonWithColorFunc minus_1("-1",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).DimIfNot() : Color(BLANK);}, 
             [&]() -> void { 
                 switch(active) {
                     case 1: con->channel    -= (con->channel > 0);      break;
                     case 2: con->byte1      -= (con->byte1 > 0);        break;
                     case 3: con->byte2      -= (con->byte2 > 0);        break;
                 }; });
-        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).ToLowBrightness() : Color(BLANK);}, 
+        UIButtonWithColorFunc minus_10("-10",[&]() -> Color { return (active != 0) ? Color(0xFFFFFF).DimIfNot() : Color(BLANK);}, 
             [&]() -> void { 
                 switch(active) {
                     case 1: con->channel    = con->channel - 10 > 0     ? con->channel - 10     : 0;    break;
@@ -265,22 +265,22 @@ namespace MatrixOS::Component {
         UI4pxNoteName noteName( &con->byte1, con->color, Color(WHITE), color3);
 
         UIButtonWithColorFunc plus_12("+Octave",[&]() -> Color { return color3;}, [&]() -> void {});
-        plus_12.callback = [&]() -> void { 
+        plus_12.press_callback = [&]() -> void { 
             con->byte1 = (int)con->byte1 + 12 <= 127 ? con->byte1 + 12 : con->byte1;
             MatrixOS::MidiCenter::Hold(Point(15, 0), SEND_NOTE, channel, con->byte1); };
 
         UIButtonWithColorFunc plus_1("+Semi",[&]() -> Color { return con->color;}, [&]() -> void {});
-        plus_1.callback = [&]() -> void { 
+        plus_1.press_callback = [&]() -> void { 
             con->byte1 += ((int)con->byte1 + 1 <= 127); 
             MatrixOS::MidiCenter::Hold(Point(15, 1), SEND_NOTE, channel, con->byte1); };
 
-        UIButtonWithColorFunc minus_1("-Semi",[&]() -> Color { return con->color.ToLowBrightness();}, [&]() -> void {});
-        minus_1.callback = [&]() -> void { 
+        UIButtonWithColorFunc minus_1("-Semi",[&]() -> Color { return con->color.DimIfNot();}, [&]() -> void {});
+        minus_1.press_callback = [&]() -> void { 
             con->byte1 -= ((int)con->byte1 - 1 >= 0);
             MatrixOS::MidiCenter::Hold(Point(15, 2), SEND_NOTE, channel, con->byte1); };
         
-        UIButtonWithColorFunc minus_12("-Octave",[&]() -> Color { return color3.ToLowBrightness();}, [&]() -> void {});
-        minus_12.callback = [&]() -> void {
+        UIButtonWithColorFunc minus_12("-Octave",[&]() -> Color { return color3.DimIfNot();}, [&]() -> void {});
+        minus_12.press_callback = [&]() -> void {
           con->byte1 = (int)con->byte1 - 12 >= 0 ? con->byte1 - 12 : con->byte1;
           MatrixOS::MidiCenter::Hold(Point(15, 3), SEND_NOTE, channel, con->byte1); };
 
@@ -419,10 +419,10 @@ namespace MatrixOS::Component {
     //         [&]() -> Color { return Color(WHITE); }, 
     //         [&]() -> void { bpm.byte2 += (bpm.byte2 < 300); });
     //     UIButtonWithColorFunc minus_1( "-1", 
-    //         [&]() -> Color { return Color(0xFFFFFF).ToLowBrightness(); }, 
+    //         [&]() -> Color { return Color(0xFFFFFF).DimIfNot(); }, 
     //         [&]() -> void { bpm.byte2 -= (bpm.byte2 > 20); });
     //     UIButtonWithColorFunc minus_10( "-10", 
-    //         [&]() -> Color { return Color(0xFFFFFF).ToLowBrightness(); }, 
+    //         [&]() -> Color { return Color(0xFFFFFF).DimIfNot(); }, 
     //         [&]() -> void { bpm.byte2 = (bpm.byte2 - 10 > 20) ? bpm.byte2 - 10 : 20; });
 
     //     bpmSetting.AddUIComponent(numberBPM, Point(4, 0));

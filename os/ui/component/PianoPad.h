@@ -59,7 +59,7 @@
 //             if (x == octaveX + config->octave) {
 //               MatrixOS::LED::SetColor(xy, Color(WHITE));
 //             } else {
-//               MatrixOS::LED::SetColor(xy, color.ToLowBrightness());
+//               MatrixOS::LED::SetColor(xy, color.DimIfNot());
 //             }
 //           } else {
 //             MatrixOS::LED::SetColor(xy, Color(BLANK));
@@ -86,7 +86,7 @@
 //             } else if (bitRead(c_aligned_scale_map, pianoNote[(dimension.y + y) % 2][(x - config->shift + 7) % 7])) {
 //               MatrixOS::LED::SetColor(xy, color.Blink_Key(Device::KeyPad::fnState));
 //             } else {
-//               Color thisColor = color.ToLowBrightness();
+//               Color thisColor = color.DimIfNot();
 //               MatrixOS::LED::SetColor(xy, thisColor.Blink_Key(Device::KeyPad::fnState));
 //             }
 //           } else 

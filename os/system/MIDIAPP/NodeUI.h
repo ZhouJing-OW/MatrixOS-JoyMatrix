@@ -107,7 +107,7 @@ namespace MatrixOS::MidiCenter
             MatrixOS::LED::SetColor(xy, Color(BLANK));
             continue;
           }
-          Color thisColor = std::strcmp(name[(uint8_t)data], name[num]) == 0 ? (whiteHighLight ? Color(WHITE) : color[num]) : (whiteHighLight ? color[num] : Color(color[num]).ToLowBrightness());
+          Color thisColor = std::strcmp(name[(uint8_t)data], name[num]) == 0 ? (whiteHighLight ? Color(WHITE) : color[num]) : (whiteHighLight ? color[num] : Color(color[num]).DimIfNot());
           MatrixOS::LED::SetColor(xy, thisColor);
         }
       }

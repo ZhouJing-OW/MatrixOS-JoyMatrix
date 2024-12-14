@@ -13,7 +13,7 @@ bool MultiPad::OctaveRender(Point origin)
         if (x == octaveX + channelConfig->octave[channel]) {
           MatrixOS::LED::SetColor(xy, Color(WHITE));
         } else {
-          MatrixOS::LED::SetColor(xy, color.ToLowBrightness());
+          MatrixOS::LED::SetColor(xy, color.DimIfNot());
         }
       } else {
         MatrixOS::LED::SetColor(xy, Color(BLANK));

@@ -13,7 +13,7 @@ class UIButtonDimmableLarge : public UIButton {
     this->dimension = dimension;
   }
   virtual Dimension GetSize() { return dimension; }
-  virtual Color GetColor() { return color.ToLowBrightness(dim_func()); }
+  virtual Color GetColor() { return color.DimIfNot(dim_func()); }
   
   virtual bool Render(Point origin) {
     for (uint16_t x = 0; x < dimension.x; x++)

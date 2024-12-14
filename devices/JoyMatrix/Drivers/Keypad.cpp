@@ -287,7 +287,7 @@ namespace Device::KeyPad
     {
       uint8_t range = Device::KeyPad::velocity_max - Device::KeyPad::velocity_min;
       uint8_t devicePressure = Device::KeyPad::LPressure >= Device::KeyPad::RPressure ? Device::KeyPad::LPressure : Device::KeyPad::RPressure;
-      velocity = devicePressure * range / 127 + Device::KeyPad::velocity_min;
+      velocity = devicePressure * range / 127 + (int)Device::KeyPad::velocity_min;
     }
     else
     {

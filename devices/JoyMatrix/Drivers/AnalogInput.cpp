@@ -64,10 +64,10 @@ namespace Device::AnalogInput
     {L_rocker_x_direction, L_rocker_y_direction, R_rocker_x_direction, R_rocker_y_direction, L_pressure_direction, R_pressure_direction, B_fader_direction};
   adc_oneshot_unit_handle_t adc_handle[2];
 
-  AnalogConfig LX = { .name = "LX",  .max = 2900,  .min = 900,   .middle = 1910, };
-  AnalogConfig LY = { .name = "LY",  .max = 3100,  .min = 1500,  .middle = 2340, };
-  AnalogConfig RX = { .name = "RX",  .max = 3200,  .min = 900,   .middle = 2110, };
-  AnalogConfig RY = { .name = "RY",  .max = 3100,  .min = 900,   .middle = 2010, };
+  AnalogConfig LX = { .name = "LX",  .max = 3100,  .min = 200,   .middle = 1710, };
+  AnalogConfig LY = { .name = "LY",  .max = 3100,  .min = 250,   .middle = 1790, };
+  AnalogConfig RX = { .name = "RX",  .max = 3300,  .min = 1100,   .middle = 2200, };
+  AnalogConfig RY = { .name = "RY",  .max = 2700,  .min = 1200,   .middle = 1990, };
   AnalogConfig LP = { .name = "LP",  .max = 2950,  .min = 1050,  .middle = 1880, };
   AnalogConfig RP = { .name = "RP",  .max = 2950,  .min = 1050,  .middle = 1880, };
   AnalogConfig BF = { .name = "BF",  .max = 2950,  .min = 1050,  .middle = 1880, };
@@ -163,8 +163,8 @@ namespace Device::AnalogInput
 
   inline uint16_t GetRaw(string input)
   {
-    if (input == "LX") {return 1910 /*reading[0]*/;}      // left X
-    else if (input == "LY") {return 2340 /*reading[1]*/;} // left Y
+    if (input == "LX") {return reading[0];}      // left X
+    else if (input == "LY") {return reading[1];} // left Y
     else if (input == "RX") {return reading[2];} // right X
     else if (input == "RY") {return reading[3];} // right Y
     else if (input == "LP") {return reading[4];} // left pressure

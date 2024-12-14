@@ -271,7 +271,7 @@ namespace MatrixOS::KnobCenter
         else if(x <= pageMax + extraPage)
         {
           Color thisColor = COLOR_KNOB_8PAGE[x];
-          MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+          MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
         }
         else
           MatrixOS::LED::SetColor(xy, Color(BLANK));

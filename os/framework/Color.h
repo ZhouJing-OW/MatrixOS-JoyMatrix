@@ -83,10 +83,13 @@ class Color {
   uint32_t GRB(uint8_t brightness = 255);
   Color Scale(uint8_t scale);
   Color Scale(uint8_t value, uint8_t lowest, uint8_t highest, uint8_t brightness = COLOR_LOW_STATE_SCALE);
-  Color ToLowBrightness(bool cancel = false, uint8_t scale = COLOR_LOW_STATE_SCALE);  // Helper for UI, make ui variable
+  Color Dim(uint8_t scale = COLOR_LOW_STATE_SCALE);
+  Color DimIfNot(bool not_dim = false, uint8_t scale = COLOR_LOW_STATE_SCALE);  // Helper for UI, make ui variable
                                                                                       // as parameter so the output
-                                                                                      // dynamiclly change based on the
+                                                                                      // dynamically change based on the
                                                                                       // variable
+
+  Color Gamma();
   
   Color Invert();
   Color Contrast(bool clockwise = true);
@@ -96,7 +99,7 @@ class Color {
   Color Blink_Color(bool active, Color color);
   Color Blink_Timer(Timer* timer , uint32_t ms);
   Color Blink_Interval(uint32_t ms , Color color, uint32_t start = 0);
-  Color Breathe(bool active = true, uint32_t startTime = 0, uint16_t timeLength = BREATHE_TIME);
+  static Color Crossfade(Color color1, Color color2, Fract16 ratio);
 
   static uint8_t scale8(uint8_t i, uint8_t scale);
 

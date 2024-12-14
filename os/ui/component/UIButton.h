@@ -4,30 +4,49 @@
 class UIButton : public UIComponent {
  public:
   string name;
-  Color color;
-  std::function<void()> callback;
+  Color color = Color(0);
+  std::function<void()> press_callback;
   std::function<void()> hold_callback;
+  std::function<Color()> color_func;
+  Dimension dimension = Dimension(1, 1);
 
+  UIButton() {}
 
-  UIButton(string name, Color color, std::function<void()> callback = nullptr, std::function<void()> hold_callback = nullptr) {
+  UIButton(string name, Color color, std::function<void()> press_callback = nullptr, std::function<void()> hold_callback = nullptr) {
     this->name = name;
     this->color = color;
-    this->callback = callback;
+    this->press_callback = press_callback;
     this->hold_callback = hold_callback;
   }
 
   virtual string GetName() { return name; }
-  virtual Color GetColor() { return color; }
-  virtual Dimension GetSize() { return Dimension(1, 1); }
+  void SetName(string name) { this->name = name; }
 
-  virtual bool Callback() {
-    if (callback != nullptr)
+  virtual Color GetColor() { 
+    if (color_func)
     {
-      callback();
+      return color_func();
+    }
+    return color;
+  }
+  void SetColor(Color color) { this->color = color; }
+  void SetColorFunc(std::function<Color()> color_func) {
+    this->color = Color(0);
+    this->color_func = color_func;
+  }
+
+  virtual Dimension GetSize() { return Dimension(1, 1); }
+  void SetSize(Dimension dimension) { this->dimension = dimension; }
+
+  virtual bool PressCallback() {
+    if (press_callback != nullptr)
+    {
+      press_callback();
       return true;
     }
     return false;
   }
+
   virtual bool HoldCallback() {
     if (hold_callback != nullptr)
     {
@@ -36,18 +55,31 @@ class UIButton : public UIComponent {
     }
     return false;
   }
+
+  void OnPress(std::function<void()> press_callback) { this->press_callback = press_callback; }
+
+  void OnHold(std::function<void()> hold_callback) { this->hold_callback = hold_callback; }
+
   virtual bool Render(Point origin) {
-    MatrixOS::LED::SetColor(origin, GetColor());
+    Dimension dimension = GetSize();
+    Color color = GetColor();
+    for (uint16_t x = 0; x < dimension.x; x++)
+    {
+      for (uint16_t y = 0; y < dimension.y; y++)
+      {
+        MatrixOS::LED::SetColor(origin + Point(x, y), color);
+      }
+    }
     return true;
   }
 
   virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) {
     if (keyInfo->state == RELEASED && keyInfo->hold == false)
     {
-      if (Callback())
+      if (PressCallback())
       {
         MLOGD("UI Button", "Key Event Callback");
-        // MatrixOS::KEYPAD::Clear();
+        MatrixOS::KEYPAD::Clear();
         return true;
       }
     }
@@ -55,16 +87,17 @@ class UIButton : public UIComponent {
     {
       if (HoldCallback())
       {
-        // MatrixOS::KEYPAD::Clear();
+        MatrixOS::KEYPAD::Clear();
         return true;
       }
       else
       {
-        if (name != "")
-          MatrixOS::UIInterface::TextScroll(GetName(), color);
+        MatrixOS::UIInterface::TextScroll(GetName(), GetColor());
         return true;
       }
     }
     return false;
   }
+
+  virtual ~UIButton(){};
 };

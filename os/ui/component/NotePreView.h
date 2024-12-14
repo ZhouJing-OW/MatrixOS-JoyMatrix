@@ -124,7 +124,7 @@ class NotePreView : public UIComponent {
           uint8_t inScale = InScale(note);  // Check if the note is in scale.
           if (inScale == 0)
           { 
-            MatrixOS::LED::SetColor(globalPos, color.ToLowBrightness()); 
+            MatrixOS::LED::SetColor(globalPos, color.DimIfNot()); 
           }
           else if (inScale == 1)
             MatrixOS::LED::SetColor(globalPos, color); 

@@ -153,9 +153,9 @@ class MultiPad : public UIComponent {
     Color pianoColor = COLOR_PIANO_PAD[1];
     Color drumColor  = (drumConfig != nullptr) ? COLOR_DRUM_PAD[1] : Color(BLANK);
 
-    MatrixOS::LED::SetColor(origin + Point(dimension.x - 2, 0), noteColor.ToLowBrightness(*padType == NOTE_PAD));
-    MatrixOS::LED::SetColor(origin + Point(dimension.x - 3, 0), pianoColor.ToLowBrightness(*padType == PIANO_PAD));
-    MatrixOS::LED::SetColor(origin + Point(dimension.x - 4, 0), drumColor.ToLowBrightness(*padType == DRUM_PAD));
+    MatrixOS::LED::SetColor(origin + Point(dimension.x - 2, 0), noteColor.DimIfNot(*padType == NOTE_PAD));
+    MatrixOS::LED::SetColor(origin + Point(dimension.x - 3, 0), pianoColor.DimIfNot(*padType == PIANO_PAD));
+    MatrixOS::LED::SetColor(origin + Point(dimension.x - 4, 0), drumColor.DimIfNot(*padType == DRUM_PAD));
     MatrixOS::LED::SetColor(origin + Point(dimension.x - 5, 0), Color(BLANK));
 
     for (uint8_t y = 0; y < dimension.y; y++)
@@ -178,9 +178,9 @@ class MultiPad : public UIComponent {
           if (i == *activePadConfig)
             MatrixOS::LED::SetColor(xy, color);
           else if (*padType != DRUM_PAD && i == *otherPadConfig)
-            MatrixOS::LED::SetColor(xy, otherColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, otherColor.DimIfNot());
           else
-            MatrixOS::LED::SetColor(xy, colorBack.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, colorBack.DimIfNot());
         }
         else
           MatrixOS::LED::SetColor(xy, Color(BLANK));

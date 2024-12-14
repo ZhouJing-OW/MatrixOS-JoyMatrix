@@ -30,6 +30,8 @@ namespace MatrixOS::MidiCenter
 
   bool clockOut;
   bool clockIn;
+
+  TaskHandle_t midiCenterTaskHandle = NULL;
   void MidiCenterTask(void* arg)
   {
     TickType_t xLastWakeTime;
@@ -206,10 +208,19 @@ namespace MatrixOS::MidiCenter
     MLOGD("Midi Center", "clock stoped");
   }
 
-  void Init()
+  void MidiCenterStart()
   {
-    xTaskCreate(MidiCenterTask, "MidiCenter", configMINIMAL_STACK_SIZE * 6, NULL, configMAX_PRIORITIES - 5, NULL);
-    taskCount = 0;
+    xTaskCreate(MidiCenterTask, "MidiCenter", configMINIMAL_STACK_SIZE * 6, NULL, configMAX_PRIORITIES - 5, &midiCenterTaskHandle);
+    taskCount = 0;    
+  }
+
+  void MidiCenterStop()
+  {
+    if (midiCenterTaskHandle != NULL)
+    {
+        vTaskDelete(midiCenterTaskHandle);
+        midiCenterTaskHandle = NULL;
+    }    
   }
 
   bool Scan_Toggle()

@@ -121,7 +121,7 @@
 //               if (x == octaveX + config->octave) {
 //                 MatrixOS::LED::SetColor(xy, Color(WHITE));
 //               } else {
-//                 MatrixOS::LED::SetColor(xy, color.ToLowBrightness());
+//                 MatrixOS::LED::SetColor(xy, color.DimIfNot());
 //               }
 //             } else {
 //               MatrixOS::LED::SetColor(xy, Color(BLANK));
@@ -150,7 +150,7 @@
 //             uint8_t inScale = InScale(note);  // Check if the note is in scale.
 //             if (inScale == 0)
 //             { 
-//               Color thisColor = color.ToLowBrightness();
+//               Color thisColor = color.DimIfNot();
 //               MatrixOS::LED::SetColor(globalPos, thisColor.Blink_Key(Device::KeyPad::fnState)); 
 //             }
 //             else if (inScale == 1)

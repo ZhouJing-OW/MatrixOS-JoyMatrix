@@ -69,8 +69,8 @@ class UI4pxKnobVar : public UIComponent {
     Color thisColor = Color(WHITE);
     MatrixOS::LED::SetColor(origin + Point(0, 0), thisColor);
     MatrixOS::LED::SetColor(origin + Point(0, 1), thisColor);
-    MatrixOS::LED::SetColor(origin + Point(0, 2), thisColor.ToLowBrightness());
-    MatrixOS::LED::SetColor(origin + Point(0, 3), thisColor.ToLowBrightness());
+    MatrixOS::LED::SetColor(origin + Point(0, 2), thisColor.DimIfNot());
+    MatrixOS::LED::SetColor(origin + Point(0, 3), thisColor.DimIfNot());
     return true;
   }
 

@@ -57,7 +57,7 @@ namespace MatrixOS::MidiCenter
       CheckNodeChange(arpeggiator, NODE_ARP);
 
       Color switchColor = Color(WHITE);
-      MatrixOS::LED::SetColor(origin + Point(15, 0), switchColor.ToLowBrightness(arpeggiator != nullptr));
+      MatrixOS::LED::SetColor(origin + Point(15, 0), switchColor.DimIfNot(arpeggiator != nullptr));
       LabelRender(origin + labelPos);
 
       if (arpeggiator == nullptr) return true;
@@ -66,7 +66,7 @@ namespace MatrixOS::MidiCenter
       Color configColor = arpeggiator->activeLabel == 8 ? Color(WHITE) : COLOR_HIGH_S[arpeggiator->configNum];
       MatrixOS::LED::SetColor(origin + Point(14, 0), configColor);
       // Color timeSyncColor = Color(BLUE);
-      // MatrixOS::LED::SetColor(origin + Point(2, 0), timeSyncColor.ToLowBrightness(arpeggiator->config->timeSync));
+      // MatrixOS::LED::SetColor(origin + Point(2, 0), timeSyncColor.DimIfNot(arpeggiator->config->timeSync));
       switch (arpeggiator->activeLabel)
       { 
         case 0: TypeRender      (origin + settingPos); break;
@@ -156,7 +156,7 @@ namespace MatrixOS::MidiCenter
       {
         Point xy = origin + Point(x, 0);
         Color thisColor = labelColor[x];
-        MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness(arpeggiator != nullptr));
+        MatrixOS::LED::SetColor(xy, thisColor.DimIfNot(arpeggiator != nullptr));
         if (arpeggiator == nullptr) continue;
         
         if (x == arpeggiator->activeLabel)
@@ -194,9 +194,9 @@ namespace MatrixOS::MidiCenter
       {
         Point xy = origin + Point(x, 0);
         if ( x == 0)
-          MatrixOS::LED::SetColor(xy, forbackColor.ToLowBrightness(arpeggiator->config->forBackward));
+          MatrixOS::LED::SetColor(xy, forbackColor.DimIfNot(arpeggiator->config->forBackward));
         else if (x == 1)
-          MatrixOS::LED::SetColor(xy, repeatColor.ToLowBrightness(arpeggiator->config->forBackward && arpeggiator->config->repeatEnds));
+          MatrixOS::LED::SetColor(xy, repeatColor.DimIfNot(arpeggiator->config->forBackward && arpeggiator->config->repeatEnds));
         else if (x > 3)
         {
           uint8_t i = x - 4;
@@ -204,7 +204,7 @@ namespace MatrixOS::MidiCenter
           if(i == arpeggiator->config->type)
             MatrixOS::LED::SetColor(xy, selectColor);
           else
-            MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
         }
       }
     }
@@ -274,7 +274,7 @@ namespace MatrixOS::MidiCenter
             MatrixOS::LED::SetColor(xy, Color(WHITE));
         }
         else
-          MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+          MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
       }
     }
 
@@ -308,7 +308,7 @@ namespace MatrixOS::MidiCenter
           else if(x < octaveRange.Value())
             MatrixOS::LED::SetColor(xy, thisColor);
           else
-            MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
         }
         else
           MatrixOS::LED::SetColor(xy, Color(BLANK));
@@ -345,7 +345,7 @@ namespace MatrixOS::MidiCenter
         else if(x < noteRepeat.Value())
           MatrixOS::LED::SetColor(xy, thisColor);
         else
-          MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+          MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
       }
     }
 
@@ -375,7 +375,7 @@ namespace MatrixOS::MidiCenter
       {
         Point xy = origin + Point(x, 0);
         if (x == 15)
-          MatrixOS::LED::SetColor(xy, skipColor.ToLowBrightness(arpeggiator->config->skip));
+          MatrixOS::LED::SetColor(xy, skipColor.DimIfNot(arpeggiator->config->skip));
         else if (x > 3 && x < 12)
         {
           uint8_t i = x - 4;
@@ -385,15 +385,15 @@ namespace MatrixOS::MidiCenter
           {
             bool active = bitRead(arpeggiator->config->pattern, i);
             uint8_t scale = arpeggiator->config->velocity[i];
-            MatrixOS::LED::SetColor(xy, active ? thisColor.Scale(scale, 0, 127, 16) : lengthColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, active ? thisColor.Scale(scale, 0, 127, 16) : lengthColor.DimIfNot());
           }
           else
-            MatrixOS::LED::SetColor(xy, backColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, backColor.DimIfNot());
         }
         else if (x == 0)
-          MatrixOS::LED::SetColor(xy, backColor.ToLowBrightness());
+          MatrixOS::LED::SetColor(xy, backColor.DimIfNot());
         else if (x == 1)
-          MatrixOS::LED::SetColor(xy, lengthColor.ToLowBrightness());
+          MatrixOS::LED::SetColor(xy, lengthColor.DimIfNot());
         else
           MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
@@ -483,19 +483,19 @@ namespace MatrixOS::MidiCenter
       {
         Point xy = origin + Point(x, 0);
         if(x == 0)
-          MatrixOS::LED::SetColor(xy, blinkColor.ToLowBrightness());
+          MatrixOS::LED::SetColor(xy, blinkColor.DimIfNot());
         else if (x == 1)
           MatrixOS::LED::SetColor(xy, blinkColor);
         else if(x > 2 && x < 13)
         {
           uint8_t i = x - 3;
           if(i >= chance.Value() / 10)
-            MatrixOS::LED::SetColor(xy, backColor.ToLowBrightness().Blink_Color((chance.Value() - 1) % 10 == i, blinkColor));
+            MatrixOS::LED::SetColor(xy, backColor.DimIfNot().Blink_Color((chance.Value() - 1) % 10 == i, blinkColor));
           else
             MatrixOS::LED::SetColor(xy, thisColor.Blink_Color((chance.Value() - 1) % 10 == i, blinkColor));
         }
         else if(x == 15)
-          MatrixOS::LED::SetColor(xy, skipColor.ToLowBrightness(arpeggiator->config->skip));
+          MatrixOS::LED::SetColor(xy, skipColor.DimIfNot(arpeggiator->config->skip));
         else
           MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
@@ -571,7 +571,7 @@ namespace MatrixOS::MidiCenter
         else if (x < gate.Value())
           MatrixOS::LED::SetColor(xy, gateColor[gate.Value()]);
         else
-          MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+          MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
       }
     }
 
@@ -603,21 +603,21 @@ namespace MatrixOS::MidiCenter
         if(arpeggiator->inputList.empty())
         {
           if (x == 0)
-            MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
           else if (decayNum[x] < velDecay.Value())
-            MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
           else if (decayNum[x - 1] < velDecay.Value() && decayNum[x] >= velDecay.Value())
           {
             uint8_t scale = (int)((255 - 16) * (velDecay.Value() - decayNum[x - 1]) / (decayNum[x] - decayNum[x - 1]) + 16);
             MatrixOS::LED::SetColor(xy, thisColor.Scale(scale));
           }
           else
-            MatrixOS::LED::SetColor(xy, backColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, backColor.DimIfNot());
         }
         else
         {
           if(x == 0 && arpeggiator->decayNow >= 127)
-            MatrixOS::LED::SetColor(xy, backColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, backColor.DimIfNot());
           else if ( x * 8 < 127 - arpeggiator->decayNow)
           {
             MatrixOS::LED::SetColor(xy, velColor);
@@ -628,7 +628,7 @@ namespace MatrixOS::MidiCenter
             MatrixOS::LED::SetColor(xy, velColor.Scale(scale));
           }
           else
-            MatrixOS::LED::SetColor(xy, backColor.ToLowBrightness());
+            MatrixOS::LED::SetColor(xy, backColor.DimIfNot());
           
           if (decayNum[x - 1] < velDecay.Value() && decayNum[x] >= velDecay.Value())
           {
@@ -664,7 +664,7 @@ namespace MatrixOS::MidiCenter
         if (arpeggiator->configNum == x)
           MatrixOS::LED::SetColor(xy, thisColor);
         else
-          MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness());
+          MatrixOS::LED::SetColor(xy, thisColor.DimIfNot());
       }
     }
     

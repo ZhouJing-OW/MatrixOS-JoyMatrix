@@ -92,7 +92,7 @@ class MixerFader : public UIComponent {
             if (active) 
               MatrixOS::LED::SetColor(xy, knobPtr[i]->color);
             else 
-              MatrixOS::LED::SetColor(xy, knobPtr[i]->color.ToLowBrightness());
+              MatrixOS::LED::SetColor(xy, knobPtr[i]->color.DimIfNot());
           } 
           else
             MatrixOS::LED::SetColor(xy, Color(BLANK));

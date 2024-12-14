@@ -15,7 +15,7 @@ class KeyTestUI : public UIComponent
     {
       case 0: return Color(0);
       case 1: return color;
-      case 2: return color.ToLowBrightness();
+      case 2: return color.DimIfNot();
       case 3: return color.Scale(8);
       default: return Color(0);
     }

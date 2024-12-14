@@ -1,0 +1,871 @@
+[33mcommit 63fb69c7a21246877d2506ba5a420777b7fa9550[m[33m ([m[1;31mupstream/main[m[33m)[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Dec 3 07:34:17 2024 -0500
+
+    Changed UIInterface to UIUtility
+
+[33mcommit 5df731fca4a214a582f68dfc0cefcd92d8bff294[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Dec 3 07:28:56 2024 -0500
+
+    Removed UI mutli add component API
+
+[33mcommit 305e2a488e2283549e4e9ffe0a504a2d9b1e8a01[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Dec 2 06:22:26 2024 -0500
+
+    Added delay to Mystrix Standard keypad driver
+
+[33mcommit 5690cae27104f398560737847cbfc541ad78b8c4[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Dec 2 06:19:19 2024 -0500
+
+    Added all note off CC for Note and Performance app
+
+[33mcommit 7a8b732a7e2591c03c797ae1d8177847c1b94365[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Dec 2 06:09:49 2024 -0500
+
+    Fixed Mystrix Touchbar Toggle not saving
+
+[33mcommit a208c810ffec590c16157bf8dc8c6aa54191955a[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Dec 2 06:06:51 2024 -0500
+
+    Bump version to 2.6
+
+[33mcommit 7a7a4d93dd2b9b763a0f5c902581151ba0487ccd[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Dec 2 06:06:05 2024 -0500
+
+    Removed UAD sample
+
+[33mcommit 460baa9435b00ea9e02f99fb3ab6cce7c6015ce9[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Dec 2 05:51:37 2024 -0500
+
+    Custom Control Map beta
+
+[33mcommit 272fcb4804cadc7047d801fbbd3709909a83fbf3[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Dec 1 03:02:54 2024 -0500
+
+    Enabled Custom Control Map app
+
+[33mcommit 768056a4168a0f3113b5d7d3c094caeafca70025[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Dec 1 03:02:41 2024 -0500
+
+    Performance Optimized config
+
+[33mcommit 523e1630ecabd0f138d26c47a1956abc96f8170b[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Dec 1 03:02:20 2024 -0500
+
+    Fixed small bug in Mystrix FSR driver
+
+[33mcommit aff5e2456863815022b65996d3d8a8423115c013[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Nov 30 08:57:04 2024 -0500
+
+    Fix typo
+
+[33mcommit f50f24b311a5de92cacbe493f1bf0ae8aa504884[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Nov 30 08:56:14 2024 -0500
+
+    Triangle color effect
+
+[33mcommit 44344235e5cba8069ac84c7e0653d01f0f36c9f4[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Oct 28 13:28:20 2024 -0400
+
+    Added HIDReportHandler to Custom Control Map
+
+[33mcommit 9de83e34a664bf453c35b36087071f57eeaab7d3[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Oct 28 11:35:25 2024 -0400
+
+    Renamed CustomKeyMap to CustomControlMap
+
+[33mcommit 6d021338a8dfdd74795b9f7fd205bd77e4085ac0[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Oct 25 00:35:38 2024 -0400
+
+    Make build-RC work
+
+[33mcommit cf3550acfeeb537c8273032ed2d1d6bdd2dd854d[m[33m ([m[1;33mtag: [m[1;33mV2.5-RC[m[33m, [m[1;33mtag: [m[1;33mV2.5[m[33m)[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Oct 25 00:16:53 2024 -0400
+
+    Note App: Fix overlap selector default value not showing up correctly
+
+[33mcommit f245b43e5754d780ff63509ea1fd327a60f6de7f[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 23:10:27 2024 -0400
+
+    Updated Github Action to latest version
+
+[33mcommit 2d4c9b6db265d9c7ae83eb7fed24c74d97d9861f[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 23:04:06 2024 -0400
+
+    Github Action
+
+[33mcommit b237ee8b02d6f3ed42d3dc9691e5e4893b7cc8f4[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 22:21:28 2024 -0400
+
+    Updated case sensitivie
+
+[33mcommit ba79758a72f164b10070e3fabcedd52dbe591df3[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 22:10:24 2024 -0400
+
+    OOPS, that's why it's not working
+
+[33mcommit 8fc5c9c2886255b2b4d3d8ee8b7cc35a977a7734[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 21:59:19 2024 -0400
+
+    Build system changes
+
+[33mcommit 76cfb91d4a058ef823242358d147495413edd238[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 17:59:14 2024 -0400
+
+    Updated ESP-IDF to 5.3.x
+
+[33mcommit 64f200f6b15ce8cbc1f89b6700e220bf3ca9fd79[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 17:58:50 2024 -0400
+
+    Added BreathLowBound to Reversi winner screen
+
+[33mcommit 34bd87cd0d6c7e1816eb75aa9d891b9c5a58faee[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 17:58:28 2024 -0400
+
+    ColorEffect:BreathLowBound
+
+[33mcommit 179db0216e69a1d9d6e467e0b018701d705ee1b3[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 15:08:16 2024 -0400
+
+    Fixed reversi game
+
+[33mcommit feaa93e37373fb6e75ac19da3efc784c1edec8a8[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 15:08:06 2024 -0400
+
+    Oops, left this unfixed
+
+[33mcommit 4a86f98c15db208dd532f94f48ca0554f87f0a45[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Oct 24 14:59:22 2024 -0400
+
+    Misc and Typo fix
+
+[33mcommit 15e0aad1c0c6f25b9687909ac00a5f2bb5c9ffa1[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Wed Oct 9 12:42:51 2024 -0400
+
+    Fix apollo not working with action menu keys
+
+[33mcommit 3d6cbeaaf2940e815a1b37cd4897a0c8b7305237[m
+Merge: 6b03d06 0c40a64
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 8 01:17:19 2024 -0400
+
+    Merge branch 'main' of https://github.com/203Electronics/MatrixOS
+
+[33mcommit 6b03d063f8cb8cb8c2a11a564cb1594ce292d616[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 8 01:17:03 2024 -0400
+
+    Oops
+
+[33mcommit 012abfd4e1245086b0f994143eb3557bb234cb2c[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 8 01:15:37 2024 -0400
+
+    Bumped to 2.5 Beta 3
+
+[33mcommit e23a326711e087a58c686f1b5866d0ff5f04f9a5[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 8 01:10:29 2024 -0400
+
+    Performance App now send and recive from all midi prots
+
+[33mcommit 2007558d87e33572cb23cddd6863c635f0ddfb6f[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 8 01:10:08 2024 -0400
+
+    Dual USB Midi
+
+[33mcommit 2a206fd89b5eca5e02839b3fa5fb512dce2ab01c[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 8 01:08:39 2024 -0400
+
+    Updated submodules
+
+[33mcommit 33425c20c5e28afa777865e6961813fec23a1495[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Oct 7 19:59:26 2024 -0400
+
+    New LED Driver for Mystrix
+
+[33mcommit 78e6073bdc545ef27db9d002de3b212b862ee3cd[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Oct 6 03:01:35 2024 -0400
+
+    Revisied LED steps
+
+[33mcommit 1165a18f24848c4250ae2b3cc1fb8767dc9c4e68[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Oct 6 02:25:39 2024 -0400
+
+    Bug fix for dice app
+
+[33mcommit 458d9684e53ece0e7cbb1ed1f8b8025eca28d0ce[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Oct 6 02:25:24 2024 -0400
+
+    Added debounce to binary keyswitch
+
+[33mcommit 0c40a6491eb56445506b08a387941ff8b19562c9[m
+Author: Nengzhuo Cai <cainengzhuo@gmail.com>
+Date:   Sat Oct 5 01:48:40 2024 -0400
+
+    Update README.md
+
+[33mcommit e27ca7ed4d582b8a27026487eb2edc8b8e15ce9c[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Oct 5 01:44:52 2024 -0400
+
+    Matrix OS Logo SVG
+
+[33mcommit 341ce9a47360bd22095998deb2e2c0c69cee409b[m
+Author: Nengzhuo Cai <cainengzhuo@gmail.com>
+Date:   Sat Oct 5 01:33:49 2024 -0400
+
+    Update README.md
+
+[33mcommit a867754d92b001a6f68b2fcd2c63caae47e979c7[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Oct 5 01:30:06 2024 -0400
+
+    Changed the default debug build log setting to debug instead of verbose
+
+[33mcommit c6b5e7d6a358ee546aeb5ac7838b503483e0ba57[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Oct 5 01:29:00 2024 -0400
+
+    Bug fix Reversi Game
+
+[33mcommit 4333407d73aed06ed6228a790b9f566d560a8a3d[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Oct 5 00:41:05 2024 -0400
+
+    Reset Reversi Game if change first hand
+
+[33mcommit 7edac3ee6c8cf531cc71b85ca2f924318d8a04e4[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Oct 5 00:05:35 2024 -0400
+
+    Fix application registeration system to actually perserve order
+
+[33mcommit c95a71a05a7923c266c71e218bbf312ed01b8ac5[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Oct 5 00:05:07 2024 -0400
+
+    Placement Hint mode in reversi
+
+[33mcommit 0c4e7e99057fe1e068b10805609e1063a763cbd8[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Wed Oct 2 22:33:49 2024 -0400
+
+    Reversi Update
+
+[33mcommit 82867542e327f90c69413f9b57fd0106b9e849f9[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Wed Oct 2 02:39:58 2024 -0400
+
+    Fixed Winner LED bug in Reversi and added a confirm reset screen
+
+[33mcommit a125f88f79f22f54b529727fcb0d493d18162631[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Wed Oct 2 01:53:55 2024 -0400
+
+    Added Reversi Game App (beta)
+
+[33mcommit a09582965f0e0be6ec67e695ec47f9017673f0fc[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Wed Oct 2 01:53:34 2024 -0400
+
+    Added a small base V for color picker
+
+[33mcommit 1f124d6f5dd1111c55ab7157ea3c4d600b1516c3[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Wed Oct 2 01:46:38 2024 -0400
+
+    Moved APP start up and exit LED fading from APP to OS
+
+[33mcommit 683c870e26c77b053f9bd99c89fcb1c3065896c7[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 1 17:26:08 2024 -0400
+
+    Fixed Lighting app UI
+
+[33mcommit 9ba0ef186faead4e72f5850061c623016410a5fb[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 1 17:07:34 2024 -0400
+
+    Safer setting for Mystrix Pro keypad
+
+[33mcommit fe61dfc214928d2565c4fd31d382e5031a5fc090[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 1 17:07:18 2024 -0400
+
+    Single read for Mystrix Pro keypad
+
+[33mcommit d2c4f9835398cdfff1470073b625942336cfda58[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 1 17:06:52 2024 -0400
+
+    Performance APP action menu control change now reports enter and exit
+
+[33mcommit 952c042b874ef934633bbf20add06baea910a728[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 1 17:06:31 2024 -0400
+
+    fixed gamepad select and start is fliped
+
+[33mcommit c42b326a02536f496f847154290c664d00c0dd63[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Oct 1 17:06:16 2024 -0400
+
+    Added Underglow to Note APP
+
+[33mcommit e2bb533853df5eed219f17db77e837eaf2c29135[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 06:19:14 2024 -0400
+
+    Added build-release build-rc build-beta build-nightly build-dev to make system
+
+[33mcommit 6add121a93f32af7a67685a747c93aa5f560ae1d[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 06:18:34 2024 -0400
+
+    Reworked APP system flow
+
+[33mcommit 7ba43560d544f1fa74013139d993f4ed70448c99[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 06:17:43 2024 -0400
+
+    Clean up
+
+[33mcommit 91d40734055784a28e358c07e7de5f9464b9d144[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 06:16:18 2024 -0400
+
+    UI CheanUpUIs()
+
+[33mcommit 94baf0e1d1220a35e5ab17ed47774ebff9a5d666[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 06:15:46 2024 -0400
+
+    Less Aggresive sys module reinit
+
+[33mcommit 7a34b78da964291f219297595a9e9f3138661ea0[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 06:14:50 2024 -0400
+
+    Fixed Shell memory leak
+
+[33mcommit a68e344da68505441bd6e29309b9b25ba4ca6f18[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 06:14:37 2024 -0400
+
+    Updated Memory Logging in Shell
+
+[33mcommit 14de97da26e17b98229dfc75d1989d0c60b26384[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 05:09:04 2024 -0400
+
+    Removed some logging
+
+[33mcommit a5c2941fe083901e0ae94a80ae0d96492f47ca84[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 05:08:55 2024 -0400
+
+    Removed LED::FadeOut()
+
+[33mcommit 1fb6d0a397c2ac034334d1cfb24f5d28f0432732[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 05:08:04 2024 -0400
+
+    Fixed small issue in Mystrix boot
+
+[33mcommit 55267b1895ca22510373bbf44aafcace6636277e[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 05:07:54 2024 -0400
+
+    Removed LED layer in lighting app
+
+[33mcommit 160ca1d0ceed362818b6372a93c77981d221a73a[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 05:07:16 2024 -0400
+
+    Application Destructor
+
+[33mcommit aa223957df3c1e39ea4d96761653f10847c015fe[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 05:05:23 2024 -0400
+
+    Fix UI Exit name not showing correctly
+
+[33mcommit 979cc32342f0c99645c5526d8df931e3898ef7b5[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 04:02:01 2024 -0400
+
+    Fade in UI Interface Color Picker
+
+[33mcommit a22855809c54e1ed1284676049ba876fc17de5ee[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 16 04:01:49 2024 -0400
+
+    Fade in Performance APP PaletteEditor
+
+[33mcommit 7c03ac916d2aa6b59ca654d82f3094987fcc5a5f[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 02:54:12 2024 -0400
+
+    Added underglow for Mystrix Boot
+
+[33mcommit 3a527533ca4ce7ab8d8c3c06dde4466f6afeeea0[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 01:48:56 2024 -0400
+
+    New APIs for crossfade LEDs
+
+[33mcommit d8e88fcd48281ffbf2cb3196b079f262322455fa[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 01:48:34 2024 -0400
+
+    Added fading and deconstructor in UI
+
+[33mcommit b62321be356e070dacc591c3364b5a0c16e191ad[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 01:48:05 2024 -0400
+
+    Removed one unneeded log
+
+[33mcommit cc3829fb0bcf589290358a7b8722c795d7d9fae7[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 01:47:52 2024 -0400
+
+    More efficent color crossfade
+
+[33mcommit 8e93c36637f3e1115ae9d175bb919c390e0001ba[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 01:47:14 2024 -0400
+
+    Updated the Application boiler code to work better with new system animation
+
+[33mcommit 94bda9794e9f7b4d0de4a0ec83784f22c72d2854[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 01:46:37 2024 -0400
+
+    Fixed Brightness control keep spaming save
+
+[33mcommit 61b8aa75a5482e83fc907704118695132e5e2d61[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 01:46:20 2024 -0400
+
+    Recolored some keys in Performance APP
+
+[33mcommit 8cb6fe771a20d7b82d1ca35fbc93f25da49c11d4[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 01:45:54 2024 -0400
+
+    Matrix OS memory report log in Shell APP
+
+[33mcommit 6937ed126818b52469cb1971d0519ee49fbf109a[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 01:45:37 2024 -0400
+
+    System Animation Toggle
+
+[33mcommit bc3f0f1176550012f565de1a5cf1092e787d3772[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Sep 14 01:45:15 2024 -0400
+
+    Reworked LED Crossfade
+
+[33mcommit c15436f3e0a815a8df548fc084774855a35f0de9[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 13 02:25:36 2024 -0400
+
+    Change Flicker Reduction Button from UIToggle back to UIButton
+
+[33mcommit b34ee31a12ff85c900dd04ecfc7f3d807e070e99[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 13 01:43:15 2024 -0400
+
+    Revert back to using UIButtons for Note APP
+
+[33mcommit 0debecda460f2c99dd6b5fcf3be4f950a80aa50c[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 13 01:35:49 2024 -0400
+
+    Now toggable type switches has On or Off at the end of the text scroll
+
+[33mcommit 207f864e88c18e650b8914d64c11de6ba1578bfe[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 13 01:35:09 2024 -0400
+
+    Note APP: Added horizontal spilt
+
+[33mcommit 0ed53386901e4451763cc705661a1dd3762fa5cb[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 13 01:34:31 2024 -0400
+
+    UI Toggle
+
+[33mcommit 7ac773770156df1b90be67a6b4f0ddcad1f25e65[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Wed Sep 11 00:59:38 2024 -0400
+
+    Deleted unused code
+
+[33mcommit fde61f4aeb706dc3b46573c23924fe6015dddd09[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Wed Sep 11 00:59:23 2024 -0400
+
+    Performance APP: Reduced the delay of Flicker Reduction
+
+[33mcommit 35e3baf11a4fa7ab98dc532a905f5f1f190fa96e[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Sep 10 22:42:06 2024 -0400
+
+    I fucked up. The buttons are stored in scope...
+
+[33mcommit 70fc7f8d6a31abb109a302eaef88bbe5723ac629[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 9 02:38:32 2024 -0400
+
+    timed retry for Companion APP handshake
+
+[33mcommit e43a9044199b819a4370b14023a9722db336d834[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 9 02:24:34 2024 -0400
+
+    Resolved warnings
+
+[33mcommit 9d8e399800ea20a919adc33a29727af589127233[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 9 02:24:04 2024 -0400
+
+    Removed Extra Log
+
+[33mcommit 0871c0cbfdd776207d60bf76e19ff2e8f48f4347[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 9 02:23:36 2024 -0400
+
+    Dice APP: Hide Underglow settings on Mystrix Standard
+
+[33mcommit 167e3b5ddcd5e53802a7f6a9511e40df287db011[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 9 02:22:03 2024 -0400
+
+    Fix Mystrix Boot Color on Mystrix Standard
+
+[33mcommit d8a76d7847d9537ebdcf89ac5939b1adce44aa63[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Sep 9 02:17:29 2024 -0400
+
+    Reorder Partition Not Found message
+
+[33mcommit 267d066b78e4e1ea1fde58227ea799afefefc00a[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Sep 8 22:24:15 2024 -0400
+
+    Fix palette editor UI not updating
+
+[33mcommit ef96b99496bb80f3fa37a1a28ea8a3cf0829ea14[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Sep 8 16:58:10 2024 -0400
+
+    Fix case fell though
+
+[33mcommit b7d707e7a18c506a857f0630cad68a205f25ea36[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Sep 8 16:57:38 2024 -0400
+
+    Minor Clean up
+
+[33mcommit 6669e78434852423b255d491c9a7b690d78538fd[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Sep 8 14:11:02 2024 -0400
+
+    Note APP: Disable velocity toggle on device without velocity sensitivity
+
+[33mcommit 441af8854d76c38588f7b1a06510a3202d04d339[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sun Sep 8 14:10:32 2024 -0400
+
+    Performance APP: Fix velocity toggle is reversed
+
+[33mcommit 596aeaa568239e5cb6f3e7d7ffde0bc5ead421ef[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 17:21:36 2024 -0400
+
+    Update to Mystrix Boot
+
+[33mcommit d9938a61e9203c7d219f72a674383fe47ee62964[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 16:42:02 2024 -0400
+
+    Mystrix Pro now shows up as Mystrix Pro in USB device
+
+[33mcommit 5eca37278675efb44774964053a8409c7e544cc5[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 16:41:40 2024 -0400
+
+    203 Electronics to 203 Systems
+
+[33mcommit 3a87e53b144037a7f659133ae0272eda4a7cfd27[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 16:38:40 2024 -0400
+
+    Fix issue in readme
+
+[33mcommit 8e74b170b7cd134b033670ceb294b461c16dc51a[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 16:37:38 2024 -0400
+
+    Renamed Matrix to Mystrix
+
+[33mcommit a25a33382af70887daae113908e4c68d738b15ed[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 16:21:37 2024 -0400
+
+    Added visual feedback for Gamepad Trigger Key
+
+[33mcommit b7ed9074265d5f4bd08794755135c768cca56a90[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 15:02:59 2024 -0400
+
+    Fixed MIDI status 4 LSBs being stripped on all status
+
+[33mcommit afe00c80f1e89cf0cacf1ceabe7d587d8cde22cf[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 14:59:07 2024 -0400
+
+    MIDI MTC Quarter Frame support
+
+[33mcommit 4815e3212030c380421b411ccf10122afa0eab26[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 14:58:53 2024 -0400
+
+    Fixed 1byte midi packet
+
+[33mcommit 51e2d8a81588f186e3bd5e127ce2160325d2ed87[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 05:09:46 2024 -0400
+
+    oops
+
+[33mcommit 89623ab2dc25275fe4f5ad3a1c0adc9fbe3fcc82[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 05:09:32 2024 -0400
+
+    Removed Keypad Visualizer button
+
+[33mcommit 8cca7dcb30eecce18d8d62980815c9b858fb243e[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 02:29:27 2024 -0400
+
+    Removed ForceGridVisualizer
+
+[33mcommit 916b8634c0bd12c5e93ef356a5a7c36d67d2c46f[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 02:29:17 2024 -0400
+
+    Small bug fix
+
+[33mcommit 3bee378389bb880c8c5c61e64ea036fde438cbf5[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 02:24:06 2024 -0400
+
+    Key actovation offset
+
+[33mcommit 3200b91a020f43e9f93faba2217c5b97302fa58c[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 02:23:50 2024 -0400
+
+    Fract16 arithmetic
+
+[33mcommit 2d937041a1dbe1c1a02f1c6f406114313e9e836d[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 02:22:04 2024 -0400
+
+    More sensitive keypad hack
+
+[33mcommit 9bf861673e984fa9d958d3ef6a821563d211d1cc[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 02:21:49 2024 -0400
+
+    Advanced Force Calibration Driver Side Support
+
+[33mcommit 28abdfc55d5efc2e942d53a3f32c9cf792167b3d[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 02:18:19 2024 -0400
+
+    Fixed memory leak in Number Editor
+
+[33mcommit 669f342c6c1a0efa599a9aa1256ab994534bc4ac[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Sep 6 02:17:58 2024 -0400
+
+    Advance Force Calibration
+
+[33mcommit eaca40768a7b78ae3e148dd0792b5acac9cea84a[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Sep 5 22:16:26 2024 -0400
+
+    Fixed flickering when switching apps
+
+[33mcommit 9c1757bc21c26ed7e0dbc1f025c7249b8a99e4fa[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Sep 5 22:12:30 2024 -0400
+
+    Dice APP: prevent duplicated face during rolling
+
+[33mcommit 670113241bbfb85366b4380ef0181d275eae3bda[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Sep 5 22:09:34 2024 -0400
+
+    Updated Gamepad APP Color
+
+[33mcommit cf6eb9e70efdf5cd63b95704b6a6b0f71cef50e5[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Sep 5 22:07:01 2024 -0400
+
+    Added Factory Reset button in system setting
+
+[33mcommit 9d67ab99d12278bf53128abac09297ae9d5beb8d[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Sep 5 22:06:48 2024 -0400
+
+    NVS smart update & repair system
+
+[33mcommit 5edf7e7256a5fe612fa9250f6e1c697f0dde899e[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Sep 5 22:06:27 2024 -0400
+
+    Clean up
+
+[33mcommit def5d3627bd998f7861a1d0213dce5222ee7474f[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Sep 5 22:05:50 2024 -0400
+
+    Improved Keypad Update Logic
+
+[33mcommit 8a72896f73d2194b360d8a4d38c82c0a78ccba1b[m
+Merge: 99fcae3 1c7f60f
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Sep 5 18:53:54 2024 -0400
+
+    Merge remote-tracking branch 'origin/HID_Improve'
+
+[33mcommit 99fcae391545f5ede6a1f04d5e6402cc1f91b7c1[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Thu Sep 5 18:47:32 2024 -0400
+
+    Note App: Enter play view first
+
+[33mcommit abbe484825ea5863077e4df9e562719441f6491e[m
+Author: Nengzhuo Cai <cainengzhuo@gmail.com>
+Date:   Sat Aug 31 18:07:13 2024 -0400
+
+    Update README.md
+
+[33mcommit 1c7f60fb33a384af3bc59800e303f5d6431a9b4e[m[33m ([m[1;31mupstream/HID_Improve[m[33m)[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Aug 27 01:31:47 2024 -0400
+
+    Rename Performance App touch alt key to touch combo key
+
+[33mcommit 5fb86b915ab1a507a0d0030dca5ddaa9c5990771[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Aug 27 01:30:58 2024 -0400
+
+    Gamepad App
+
+[33mcommit 6d2a7ec8f593de557521c098b485007e736947ce[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Aug 27 01:30:44 2024 -0400
+
+    Dice App small fix
+
+[33mcommit d7dde1863aa27d63033c905435451e1d202de586[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Aug 27 00:51:48 2024 -0400
+
+    Fix minor issues
+
+[33mcommit 82150d38310be55c203d18529a500a88228fb466[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Tue Aug 27 00:42:59 2024 -0400
+
+    Merge fixed
+
+[33mcommit d48398f0410be98f1204cdf657f2e186fb78c1da[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Aug 26 23:10:29 2024 -0400
+
+    Companion APP
+
+[33mcommit 3352fe49d326e59ae316d302ef01e5ba52ef8f04[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon Aug 26 23:10:10 2024 -0400
+
+    Raw HID Send
+
+[33mcommit f292d2594fef6ffac1f9c9edf3af51f4ce7ff574[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Aug 24 15:02:45 2024 -0400
+
+    HID API changes
+
+[33mcommit d1c6912221af0387c1f51ab3dee020080614bac8[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Aug 24 14:38:35 2024 -0400
+
+    Reworked system core to support hot reloading
+
+[33mcommit 09b03205069e9001077d6e340ad0e9be9aad9f24[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Sat Aug 24 13:56:50 2024 -0400
+
+    Raw HID
+
+[33mcommit 3b84d4810caac31331804c8bc21e0da590830c0d[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Mon May 13 05:59:04 2024 -0400
+
+    Logging now use string pass by refence
+
+[33mcommit f56825243394ce5a65de1a7fe99e60f60962fe6c[m
+Author: Nengzhuo Cai <null@203.io>
+Date:   Fri Aug 23 09:52:43 2024 -0400
+
+    hid ok
+
+[33mcommit 40ec2d2c3ce96608474da13e42da195dc4eb68b7[m
+Author: 203 Null <Null@203.io>
+Date:   Mon Jan 15 02:28:32 2024 -0500
+
+    Renamed Register/Unregister in Midi port to Open/Close

@@ -9,16 +9,16 @@ class MidiButton : public UIComponent {
   uint16_t count;
   int8_t* activePoint = nullptr;
   bool upward;
-  bool ToLowBrightness;
+  bool DimIfNot;
   Point position = Point(0, 0);
 
-  MidiButton(Dimension dimension, MidiButtonConfig* config, uint16_t count, bool upward = false, int8_t* activePoint = nullptr , bool ToLowBrightness = false) {
+  MidiButton(Dimension dimension, MidiButtonConfig* config, uint16_t count, bool upward = false, int8_t* activePoint = nullptr , bool DimIfNot = false) {
     this->dimension = dimension;
     this->config = config;
     this->count = count;
     this->activePoint = activePoint;
     this->upward = upward;
-    this->ToLowBrightness = ToLowBrightness;
+    this->DimIfNot = DimIfNot;
   }
 
   virtual Color GetColor() { return config->color; }
@@ -47,9 +47,9 @@ class MidiButton : public UIComponent {
           {
             MatrixOS::LED::SetColor(xy, Color(WHITE));
           } 
-          else if (activePoint != nullptr && ToLowBrightness == true && i != *activePoint) 
+          else if (activePoint != nullptr && DimIfNot == true && i != *activePoint) 
           {
-            Color thisColor = con->color.ToLowBrightness();
+            Color thisColor = con->color.DimIfNot();
             MatrixOS::LED::SetColor(xy, thisColor.Blink_Key(Device::KeyPad::fnState));
           } 
           else 

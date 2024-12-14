@@ -50,7 +50,7 @@ namespace MatrixOS::MidiCenter
       CheckNodeChange(chorder, NODE_CHORD);
 
       Color switchColor = Color(WHITE);
-      MatrixOS::LED::SetColor(origin + Point(15, 0), switchColor.ToLowBrightness(chorder != nullptr));
+      MatrixOS::LED::SetColor(origin + Point(15, 0), switchColor.DimIfNot(chorder != nullptr));
 
       LabelRender(origin + labelPos);
 
@@ -123,7 +123,7 @@ namespace MatrixOS::MidiCenter
       {
         Point xy = origin + Point(x, 0);
         Color thisColor = labelColor[x];
-        MatrixOS::LED::SetColor(xy, thisColor.ToLowBrightness(chorder != nullptr));
+        MatrixOS::LED::SetColor(xy, thisColor.DimIfNot(chorder != nullptr));
         if (chorder == nullptr) continue;
         
         if (x == chorder->activeLabel)
@@ -173,11 +173,11 @@ namespace MatrixOS::MidiCenter
       {
         Point xy = origin + Point(x, 0);
         if ( x + 1 > VoiceRange(RETURN_MAX))
-          MatrixOS::LED::SetColor(xy, voidColor.ToLowBrightness());
+          MatrixOS::LED::SetColor(xy, voidColor.DimIfNot());
         else if (x + 1 < VoiceRange(RETURN_MIN))
           MatrixOS::LED::SetColor(xy, Color(ORANGE));
         else
-          MatrixOS::LED::SetColor(xy, numColor.ToLowBrightness( x + 1 <= chorder->config->maxVoices));
+          MatrixOS::LED::SetColor(xy, numColor.DimIfNot( x + 1 <= chorder->config->maxVoices));
       }
     }
 
@@ -202,11 +202,11 @@ namespace MatrixOS::MidiCenter
     {
       Color bassColor = Color(BLUE);
       Color trebleColor = Color(CYAN);
-      MatrixOS::LED::SetColor(origin + Point(0, 0), bassColor.ToLowBrightness(chorder->config->bassRange == 0));
-      MatrixOS::LED::SetColor(origin + Point(1, 0), bassColor.ToLowBrightness(chorder->config->bassRange <= 1));
+      MatrixOS::LED::SetColor(origin + Point(0, 0), bassColor.DimIfNot(chorder->config->bassRange == 0));
+      MatrixOS::LED::SetColor(origin + Point(1, 0), bassColor.DimIfNot(chorder->config->bassRange <= 1));
       MatrixOS::LED::SetColor(origin + Point(2, 0), trebleColor);
-      MatrixOS::LED::SetColor(origin + Point(3, 0), trebleColor.ToLowBrightness(chorder->config->trebleRange >= 3));
-      MatrixOS::LED::SetColor(origin + Point(4, 0), trebleColor.ToLowBrightness(chorder->config->trebleRange == 4));
+      MatrixOS::LED::SetColor(origin + Point(3, 0), trebleColor.DimIfNot(chorder->config->trebleRange >= 3));
+      MatrixOS::LED::SetColor(origin + Point(4, 0), trebleColor.DimIfNot(chorder->config->trebleRange == 4));
     }
 
     bool RangeEvent(Point xy, Point offset, KeyInfo* keyInfo)
@@ -246,8 +246,8 @@ namespace MatrixOS::MidiCenter
     {
       Color thridColor = Color(YELLOW);
       Color SeventhColor = Color(GOLD);
-      MatrixOS::LED::SetColor(origin + Point(0, 0), thridColor.ToLowBrightness(chorder->config->seventh == 0));
-      MatrixOS::LED::SetColor(origin + Point(1, 0), SeventhColor.ToLowBrightness(chorder->config->seventh == 1));
+      MatrixOS::LED::SetColor(origin + Point(0, 0), thridColor.DimIfNot(chorder->config->seventh == 0));
+      MatrixOS::LED::SetColor(origin + Point(1, 0), SeventhColor.DimIfNot(chorder->config->seventh == 1));
     }
 
     bool SeventhKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
@@ -270,9 +270,9 @@ namespace MatrixOS::MidiCenter
     void HamonyRender(Point origin)
     {
       Color harmonyColor = Color(YELLOW);
-      MatrixOS::LED::SetColor(origin + Point(0, 0), harmonyColor.ToLowBrightness(chorder->config->harmony == 50));
-      MatrixOS::LED::SetColor(origin + Point(1, 0), harmonyColor.ToLowBrightness(chorder->config->harmony == 75));
-      MatrixOS::LED::SetColor(origin + Point(2, 0), harmonyColor.ToLowBrightness(chorder->config->harmony == 100));
+      MatrixOS::LED::SetColor(origin + Point(0, 0), harmonyColor.DimIfNot(chorder->config->harmony == 50));
+      MatrixOS::LED::SetColor(origin + Point(1, 0), harmonyColor.DimIfNot(chorder->config->harmony == 75));
+      MatrixOS::LED::SetColor(origin + Point(2, 0), harmonyColor.DimIfNot(chorder->config->harmony == 100));
     }
 
     bool HamonyKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
@@ -297,9 +297,9 @@ namespace MatrixOS::MidiCenter
       Color trebleColor = Color(CYAN);
       Color autoColor = Color(LAWN);
       if(chorder->config->randomDrop || chorder->config->randomTreble)
-        MatrixOS::LED::SetColor(origin + Point(0, 0), autoColor.ToLowBrightness(chorder->config->autoVoicing));
-      MatrixOS::LED::SetColor(origin + Point(1, 0), bassColor.ToLowBrightness(chorder->config->randomDrop));
-      MatrixOS::LED::SetColor(origin + Point(2, 0), trebleColor.ToLowBrightness(chorder->config->randomTreble));
+        MatrixOS::LED::SetColor(origin + Point(0, 0), autoColor.DimIfNot(chorder->config->autoVoicing));
+      MatrixOS::LED::SetColor(origin + Point(1, 0), bassColor.DimIfNot(chorder->config->randomDrop));
+      MatrixOS::LED::SetColor(origin + Point(2, 0), trebleColor.DimIfNot(chorder->config->randomTreble));
       
     }
 

@@ -46,7 +46,7 @@ class TransBar : public UIComponent {
         if (*transConfig[shift][x].state == true){
           color = transConfig[shift][x].color.Blink_Timer(MatrixOS::MidiCenter::GetBeatTimer(), 200);
         } else {
-          color = transConfig[shift][x].color.ToLowBrightness();
+          color = transConfig[shift][x].color.DimIfNot();
         }
         Point xy = origin + Point(x, 0);
         MatrixOS::LED::SetColor(xy, color);

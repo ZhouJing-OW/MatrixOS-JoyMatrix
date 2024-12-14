@@ -14,7 +14,7 @@ void FactoryMenu::KeyPadSettings() {
 
   UIButtonWithColorFunc keypadVelocitySensitiveToggle(
       "velocity_sensitive",
-      [&]() -> Color { return Color(0xFF00FF).ToLowBrightness(Device::KeyPad::keypad_velocity_sensitive); },
+      [&]() -> Color { return Color(0xFF00FF).DimIfNot(Device::KeyPad::keypad_velocity_sensitive); },
       [&]() -> void {
         if (Device::KeyPad::keypad_custom_setting)
         {

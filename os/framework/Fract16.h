@@ -9,12 +9,6 @@ class Fract16 {
 
   Fract16(uint16_t value, uint8_t bits) {
     this->value = value << (16 - bits);
-    // TODO: Fill the empty part of the
-    // uint16_t fill = value
-    // for(uint8_t i = 0; i < (16 - bits) / bits)
-    // {
-
-    // }
   }
 
   // uint8_t to14bits(){return value >> 2;}
@@ -47,6 +41,11 @@ class Fract16 {
 
   bool operator!=(int value) { return this->value != value; }
   bool operator!=(Fract16 value) { return this->value != (uint16_t)value; }
+
+  Fract16 operator+(Fract16 value) { 
+    if((uint16_t)value + this->value > FRACT16_MAX) {return FRACT16_MAX;}
+    return this->value + (uint16_t)value;
+  }
 
   Fract16 operator-(Fract16 value) { 
     if(value >= this->value) {return 0;}

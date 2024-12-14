@@ -140,7 +140,7 @@ namespace Device
       return;
       if (keypad_custom_setting)
       {
-        if (keypad_low_threshold == 0)  // Can't be lower than 1
+        if (keypad_low_threshold == Fract16(0))  // Can't be lower than 1
         { keypad_low_threshold = 1; }
         keypad_config.velocity_sensitive = keypad_velocity_sensitive;
         keypad_config.low_threshold = keypad_low_threshold;

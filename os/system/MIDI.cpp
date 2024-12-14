@@ -20,7 +20,7 @@ namespace MatrixOS::MIDI
   }
 
   bool Send(MidiPacket midiPacket, uint16_t timeout_ms) {
-    if (midiPacket.port == MIDI_PORT_ALL_CLASS)
+    if (midiPacket.port == MIDI_PORT_EACH_CLASS)
     {
       uint16_t targetClass = MIDI_PORT_USB;
       bool send = false;

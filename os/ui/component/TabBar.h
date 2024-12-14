@@ -36,7 +36,7 @@ class TabBar : public UIComponent {
       TabConfig* con = config + x;
 
       if (x == *activeTab)  MatrixOS::LED::SetColor(xy, con->color);
-      else MatrixOS::LED::SetColor(xy, con->color.ToLowBrightness());
+      else MatrixOS::LED::SetColor(xy, con->color.DimIfNot());
     }
     return true;
   }
