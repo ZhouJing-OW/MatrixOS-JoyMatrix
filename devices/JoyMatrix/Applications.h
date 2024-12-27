@@ -3,7 +3,6 @@
 // SYSTEM_APPLICATION
 #include "applications/Shell/Shell.h"
 #include "applications/Performance/Performance.h"
-#include "applications/CustomControlMap/CustomControlMap.h"
 
 // USER APPLICATION
 #include "applications/Drambo/Drambo.h"

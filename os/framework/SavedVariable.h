@@ -64,7 +64,7 @@ class SavedVariable {
 
   bool Save() { return Set(value); }
 
-  T Get() {
+  T& Get() {
     if (!Loaded())  // If not yet loaded, it will try to update current cache with NVS data
     { Load(); }
     // Even if it didn't load, the default value will be used.

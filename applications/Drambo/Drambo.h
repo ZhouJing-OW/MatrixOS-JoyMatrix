@@ -32,8 +32,6 @@ class Drambo : public Application {
   std::list<SaveVarInfo> saveVarList = 
   {
     SaveVarInfo {(void**)&TAB,  sizeof(TabConfig),        5},
-    SaveVarInfo {(void**)&CC,   sizeof(MidiButtonConfig), 16},
-    SaveVarInfo {(void**)&PT,   sizeof(MidiButtonConfig), 16},
   };
 
   //common bar
