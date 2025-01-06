@@ -87,10 +87,14 @@ namespace MatrixOS::MidiCenter
       if (!Device::KeyPad::fnState.active() && holdFN)
       { largePad[channel] = true;  holdFN = false; }
       
-      if(ui == nullptr) Device::AnalogInput::SetUpDown(&largePad[channel], 1);
+      if(ui == nullptr && Device::AnalogInput::GetUDPtr() != &largePad[channel]) Device::AnalogInput::SetUpDown(&largePad[channel], 1);
+      if (ui != nullptr)
+      {
+        if (Device::AnalogInput::GetUDPtr() != &ui->fullScreen) Device::AnalogInput::SetUpDown(&ui->fullScreen, 1,-1);
+        if (ui->fullScreen < 0) largePad[channel] = true;
+        else largePad[channel] = false;
+      }
 
-      if (ui != nullptr && ui->fullScreen < 0 ){largePad[channel] = true;}
-      if (ui != nullptr && ui->fullScreen >= 0){largePad[channel] = false; }
       if(largePad[channel] && !Device::KeyPad::fnState.active())                                                         // full screen keyboard
       {
         multiPad->dimension = Dimension(16, 4);
@@ -185,9 +189,10 @@ namespace MatrixOS::MidiCenter
         }
         else
         {
-          if(ui != nullptr && ui->fullScreen) return ui->KeyEvent(xy, keyInfo);
+          if (ui != nullptr && ui->fullScreen) return ui->KeyEvent(xy, keyInfo);
+
           if (xy.y > 1)  return multiPad->KeyEvent(xy - Point(0, 2), keyInfo);      // half screen keyboard
-          if (ui != nullptr) return ui->KeyEvent(xy, keyInfo);                 // half screen ui
+          else if (ui != nullptr) return ui->KeyEvent(xy, keyInfo);                 // half screen ui
         }
       }
 

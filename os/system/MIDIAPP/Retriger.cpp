@@ -22,18 +22,18 @@
     if (transportState.play)
     {
       uint16_t ticknum = 96 * rateToRatio[rate];
-      uint16_t nextBeat = (quarterTick / 96 + 1) * 96;
+      uint16_t nextStep = (quarterTick / 24) * 24 + 24;
       if (ticknum < 24)
       {
         retrigInfo.quarterTick = quarterTick / 96 * 96 + quarterTick % 96 / ticknum * ticknum + ticknum;
-        if (retrigInfo.quarterTick > nextBeat) retrigInfo.quarterTick = nextBeat;
+        if (retrigInfo.quarterTick > nextStep) retrigInfo.quarterTick = nextStep;
       }
       else
       {
-        if (quarterTick + ticknum > nextBeat + 3)
-          retrigInfo.quarterTick = nextBeat;
+        if (quarterTick + ticknum > nextStep + 8)
+          retrigInfo.quarterTick = nextStep;
         else
-          retrigInfo.quarterTick = quarterTick;
+          retrigInfo.quarterTick = quarterTick / 24 * 24;
       }
       return;
     }
@@ -57,8 +57,7 @@
       MidiRouter(NODE_KEYPAD, SEND_NOTE, retrigInfo.channel, retrigInfo.note, retrigInfo.triged ? 0 : retrigInfo.velocity);
       retrigInfo.triged = !retrigInfo.triged;
       uint16_t ticknumHalf = 96 * rateToRatio[retrigInfo.rate] / 2;
-      retrigInfo.quarterTick = quarterTick / 96 * 96 + (quarterTick % 96 / ticknumHalf) * ticknumHalf + ticknumHalf;
-      if (retrigInfo.quarterTick > (quarterTick / 96 + 1) * 96) retrigInfo.quarterTick = (quarterTick / 96 + 1) * 96;
+      retrigInfo.quarterTick = quarterTick + ticknumHalf - (quarterTick - retrigInfo.quarterTick);
       return true;
     }
 

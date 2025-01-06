@@ -19,7 +19,7 @@ namespace MatrixOS::MidiCenter
       KnobInit();
     }
 
-    ~ArpeggiatorUI() { Device::AnalogInput::DisableUpDown(); }
+    ~ArpeggiatorUI() { }
 
     virtual bool SetKnobPtr() { 
       knobPtr = {&type, &rate, &octaveRange, &noteRepeat, &patternLength, &chance, &gate, &velDecay};
@@ -57,7 +57,6 @@ namespace MatrixOS::MidiCenter
     virtual bool Render(Point origin)
     {
       CheckNodeChange(arpeggiator, NODE_ARP);
-      Device::AnalogInput::SetUpDown(&fullScreen, 0, -1);
 
       Color switchColor = Color(WHITE);
       MatrixOS::LED::SetColor(origin + Point(15, 0), switchColor.DimIfNot(arpeggiator != nullptr));

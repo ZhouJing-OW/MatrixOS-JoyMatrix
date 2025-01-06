@@ -150,8 +150,6 @@ namespace MatrixOS::MidiCenter
 
     ~FeedBackUI() 
     {
-      Device::AnalogInput::DisableUpDown();
-
       for (auto it = actived.begin(); it != actived.end(); it++)
       {
         MatrixOS::MidiCenter::Send_Off(ID_Type(*it), ID_Channel(*it), ID_Byte1(*it));
@@ -165,7 +163,6 @@ namespace MatrixOS::MidiCenter
     virtual bool Render(Point origin)
     {
       position = origin;
-      Device::AnalogInput::SetUpDown(&fullScreen, 1, -1);
 
       if(Device::KeyPad::Shift() && fullScreen == 0) {
         fullScreen = 1;

@@ -119,7 +119,6 @@ namespace MatrixOS::MidiCenter
     uint8_t     settingLabel  = 0;
     uint8_t     compLabel     = 0; 
     PadType     lastPadType   = PIANO_PAD;
-    bool        largeSeq      = false;
     bool        monoMode      = false;
 
     KnobConfig velocityKnob   = {.lock = true, .data{.varPtr = &editing.velocity}, .min = 1, .max = 127, .def = 127, .color = Color(LAWN)  };
@@ -140,7 +139,7 @@ namespace MatrixOS::MidiCenter
       monoMode = false;
   }
 
-    ~SequencerUI() { seqData->Capture_EndEditing(); Device::AnalogInput::DisableUpDown();}
+    ~SequencerUI() { seqData->Capture_EndEditing();}
 
     virtual void SetNull() {}
     virtual bool SetKnobPtr() { knobPtr.clear(); return false; }
@@ -176,7 +175,7 @@ namespace MatrixOS::MidiCenter
       switch(mode)
       {
         case NORMAL:   
-          if(!largeSeq)
+          if(!fullScreen)
           { 
             BarRender(origin, barPos);
             ButtonRender(origin, reduceBarBtnPos,  ReduceBarColor() );
@@ -222,7 +221,7 @@ namespace MatrixOS::MidiCenter
         case NORMAL:
           if(InArea(xy, seqPos, seqArea))
             return SeqKeyEvent(xy, seqPos, keyInfo);
-          if(!largeSeq)
+          if(fullScreen < 1)
           {
             if(InArea(xy, barPos, barArea))
               return BarKeyEvent(xy, barPos, keyInfo);
@@ -296,15 +295,10 @@ namespace MatrixOS::MidiCenter
       
       if(mode == NORMAL)                                                                   // Check direct pad
       {
-        Device::AnalogInput::SetUpDown(&fullScreen, 1, -1);
-        if(!largeSeq && fullScreen == 1)                                                                        
-        {
+        if(fullScreen > 0 && seqArea.y != 4)                                                                        
           LargeSeq();
-        }
-        else if (fullScreen != 1)
-        {
+        if(fullScreen < 1 && seqArea.y != 1)
           SmallSeq();
-        }
       }
 
       if (seqData->Comp_InEditing())                                                      // Check component editing
@@ -363,19 +357,16 @@ namespace MatrixOS::MidiCenter
 
     void LargeSeq()
     {
-      largeSeq = true;
-      uint8_t barMax = clip->barMax;
-      if(barMax > 2) fullScreen = true;
-      dimension = Dimension(16, barMax > 2 ? 4 : 2);
+      fullScreen = 1;
+      dimension = Dimension(16, 4);
       seqPos = Point(0, 0);
-      seqArea.y = barMax > 2 ? 4 : 2;
+      seqArea.y = 4;
       ResetUI();
     }
 
     void SmallSeq()
     {
-      largeSeq = false;
-      fullScreen = false;
+      fullScreen = 0;
       dimension = Dimension(16, 2);
       seqPos = Point(0, 1);
       seqArea.y = 1;
