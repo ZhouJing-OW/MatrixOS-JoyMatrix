@@ -27,6 +27,8 @@ enum NodeID : uint8_t {
   BYPASS_SEQ3       = 0x91, // Just for sequencer input and output mark
   NODE_MIDIFX       = 0xA0,
 
+  NODE_FEEDBACK     = 0xB0,
+  
   NODE_MIDIOUT      = 0xFF,
 };
 
@@ -92,3 +94,4 @@ namespace MatrixOS::MidiCenter
 
 #include "Arpeggiator.h"
 #include "Chorder.h"
+#include "Retriger.h"

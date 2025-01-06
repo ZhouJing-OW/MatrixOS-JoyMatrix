@@ -107,6 +107,7 @@ namespace Device::Encoder
     uint32_t io_num;
     for (;;)
     {
+      vTaskDelay(3 / portTICK_PERIOD_MS);  // debunce
       if (xQueueReceive(encoder_evt_queue, &io_num, portMAX_DELAY) == pdPASS)
       {
         encoderBuff.push(Device::I2C::PCF8574_Read());

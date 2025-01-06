@@ -10,9 +10,9 @@ void Drambo::Setup() {
   MatrixOS::FATFS::VarManager(info.name, CONFIG_SUFFIX, saveVarList);
   MatrixOS::KnobCenter::RequestService(info.name);
   MatrixOS::MidiCenter::RequestService(info.name, CH);
-  
+
   transBar.Setup(MatrixOS::MidiCenter::TransState());
-  tabBar.Setup(TAB, 5, activeTab, toggle);
+  tabBar.Setup(TAB, 1, activeTab, toggle);
 
   volumeMixer.Setup(Dimension(16, 4), 16, true, true);
   mixer.Setup(Dimension(16, 4), 64, true); 
@@ -90,8 +90,16 @@ void Drambo::TabS(){
 void Drambo::Tab0(){ // Main
   UI tab0("");
   MatrixOS::KnobCenter::ChannelMode();
-  MatrixOS::MidiCenter::AddMidiAppTo(tab0);
-
+  switch(TAB[0].subTab)
+  {
+    case 0:
+      MatrixOS::MidiCenter::AddMidiAppTo(tab0);
+      break;
+    case 1:
+      MatrixOS::MidiCenter::AddClipSelectorTo(tab0);
+      break;
+  }
+  MatrixOS::MidiCenter::AddFeedBack4x1To(tab0, Point(4, 4));
   // int8_t num;
   CommonUI(tab0);
   // tab0.SetScrollBar(&num, 4, COLOR_SEQ_4PAGE);
@@ -159,22 +167,24 @@ void Drambo::Pop(){
   Device::KeyPad::ClearPad();
   uint8_t chn = MatrixOS::UserVar::global_channel;
 
-  UIPlusMinus ProgramBank(&CH->bankLSB[chn], 127, 1, Color(TURQUOISE), false, false,
-    [&]() -> void { MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, chn, 0, CH->bankLSB[chn])); });
-  UIPlusMinus ProgramNum(&CH->PC[chn], 127, 0, Color(CYAN), false, false,
-    [&]()-> void { MatrixOS::MIDI::Send(MidiPacket(0, ProgramChange, chn, CH->PC[chn], 0));});
+  // UIPlusMinus ProgramBank(&CH->bankLSB[chn], 127, 1, Color(TURQUOISE), false, false,
+  //   [&]() -> void { MatrixOS::MIDI::Send(MidiPacket(0, ControlChange, chn, 0, CH->bankLSB[chn])); });
+  // UIPlusMinus ProgramNum(&CH->PC[chn], 127, 0, Color(CYAN), false, false,
+  //   [&]()-> void { MatrixOS::MIDI::Send(MidiPacket(0, ProgramChange, chn, CH->PC[chn], 0));});
   ChannelButton channel(Dimension(16, 1), CH, MatrixOS::MidiCenter::TransState(), true, [&]() -> void { 
     chn = MatrixOS::UserVar::global_channel;
-    ProgramBank.val = &CH->bankLSB[chn];
-    ProgramNum.val = &CH->PC[chn];});
-  MidiButton ccBtn(Dimension(8, 1), CC, 16);
+    // ProgramBank.val = &CH->bankLSB[chn];
+    // ProgramNum.val = &CH->PC[chn];
+    });
+  // MidiButton ccBtn(Dimension(8, 1), CC, 16);
 
   pop.AddUIComponent(channel, Point(0, 0));
-  pop.AddUIComponent(ProgramBank, Point(0, 1));
-  pop.AddUIComponent(ProgramNum, Point(14, 1));
-  pop.AddUIComponent(ccBtn, Point(4, 1));
+  // pop.AddUIComponent(ProgramBank, Point(0, 1));
+  // pop.AddUIComponent(ProgramNum, Point(14, 1));
+  // pop.AddUIComponent(ccBtn, Point(4, 1));
 
   MatrixOS::KnobCenter::AddKnobBarTo(pop);
+  MatrixOS::MidiCenter::AddFeedBack16x2To(pop, Point(0, 2));
   pop.SetLoopFunc([&]() -> void { if(Device::KeyPad::AltExit()) { Device::KeyPad::ClearPad(); pop.Exit();} });
   pop.Start();
 }
@@ -216,7 +226,7 @@ void Drambo::CommonEnd(UI &ui)
 bool Drambo::ConfigInit()
 {
   TAB = new TabConfig[5];
-  TAB[0] = TabConfig{"MAIN", Color(GREEN), 0, 3};
+  TAB[0] = TabConfig{"MAIN", Color(GREEN), 0, 2};
   TAB[1] = TabConfig{"NOTE", Color(PURPLE), 0, 2};
   TAB[2] = TabConfig{"SEQ", Color(TURQUOISE), 0, 1};
   TAB[3] = TabConfig{"CLIP", Color(VIOLET), 0, 1};

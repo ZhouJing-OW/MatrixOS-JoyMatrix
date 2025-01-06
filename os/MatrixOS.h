@@ -154,6 +154,8 @@ namespace MatrixOS
     ChannelConfig* GetChannelConfig();
     std::vector<KnobConfig*> GetSysKnobs();
     void AddMidiAppTo(UI &ui, Point point = Point(0,0));
+    void AddFeedBack4x1To(UI& ui, Point point);
+    void AddFeedBack16x2To(UI& ui, Point point);
     void AddClipSelectorTo(UI& ui, Point point = Point(0, 0));
   }
 

@@ -17,6 +17,8 @@ enum PadCheck : uint8_t {
 
 namespace MatrixOS::MidiCenter
 {
+  extern TaskHandle_t midiCenterTaskHandle;
+
   extern int16_t    bpmPrv,      swingPrv,    defVelPrv,   drightnessPrv;
   extern KnobConfig bpm,         swing,       defVel   ,   brightness;
 
@@ -36,6 +38,8 @@ namespace MatrixOS::MidiCenter
   extern std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep; // SEQ_Pos, SEQ_Step*
   extern std::set<uint16_t>                           CNTR_Chord;       // midiID
   extern std::map<uint16_t, uint32_t>                 CNTR_Arp;         // midiID, offTime
+  extern std::unordered_map<uint16_t, uint8_t*>       CNTR_FeedBack;    // midiID, value*
+  extern RetrigInfo retrigInfo;
 
   extern PadCheck padCheck[127]; // in globle channel;
 
@@ -43,6 +47,9 @@ namespace MatrixOS::MidiCenter
   extern std::map<NodeID, Node*>    nodesInChannel[16]; // 16 channel router node set
   extern std::map<NodeID, uint8_t>  nodesConfigNum[16];
   extern NodeID seqInOut[16];
+
+  extern pair<uint16_t, uint8_t> FBButtons[128];
+  extern pair<uint16_t, uint8_t> FBButtons2[8];
 
   extern uint8_t inputCount;
   extern bool timeReceived;
@@ -65,6 +72,8 @@ namespace MatrixOS::MidiCenter
   bool Scan_Arp();
   void PadColorCheck();
   PadCheck GetPadCheck(int8_t byte1);
+  uint8_t GetRetrigCheck(uint8_t rate, uint8_t retrig);
+  
 
   void NodeScan(uint8_t channel);
 
@@ -83,6 +92,10 @@ namespace MatrixOS::MidiCenter
   bool RequestService(string name, ChannelConfig*& CH_Config);
   void EndService();
   void SetMidiAppNode(NodeID nodeID);
+
+  void RegistFeedBack();
+  void UnRegistFeedBack();
+  void ResetFeedBack();
 
   uint16_t MidiID(uint8_t type, uint8_t channel, uint8_t byte1);
   uint8_t ID_Type(uint16_t midiID);

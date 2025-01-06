@@ -2,18 +2,20 @@
 
 bool MultiPad::DrumRender(Point origin)
 {
-  uint8_t width = 8 ; // 16 / dimension.y + (16 % dimension.y > 0)
+  uint8_t width = 16 / dimension.y + (16 % dimension.y > 0);
   uint16_t pos = channelConfig->activePadConfig[channel][DRUM_PAD] * 16;
   MidiButtonConfig* con = drumConfig + pos;
 
   for (uint8_t x = 0; x < dimension.x; x++)
   {
-    for (uint8_t y = dimension.y - 2; y < dimension.y; y++)
+    for (uint8_t y = 0; y < dimension.y; y++)
     {
       Point xy = origin + Point(x, y);
+      uint8_t i;
+
       if (x < width)
       {
-        uint8_t i = x + (dimension.y - 1 - y) * width;
+        i = x + y * width;
         if (i < 16)
         {
           Color thisColor = GetPadColor((con + i)->byte1);
@@ -25,7 +27,7 @@ bool MultiPad::DrumRender(Point origin)
       }
       else if (x >= dimension.x - width && !settingMode)
       {
-        uint8_t i = x - (dimension.x - width) + (dimension.y - 1 - y) * width;
+        i = x - (dimension.x - width) + y * width;
         if (i < 16){
           Color thisColor = GetPadColor((con + i)->byte1);
           thisColor = thisColor != Color(BLANK) ? thisColor : (con + i)->color;
@@ -37,19 +39,23 @@ bool MultiPad::DrumRender(Point origin)
         else
           MatrixOS::LED::SetColor(xy, Color(BLANK));
       }
+      else if(x >= width && x < dimension.x - width && !settingMode)
+      {
+        uint8_t rate = xy.x - width + 1;
+        uint8_t velocity = 128 / dimension.y * (dimension.y - y) - 1;
+        uint8_t trig = MatrixOS::MidiCenter::GetRetrigCheck(rate, velocity);
+        switch (trig)
+        {
+          case 0: MatrixOS::LED::SetColor(xy, Color(RED).Dim(velocity)); break;
+          case 1: MatrixOS::LED::SetColor(xy, Color(RED_HL).Dim(velocity)); break;
+          case 2: MatrixOS::LED::SetColor(xy, Color(WHITE).Dim(velocity)); break;
+        }
+      }
       else if (!(settingMode && x >= dimension.x - 5))
         MatrixOS::LED::SetColor(xy, Color(BLANK));
     }
   }
 
-  if (dimension.y == 2) return true;
-
-  for (uint8_t x = 1; x < 16; x++) {
-    for (uint8_t y = 0; y < 2; y++) {
-      MatrixOS::LED::SetColor(origin + Point(x, y), Color(BLANK));
-    }
-  }
- 
   return true;
 }
 
@@ -71,15 +77,13 @@ bool MultiPad::DrumKeyEvent(Point xy, KeyInfo* keyInfo)
 {
   if (keyInfo->state == PRESSED)
   {
-    if(dimension.y == 4 && xy.y < 2) return false;
-    
-    uint8_t width = 8; // 16 / dimension.y + (16 % dimension.y > 0);
+    uint8_t width = 16 / dimension.y + (16 % dimension.y > 0);
     uint16_t pos = channelConfig->activePadConfig[channel][DRUM_PAD] * 16;
     MidiButtonConfig* con = drumConfig + pos;
-    uint8_t i;
+    uint8_t i = 0;
     if (xy.x < width)
     {
-      i = xy.x + (dimension.y - 1 - xy.y) * width;
+      i = xy.x + xy.y * width;
       if((Device::KeyPad::fnState.active())) 
       {
         channelConfig->activeNote[channel] = (con + i)->byte1;
@@ -88,9 +92,15 @@ bool MultiPad::DrumKeyEvent(Point xy, KeyInfo* keyInfo)
       } 
     }
     else if (xy.x >= dimension.x - width && !settingMode)
-      i = xy.x - (dimension.x - width) + (dimension.y - 1 - xy.y) * width;
-    else
-      return false;
+      i = xy.x - (dimension.x - width) + xy.y * width;
+    else if (xy.x >= width && xy.x < dimension.x - width && !settingMode)
+    {
+      uint8_t rate = xy.x - width + 1;
+      uint8_t velocity = 128 / dimension.y * (dimension.y - xy.y) - 1;
+      MatrixOS::MidiCenter::Retrig(xy, rate, channel, channelConfig->activeNote[channel] , velocity);
+      return true;
+    }
+
     channelConfig->activeNote[channel] = (con + i)->byte1;
     MatrixOS::MidiCenter::Hold(xy + position, (con + i)->type, channel, (con + i)->byte1, (con + i)->byte2);
     // noteNameView++;

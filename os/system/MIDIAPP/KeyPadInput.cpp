@@ -5,6 +5,7 @@ namespace MatrixOS::MidiCenter
   std::map<uint16_t, uint16_t> CNTR_PadHold; // keyID , midiID
   std::set<uint16_t> CNTR_PadToggle; // midiID
   std::set<uint16_t> CNTR_PadMidiID; // midiID, midiIDCount
+  
   PadCheck padCheck[127];
   uint8_t inputCount = 0;
 
@@ -90,6 +91,12 @@ namespace MatrixOS::MidiCenter
   }
 
   PadCheck GetPadCheck(int8_t byte1) { return padCheck[byte1]; }
+  uint8_t GetRetrigCheck(uint8_t rate, uint8_t velocity)
+  {
+    if (rate != retrigInfo.rate || !retrigInfo.triged) return 0;
+    if (velocity != retrigInfo.velocity) return 1;
+    else return 2;
+  }
 
   bool moveToToggle;
   void MoveHoldToToggle() // when shift is pressed, move hold note to toggle

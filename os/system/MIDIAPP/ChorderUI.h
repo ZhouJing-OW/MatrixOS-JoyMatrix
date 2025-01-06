@@ -17,6 +17,8 @@ namespace MatrixOS::MidiCenter
       // KnobInit();
     }
 
+    ~ChorderUI() { Device::AnalogInput::DisableUpDown(); }
+
     virtual bool SetKnobPtr() { knobPtr.clear(); return false; }
 
     virtual Color GetColor() { return Color(GOLD); }
@@ -48,6 +50,7 @@ namespace MatrixOS::MidiCenter
     virtual bool Render(Point origin)
     {
       CheckNodeChange(chorder, NODE_CHORD);
+      Device::AnalogInput::SetUpDown(&fullScreen, 0, -1);
 
       Color switchColor = Color(WHITE);
       MatrixOS::LED::SetColor(origin + Point(15, 0), switchColor.DimIfNot(chorder != nullptr));

@@ -16,6 +16,7 @@ namespace MatrixOS::MidiCenter
     {NODE_SEQ,    {"SEQ",     Color(LAWN),     nullptr     }},
     {NODE_CHORD,  {"CHORD",   Color(YELLOW),   chordConfig }},
     {NODE_ARP,    {"ARP",     Color(ORANGE),   arpConfig   }},
+    {NODE_FEEDBACK, {"FEEDBACK",Color(BLUE),  nullptr     }},
   };
 
   void MidiRouter(NodeID from, uint8_t type, uint8_t channel, uint8_t byte1, uint8_t byte2)

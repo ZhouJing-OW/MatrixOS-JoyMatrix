@@ -11,7 +11,7 @@ namespace MatrixOS::MidiCenter
   class NodeUI : public UIComponent {
     public:
     Dimension dimension = Dimension(16, 2);
-    bool fullScreen = false;
+    int8_t fullScreen = 0;
     uint8_t channel;
     uint8_t channelPrv;
     

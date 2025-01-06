@@ -296,16 +296,14 @@ namespace MatrixOS::MidiCenter
       
       if(mode == NORMAL)                                                                   // Check direct pad
       {
-        if(!largeSeq)                                                                        
+        Device::AnalogInput::SetUpDown(&fullScreen, 1, -1);
+        if(!largeSeq && fullScreen == 1)                                                                        
         {
-          uint8_t barMax = clip->barMax;
-          Device::AnalogInput::SetUpDown(&barNum, barMax - 1, barMax > 1 ? -1 : 0);
-          if (barNum == -1) LargeSeq();
+          LargeSeq();
         }
-        else
+        else if (fullScreen != 1)
         {
-          Device::AnalogInput::SetUpDown(&barNum, 1);
-          if (barNum > 0 || clip->barMax < 2) SmallSeq();
+          SmallSeq();
         }
       }
 

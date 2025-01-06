@@ -16,6 +16,8 @@ namespace MatrixOS::MidiCenter
   KnobConfig  brightness          = {.lock = true, .data = {.varPtr = &brightnessPrv}, .min = 2,   .max = 12,    .def = 4, .color = Color(WHITE)};
 
   std::vector<KnobConfig*> sysKnobs = {&bpm, &swing, &defVel, &brightness};
+
+  std::unordered_map<uint16_t, uint8_t*>       CNTR_FeedBack;
   
   bool timeReceived = false;
   Timer tickTimer;
@@ -43,6 +45,29 @@ namespace MatrixOS::MidiCenter
     {
       while (MatrixOS::MIDI::Get(&midiPacket)) { 
         switch (midiPacket.status) {
+          case NoteOn:
+          case NoteOff:
+          {
+            uint16_t midiID = MidiID(SEND_NOTE, midiPacket.data[0] & 0x0F, midiPacket.data[1]);
+            auto it = CNTR_FeedBack.find(midiID);
+            if (it != CNTR_FeedBack.end()) 
+            {
+              *it->second = midiPacket.data[2];
+            }
+            //MLOGD("Midi in", "Note: %d, %d, %d", midiPacket.data[0] & 0x0F, midiPacket.data[1], midiPacket.data[2]);
+            break;
+          }
+          case ControlChange:
+          {
+            uint16_t midiID = MidiID(SEND_CC, midiPacket.data[0] & 0x0F, midiPacket.data[1]);
+            auto it = CNTR_FeedBack.find(midiID);
+            if (it != CNTR_FeedBack.end()) 
+            {
+              *it->second = midiPacket.data[2];
+            }
+            //MLOGD("Midi in", "CC: %d, %d, %d", midiPacket.data[0] & 0x0F, midiPacket.data[1], midiPacket.data[2]);
+            break;
+          }
           case Start:
           {
             if (!clockIn) break;
@@ -97,6 +122,7 @@ namespace MatrixOS::MidiCenter
 
       Scan_Toggle();
       Scan_Hold();
+      Scan_Retrig();
       Scan_Seq();
       Scan_Chord();
       Scan_Arp();
@@ -411,10 +437,76 @@ namespace MatrixOS::MidiCenter
 
   std::vector<KnobConfig*> GetSysKnobs() {return sysKnobs;}
 
+  pair<uint16_t, uint8_t> FBButtons[128] = {
+    {0x3000, 0}, {0x3001, 0}, {0x3002, 0}, {0x3003, 0}, {0x3004, 0}, {0x3005, 0}, {0x3006, 0}, {0x3007, 0},
+    {0x3008, 0}, {0x3009, 0}, {0x300A, 0}, {0x300B, 0}, {0x300C, 0}, {0x300D, 0}, {0x300E, 0}, {0x300F, 0},
+    {0x3010, 0}, {0x3011, 0}, {0x3012, 0}, {0x3013, 0}, {0x3014, 0}, {0x3015, 0}, {0x3016, 0}, {0x3017, 0},
+    {0x3018, 0}, {0x3019, 0}, {0x301A, 0}, {0x301B, 0}, {0x301C, 0}, {0x301D, 0}, {0x301E, 0}, {0x301F, 0},
+
+    {0x3020, 0}, {0x3021, 0}, {0x3022, 0}, {0x3023, 0}, {0x3024, 0}, {0x3025, 0}, {0x3026, 0}, {0x3027, 0},
+    {0x3028, 0}, {0x3029, 0}, {0x302A, 0}, {0x302B, 0}, {0x302C, 0}, {0x302D, 0}, {0x302E, 0}, {0x302F, 0},
+    {0x3030, 0}, {0x3031, 0}, {0x3032, 0}, {0x3033, 0}, {0x3034, 0}, {0x3035, 0}, {0x3036, 0}, {0x3037, 0},
+    {0x3038, 0}, {0x3039, 0}, {0x303A, 0}, {0x303B, 0}, {0x303C, 0}, {0x303D, 0}, {0x303E, 0}, {0x303F, 0},
+
+    {0x3040, 0}, {0x3041, 0}, {0x3042, 0}, {0x3043, 0}, {0x3044, 0}, {0x3045, 0}, {0x3046, 0}, {0x3047, 0},
+    {0x3048, 0}, {0x3049, 0}, {0x304A, 0}, {0x304B, 0}, {0x304C, 0}, {0x304D, 0}, {0x304E, 0}, {0x304F, 0},
+    {0x3050, 0}, {0x3051, 0}, {0x3052, 0}, {0x3053, 0}, {0x3054, 0}, {0x3055, 0}, {0x3056, 0}, {0x3057, 0},
+    {0x3058, 0}, {0x3059, 0}, {0x305A, 0}, {0x305B, 0}, {0x305C, 0}, {0x305D, 0}, {0x305E, 0}, {0x305F, 0},
+
+    {0x3060, 0}, {0x3061, 0}, {0x3062, 0}, {0x3063, 0}, {0x3064, 0}, {0x3065, 0}, {0x3066, 0}, {0x3067, 0},
+    {0x3068, 0}, {0x3069, 0}, {0x306A, 0}, {0x306B, 0}, {0x306C, 0}, {0x306D, 0}, {0x306E, 0}, {0x306F, 0},
+    {0x3070, 0}, {0x3071, 0}, {0x3072, 0}, {0x3073, 0}, {0x3074, 0}, {0x3075, 0}, {0x3076, 0}, {0x3077, 0},
+    {0x3078, 0}, {0x3079, 0}, {0x307A, 0}, {0x307B, 0}, {0x307C, 0}, {0x307D, 0}, {0x307E, 0}, {0x307F, 0},
+  };  // midiID, color
+
+  pair<uint16_t, uint8_t> FBButtons2[8] = 
+  {
+    {0x3F00 ,0}, {0x3F01 ,0}, {0x3F02 ,0}, {0x3F03 ,0}, {0x3F04 ,0}, {0x3F05 ,0}, {0x3F06 ,0}, {0x3F07 ,0}
+  };
+
+  void RegistFeedBack()
+  {
+    for (int i = 0; i < 128; i++)
+    {
+      CNTR_FeedBack[FBButtons[i].first] = &FBButtons[i].second;
+    }
+    for (int i = 0; i < 8; i++)
+    {
+      CNTR_FeedBack[FBButtons2[i].first] = &FBButtons2[i].second;
+    }
+    // MLOGD("RegistFeedBack", "%d", CNTR_FeedBack.size());
+  }
+
+  void UnRegistFeedBack()
+  {
+    for (int i = 0; i < 128; i++)
+    {
+      CNTR_FeedBack.erase(FBButtons[i].first);
+    }
+    for (int i = 0; i < 8; i++)
+    {
+      CNTR_FeedBack.erase(FBButtons2[i].first);
+    }
+  }
+
+  void ResetFeedBack()
+  {
+    for (int i = 0; i < 128; i++)
+    {
+      FBButtons[i].second = 0;
+    }
+    for (int i = 0; i < 8; i++)
+    {
+      FBButtons2[i].second = 0;
+    }
+  }
+
   uint16_t MidiID(uint8_t type, uint8_t channel, uint8_t byte1) { return (type << 12) | (channel << 8) | byte1; }
   uint8_t ID_Type(uint16_t midiID) { return midiID >> 12; }
   uint8_t ID_Channel(uint16_t midiID) { return (midiID >> 8) & 0xF; }
   uint8_t ID_Byte1(uint16_t midiID) { return midiID & 0xFF; }
+
+  
   
 
 }
