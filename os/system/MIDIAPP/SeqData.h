@@ -15,7 +15,7 @@ namespace MatrixOS::MidiCenter
 
   #define PATTERN_MAX   32
   #define CLIP_MAX      8
-  #define BAR_MAX       4
+  #define BAR_MAX       16
   #define STEP_MAX      16
   #define STEP_DIVISION 12
   #define NOTE_MAX      8
@@ -545,7 +545,12 @@ namespace MatrixOS::MidiCenter
     uint8_t quantize        = 100;        // 0% - 100%
     uint8_t barMax          = 1;          // 1 - 4
     uint8_t barStepMax      = STEP_MAX;   // 8 - 16
-   
+    int8_t loopStart = -1;  // -1 表示未设置 loop
+    int8_t loopEnd = -1;
+    
+    bool HasLoop() const { return loopStart >= 0 && loopEnd >= 0; }
+    void ClearLoop() { loopStart = -1; loopEnd = -1; }
+
   private:
     std::bitset<BAR_MAX * STEP_MAX>  stepMark;
     std::bitset<BAR_MAX * AUTOM_MAX> automMark;
@@ -1178,6 +1183,24 @@ namespace MatrixOS::MidiCenter
     uint8_t         Pick_PickCount() { return pick.GetPick()->NoteCount(); }
 
     void            Pick_EndEditing() { pick.EndEditing(); }
+
+    void CopyNote(SEQ_Pos src, SEQ_Pos dst, uint8_t note)
+    {
+        SEQ_Step* srcStep = Step(src);
+        if (!srcStep || !srcStep->FindNote(note)) return;
+
+        SEQ_Step* dstStep = Step(dst, true);
+        if (!dstStep) return;
+
+        // 使用公有方法复制音符
+        std::vector<const SEQ_Note*> notes = srcStep->GetNotes();
+        for (const SEQ_Note* srcNote : notes) {
+            if (srcNote->note == note) {
+                dstStep->AddNote(*srcNote);
+                break;
+            }
+        }
+    }
 
   private:
     inline int16_t  StepID (SEQ_Pos position) { return Clip(position.ChannelNum(), position.ClipNum())->StepID (position.BarNum(), position.Number()); }

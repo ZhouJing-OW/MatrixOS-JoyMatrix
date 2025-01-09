@@ -36,6 +36,7 @@ namespace MatrixOS::MidiCenter
     void Record(uint8_t channel, uint8_t byte1, uint8_t byte2);
     bool AutoGrouth();
     void End();
+    void Update();
 
    private:
     void MoveHead(int16_t& head);
