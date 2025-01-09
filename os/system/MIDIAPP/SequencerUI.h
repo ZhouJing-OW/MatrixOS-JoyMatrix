@@ -723,22 +723,13 @@ namespace MatrixOS::MidiCenter
             
             if (keyInfo->state == RELEASED && !keyInfo->hold) {
                 if (thisBar < clip->barMax) {
-                    // 在 loop 范围内只清空，不删除
-                    if (clip->HasLoop() && thisBar >= clip->loopStart && thisBar <= clip->loopEnd) {
-                        seqData->ClearBar(SEQ_Pos(channel, clipNum, thisBar, 0));
-                    }
-                    // 非 loop 范围的处理
-                    else if (clip->barMax == 1) {
-                        seqData->ClearBar(SEQ_Pos(channel, clipNum, thisBar, 0));
-                    }
-                    else if (thisBar < clip->barMax - 1) {
-                        seqData->ClearBar(SEQ_Pos(channel, clipNum, thisBar, 0));
-                    }
-                    else {
-                        clip->barMax--;
-                        if (barNum >= clip->barMax) {
-                            barNum = clip->barMax - 1;
-                        }
+                    seqData->ClearBar(SEQ_Pos(channel, clipNum, thisBar, 0));
+                    if (thisBar >= clip->barMax - 1 && clip->barMax > 1) 
+                    {
+                      clip->barMax--;
+                      if (barNum >= clip->barMax) {
+                          barNum = clip->barMax - 1;
+                      }
                     }
                     editBlock.deleteBarTarget = Point(-1, -1);
                 }
