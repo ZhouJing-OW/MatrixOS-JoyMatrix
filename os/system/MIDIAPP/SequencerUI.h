@@ -36,10 +36,11 @@ namespace MatrixOS::MidiCenter
     // const char      tripletName[8]        = "Triplet";
     //       BtnFunc   TripletBtn            = [&]()->void { ChangeUIMode(TRIPLET);};
 
-    const Color     settingBtnColor       = Color(VIOLET);
+    const Color     settingBtnColor       = Color(VIOLET).DimIfNot(mode == SETTING);
     const char      settingBtnName[8]     = "Setting";
           BtnFunc   settingBtn            = [&]()->void { ChangeUIMode(SETTING);};
 
+    const Point     settingBtnPos         = Point(15, 3);           // Setting 按钮移到第四行
 
     //-----------------------------------EDITING------------------------------------//
     
@@ -60,11 +61,11 @@ namespace MatrixOS::MidiCenter
     const Color speedColor[10]        = {GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN,      GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL };
     const char  speedName[10][5]      = {"4x",       "3x",       "2x",       "1.5x",     "1x",       "2/3",      "1/2",      "1/4",      "1/8",      "1/16" };
 
-    const Point     settingLabelPos       = Point(6, 0);            const Dimension settingLabelArea      = Dimension(4, 1);
-    const Point     speedSetPos           = Point(3, 1);            const Dimension speedSetArea          = Dimension(10, 1);
-    const Point     gateSetPos            = Point(3, 1);            const Dimension gateSetArea           = Dimension(10, 1);
-    const Point     quantizeSetPos        = Point(2, 1);            const Dimension quantizeSetArea       = Dimension(11, 1);
-    const Point     stepSetPos            = Point(0, 1);            const Dimension stepSetArea           = Dimension(16, 1);
+    const Point     settingLabelPos       = Point(6, 3);            const Dimension settingLabelArea      = Dimension(4, 1);
+    const Point     speedSetPos           = Point(3, 2);            const Dimension speedSetArea          = Dimension(10, 1);
+    const Point     gateSetPos            = Point(3, 2);            const Dimension gateSetArea           = Dimension(10, 1);
+    const Point     quantizeSetPos        = Point(2, 2);            const Dimension quantizeSetArea       = Dimension(11, 1);
+    const Point     stepSetPos            = Point(0, 2);            const Dimension stepSetArea           = Dimension(16, 1);
 
     const Color     backBtnColor          = Color(BLUE).DimIfNot();
     const Point     backBtnPos            = Point(15, 0);
@@ -128,11 +129,11 @@ namespace MatrixOS::MidiCenter
         Point deleteStepTarget = Point(-1, -1);
     } editBlock;
 
-    const Point     copyBtnPos           = Point(0, 2);     // 复制按钮位置
+    const Point     copyBtnPos           = Point(0, 3);     // 复制按钮移到第四行
     const Color     copyBtnColor         = Color(CYAN);     // 复制按钮颜色
     const char      copyBtnName[5]       = "Copy";
 
-    const Point     deleteBtnPos         = Point(1, 2);     // 删除按钮位置
+    const Point     deleteBtnPos         = Point(1, 3);     // 删除按钮移到第四行
     const Color     deleteBtnColor       = Color(RED);      // 删除按钮颜色
     const char      deleteBtnName[7]     = "Delete";
 
@@ -179,16 +180,10 @@ namespace MatrixOS::MidiCenter
       switch(mode)
       {
         case NORMAL:   
-          if(!fullScreen)
-          { 
             BarRender(origin, barPos);
             SeqRender(origin, seqPos);
-          } 
-          else 
+          if(fullScreen)
           {
-            BarRender(origin, barPos);                    // 第0行显示bar
-            SeqRender(origin, Point(0, 1));               // 第1行显示序列器
-
             // 复制按钮显示逻辑
             Color copyColor = editBlock.copyKeyHeld ? Color(WHITE) : copyBtnColor;
             ButtonRender(origin, copyBtnPos, copyColor);
@@ -196,28 +191,36 @@ namespace MatrixOS::MidiCenter
             // 删除按钮显示逻辑
             Color deleteColor = editBlock.deleteKeyHeld ? Color(WHITE) : deleteBtnColor;
             ButtonRender(origin, deleteBtnPos, deleteColor);
+
+            ButtonRender(origin, settingBtnPos, settingBtnColor);
           }
           break;
         case TRIPLET:  
           break;
         case SETTING:
-          LabelRender (settingLabelArea, origin, settingLabelPos, settingName, setLabelColor, settingLabel, true);
-          ButtonRender(origin, backBtnPos, backBtnColor);
-          switch(settingLabel)
+          BarRender(origin, barPos);
+          SeqRender(origin, seqPos);
+          if(fullScreen) 
           {
-            case 0:
-              LabelRender(speedSetArea, origin, speedSetPos, speedName, speedColor, clip->speed);
-              break;
-            case 1:
-              ValueBarRender(gateSetArea, origin, gateSetPos, settingColor[1], Color(settingColor[1]).DimIfNot(), clip->tair, 10, 100);
-              break;
-            case 2:
-              ValueBarRender(quantizeSetArea, origin, quantizeSetPos, settingColor[2], Color(settingColor[2]).DimIfNot(), clip->quantize, 0, 100, Color(RED).Scale(8));
-              break;
-            case 3:
-              SeqRender(origin, seqPos);
-              break;
+            ButtonRender(origin, settingBtnPos, settingBtnColor);
+            LabelRender(settingLabelArea, origin, settingLabelPos, settingName, setLabelColor, settingLabel, true);
+            switch(settingLabel)
+            {
+              case 0:
+                LabelRender(speedSetArea, origin, speedSetPos, speedName, speedColor, clip->speed);
+                break;
+              case 1:
+                ValueBarRender(gateSetArea, origin, gateSetPos, settingColor[1], Color(settingColor[1]).DimIfNot(), clip->tair, 10, 100);
+                break;
+              case 2:
+                ValueBarRender(quantizeSetArea, origin, quantizeSetPos, settingColor[2], Color(settingColor[2]).DimIfNot(), clip->quantize, 0, 100, Color(RED).Scale(8));
+                break;
+              case 3:
+                StepSetRender(origin, stepSetPos);
+                break;
+            }
           }
+          break;
         case COMPONENT:
           break;
       }
@@ -239,6 +242,8 @@ namespace MatrixOS::MidiCenter
               return CopyBtnKeyEvent(xy, copyBtnPos, keyInfo);
             if(InArea(xy, deleteBtnPos, Dimension(1, 1)))
               return DeleteBtnKeyEvent(xy, deleteBtnPos, keyInfo);
+            if(InArea(xy, settingBtnPos, Dimension(1, 1)))
+              return SettingBtnKeyEvent(xy, settingBtnPos, keyInfo);
             
             if(editBlock.copyKeyHeld && editBlock.state == EDIT_NONE)
             {
@@ -273,10 +278,14 @@ namespace MatrixOS::MidiCenter
         case TRIPLET:
           return false;
         case SETTING:
+          if(InArea(xy, seqPos, seqArea))
+            return SeqKeyEvent(xy, seqPos, keyInfo);
+          if(InArea(xy, barPos, barArea))
+            return BarKeyEvent(xy, barPos, keyInfo);
+          if(InArea(xy, settingBtnPos, Dimension(1, 1)))
+            return SettingBtnKeyEvent(xy, settingBtnPos, keyInfo);
           if(InArea(xy, settingLabelPos, settingLabelArea))
             return LabelKeyEvent(settingLabelArea, xy, settingLabelPos, keyInfo, settingName, settingColor, settingLabel, 0, 3);
-          if(InArea(xy, backBtnPos, Dimension(1, 1)))
-            return ButtonKeyEvent(xy, backBtnPos, keyInfo, backBtnColor, backBtnName, backBtn);
           switch(settingLabel)
           {
             case 0:
@@ -292,8 +301,8 @@ namespace MatrixOS::MidiCenter
                 return ValueBarKeyEvent(quantizeSetArea, xy, quantizeSetPos, keyInfo, settingColor[2], clip->quantize, 0, 100);
               break;
             case 3:
-              if(InArea(xy, seqPos, seqArea))
-                return SeqKeyEvent(xy, seqPos, keyInfo);
+              if(InArea(xy, stepSetPos, stepSetArea))
+                return StepSetKeyEvent(xy, stepSetPos, keyInfo);
               break;
           }
           return false;
@@ -406,12 +415,6 @@ namespace MatrixOS::MidiCenter
             MatrixOS::LED::SetColor(xy, backColor[0]);
             continue;
           }
-          if (mode == SETTING)
-          {
-            MatrixOS::LED::SetColor(xy, backColor[stepNum % STEP_MAX < clip->barStepMax]);
-            continue;
-          }
-
           bool playHead = false;  
           if(sequencer && transportState.play) playHead = sequencer->playHead == stepNum;
           
@@ -557,27 +560,6 @@ namespace MatrixOS::MidiCenter
                 return true;
             }
             return false;
-        }
-
-        // 编辑操作
-        if (mode == SETTING)
-        {
-          if(keyInfo->state == RELEASED)
-          {
-            if (localStep % STEP_MAX >= 2) clip->barStepMax = localStep % STEP_MAX + 1;
-            else clip->barStepMax = 3;
-            if (editing.step >= 0) GateRenderMap(seqData->GetGate(editing.pos, editing.note));
-            return true;
-          }
-          if(keyInfo->state == HOLD)
-          {
-            if (xy.x >= 2)
-              MatrixOS::UIInterface::TextScroll(std::to_string(xy.x + 1) + "/Bar", Color(BLUE));
-            else
-              MatrixOS::UIInterface::TextScroll("3/Bar", Color(BLUE));
-            return true;
-          }
-          return true;
         }
 
         // 普通音符编辑
@@ -963,6 +945,82 @@ namespace MatrixOS::MidiCenter
             if (barNum < clip->loopStart || barNum > clip->loopEnd) {
                 barNum = clip->loopStart;
             }
+        }
+    }
+
+    bool SettingBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
+    {
+        switch(keyInfo->state)
+        {
+            case PRESSED:
+                if (mode == NORMAL) {
+                    ChangeUIMode(SETTING);
+                } else if (mode == SETTING) {
+                    ChangeUIMode(NORMAL);
+                }
+                return true;
+            case HOLD:
+                MatrixOS::UIInterface::TextScroll("Setting", settingBtnColor);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    void StepSetRender(Point origin, Point offset)
+    {
+      ;
+        // 显示当前每个 bar 的 step 数量
+        for(uint8_t x = 0; x < 16; x++) {
+            Point xy = origin + offset + Point(x, 0);
+            if (x < 2) {
+              Color thisColor = stepColor[0];
+              // 前两个 step 不可选，显示暗色
+              MatrixOS::LED::SetColor(xy, thisColor.Dim());
+            }
+            else if (x < clip->barStepMax) {
+                // 当前设置的 step 范围内，显示亮色
+                MatrixOS::LED::SetColor(xy, stepColor[0]);
+            }
+            else {
+                // 超出范围的 step，显示最暗色
+                MatrixOS::LED::SetColor(xy, backColor[1]);
+            }
+        }
+    }
+
+    bool StepSetKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
+    {
+        Point ui = xy - offset;
+        uint8_t step = ui.x + 1;  // 从1开始计数
+
+        switch(keyInfo->state)
+        {
+            case PRESSED:
+                if (step >= 3) {  // 最小允许3个step
+                    clip->barStepMax = step;
+                    if (editing.step >= 0) {
+                        GateRenderMap(seqData->GetGate(editing.pos, editing.note));
+                    }
+                }
+                return true;
+
+            case HOLD:
+                if (step >= 3) {
+                    MatrixOS::UIInterface::TextScroll(
+                        std::to_string(step) + "/Bar", 
+                        settingColor[3]
+                    );
+                } else {
+                    MatrixOS::UIInterface::TextScroll(
+                        "Min 3/Bar", 
+                        settingColor[3]
+                    );
+                }
+                return true;
+
+            default:
+                return false;
         }
     }
   };
