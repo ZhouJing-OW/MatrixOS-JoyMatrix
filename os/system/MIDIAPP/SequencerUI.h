@@ -139,7 +139,7 @@ namespace MatrixOS::MidiCenter
       monoMode = false;
   }
 
-    ~SequencerUI() { seqData->Capture_EndEditing();}
+    ~SequencerUI() { seqData->Pick_EndEditing();}
 
     virtual void SetNull() {}
     virtual bool SetKnobPtr() { knobPtr.clear(); return false; }
@@ -475,9 +475,9 @@ namespace MatrixOS::MidiCenter
           {
             ResetEditing();
             if(!keyInfo->hold)
-              seqData->Capture_SaveSingle(pos);
+              seqData->Pick_SaveSingle(pos);
             else
-              seqData->Capture_SaveHold(pos);
+              seqData->Pick_SaveHold(pos);
             return true;
           }
 
@@ -490,7 +490,7 @@ namespace MatrixOS::MidiCenter
               return true;
             }
             // if(!seqData->NoteEmpty(pos)) EditVelocity(xy, pos);
-            seqData->Capture_Editing(pos);
+            seqData->Pick_Editing(pos);
             SetEditing(pos, xy, stepNum);
             return true;
           }
@@ -504,11 +504,11 @@ namespace MatrixOS::MidiCenter
             if(keyInfo->shortHold)
             {
               ResetEditing();
-              seqData->Capture_SaveHold(pos);
+              seqData->Pick_SaveHold(pos);
               return true;
             }
 
-            seqData->Capture_SaveClick(pos);
+            seqData->Pick_SaveClick(pos);
             ResetEditing();
             return true;
           }
@@ -521,7 +521,7 @@ namespace MatrixOS::MidiCenter
                 SetGate(stepNum);
               return true;
             }
-            seqData->Capture_Editing(pos);
+            seqData->Pick_Editing(pos);
             SetEditing(pos, xy, stepNum);
             // MLOGD("Seq", "Editing x: %d, y: %d", editingPos.x, editingPos.y);
             return true;
@@ -632,7 +632,7 @@ namespace MatrixOS::MidiCenter
       {
         seqData->SetVelocity(editing.pos, editing.velocity, note);
         if(!seqData->NoteEmpty(editing.pos))
-          seqData->Capture_UpdateCap(editing.pos);
+          seqData->Pick_Update(editing.pos);
         editing.velocity = -1;
       }
     }
@@ -666,7 +666,7 @@ namespace MatrixOS::MidiCenter
       if(EndEditing) 
       {
         seqData->Comp_EndEditing();
-        seqData->Capture_EndEditing();
+        seqData->Pick_EndEditing();
       }
     }
   };

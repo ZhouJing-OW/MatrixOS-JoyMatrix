@@ -15,7 +15,7 @@ bool MultiPad::DrumRender(Point origin)
 
       if (x < width)
       {
-        i = x + y * width;
+        i = x + (dimension.y - y - 1) * width;
         if (i < 16)
         {
           Color thisColor = GetPadColor((con + i)->byte1);
@@ -27,7 +27,7 @@ bool MultiPad::DrumRender(Point origin)
       }
       else if (x >= dimension.x - width && !settingMode)
       {
-        i = x - (dimension.x - width) + y * width;
+        i = x - (dimension.x - width) + (dimension.y - y - 1) * width;
         if (i < 16){
           Color thisColor = GetPadColor((con + i)->byte1);
           thisColor = thisColor != Color(BLANK) ? thisColor : (con + i)->color;
@@ -83,16 +83,16 @@ bool MultiPad::DrumKeyEvent(Point xy, KeyInfo* keyInfo)
     uint8_t i = 0;
     if (xy.x < width)
     {
-      i = xy.x + xy.y * width;
       if((Device::KeyPad::fnState.active())) 
       {
         channelConfig->activeNote[channel] = (con + i)->byte1;
         MatrixOS::Component::DrumNote_Setting(drumConfig, pos + i);
         return true;
       } 
+      i = xy.x + (dimension.y - xy.y - 1) * width;
     }
     else if (xy.x >= dimension.x - width && !settingMode)
-      i = xy.x - (dimension.x - width) + xy.y * width;
+      i = xy.x - (dimension.x - width) + (dimension.y - xy.y - 1) * width;
     else if (xy.x >= width && xy.x < dimension.x - width && !settingMode)
     {
       uint8_t rate = xy.x - width + 1;
@@ -101,18 +101,18 @@ bool MultiPad::DrumKeyEvent(Point xy, KeyInfo* keyInfo)
       return true;
     }
 
-    channelConfig->activeNote[channel] = (con + i)->byte1;
-    MatrixOS::MidiCenter::Hold(xy + position, (con + i)->type, channel, (con + i)->byte1, (con + i)->byte2);
+    if(i < 16)
+    {
+      channelConfig->activeNote[channel] = (con + i)->byte1;
+      MatrixOS::MidiCenter::Hold(xy + position, (con + i)->type, channel, (con + i)->byte1, (con + i)->byte2);
+      return true;
+    }
+
     // noteNameView++;
-    return true;
+    return false;
   }
-  
-  if (keyInfo->state == RELEASED)
-  {
-    // noteNameView--;
-  }
-  
-  return false;
+
+  return true;
 }
 
 

@@ -622,50 +622,50 @@ namespace MatrixOS::MidiCenter
     }
   };
 
-  enum    CapState : uint8_t { CAP_NORMAL, CAP_EDIT, };
-  enum    CapBlock : bool    { UNBLOCK,    BLOCK,    };
+  enum    PickState : uint8_t { PICK_NORMAL, PICK_EDIT, };
+  enum    PickBlock : bool    { UNBLOCK,    BLOCK,    };
   extern  std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep;
-  class   SEQ_Capture 
+  class   SEQ_Pick 
   {
     SEQ_Step capStep = SEQ_Step();
     std::set<uint8_t> inputList;
-    CapState state = CAP_NORMAL;
+    PickState state = PICK_NORMAL;
     bool editingStepEmpty = true;
 
    public:
-    CapBlock        Capture(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    PickBlock        Pick(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if(channel != MatrixOS::UserVar::global_channel) return UNBLOCK;
 
       switch(state)
       {
-        case CAP_NORMAL:
-          return NormalCapture(channel, byte1, byte2);
-        case CAP_EDIT:
-          return EditCapture(channel, byte1, byte2);
+        case PICK_NORMAL:
+          return NormalPick(channel, byte1, byte2);
+        case PICK_EDIT:
+          return EditPick(channel, byte1, byte2);
       }
       return UNBLOCK;
     }
 
-    CapBlock        EditCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    PickBlock        EditPick(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if (byte2 > 0) 
       {
         SEQ_Step* step = CNTR_SeqEditStep.front().second;
-        if(!step) return CapBlock(transportState.play); // when play, block input
+        if(!step) return PickBlock(transportState.play); // when play, block input
         if (step->FindNote(byte1)) step->DeleteNote(byte1);
         else step->AddNote(SEQ_Note(byte1, byte2, step->noteTemplate.gate, 0));
-        return CapBlock(transportState.play);
+        return PickBlock(transportState.play);
       }
       if (inputList.find(byte1) != inputList.end())
       {
         inputList.erase(byte1);
         return UNBLOCK;
       }
-      return CapBlock(transportState.play);
+      return PickBlock(transportState.play);
     }
 
-    CapBlock        NormalCapture(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    PickBlock        NormalPick(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if (byte2 > 0) 
       {
@@ -679,17 +679,17 @@ namespace MatrixOS::MidiCenter
       return UNBLOCK;
     }
 
-    void            ChangeState(CapState changeState , bool updateCap = false)
+    void            ChangeState(PickState changeState , bool updatePick = false)
     {
       switch(changeState)
       {
-        case CAP_NORMAL:
+        case PICK_NORMAL:
           inputList.clear(); 
-          if(updateCap && !CNTR_SeqEditStep.empty())
+          if(updatePick && !CNTR_SeqEditStep.empty())
             capStep.CopyNotes(*(CNTR_SeqEditStep.begin()->second));
           CNTR_SeqEditStep.clear();
           break;
-        case CAP_EDIT: break;
+        case PICK_EDIT: break;
       }
       this->state = changeState;
     }
@@ -700,12 +700,12 @@ namespace MatrixOS::MidiCenter
       if (!inputList.empty())
         step->CopyNotes(capStep);
       CNTR_SeqEditStep.push_back({pos, step});
-      ChangeState(CAP_EDIT);
+      ChangeState(PICK_EDIT);
     }
 
     void            Clear(bool resetState = true)
     {
-      if(resetState) state = CAP_NORMAL;
+      if(resetState) state = PICK_NORMAL;
       CNTR_SeqEditStep.clear();
       capStep.ClearNote();
       inputList.clear();
@@ -714,13 +714,13 @@ namespace MatrixOS::MidiCenter
 
     void            EndEditing()
     {
-      state = CAP_NORMAL;
+      state = PICK_NORMAL;
       CNTR_SeqEditStep.clear();
     }
 
     bool            EditingStepEmpty() const { return editingStepEmpty; }
 
-    SEQ_Step*       GetCap(){return &capStep;}
+    SEQ_Step*       GetPick(){return &capStep;}
   };
 
   class   SEQ_DataStore
@@ -732,8 +732,9 @@ namespace MatrixOS::MidiCenter
     std::map<int16_t, SEQ_Autom,   std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Autom>>>   automs;   // automID, autom
     std::set<int16_t> patternChanged, stepChanged, automChanged; // stepID, automID
     std::set<SEQ_Step*> compEdit;
-    SEQ_Capture capturer;
+    SEQ_Pick pick;
     bool inited = false;
+
 
    public:
     void Init()
@@ -746,7 +747,7 @@ namespace MatrixOS::MidiCenter
       new (&stepChanged)    std::set<int16_t>();
       new (&automChanged)   std::set<int16_t>();
       new (&compEdit)       std::set<SEQ_Step*>();
-      new (&capturer) SEQ_Capture();
+      new (&pick)   SEQ_Pick();
       inited = true;
     }
 
@@ -760,10 +761,11 @@ namespace MatrixOS::MidiCenter
       stepChanged.~set();
       automChanged.~set();
       compEdit.~set();
-      capturer.~SEQ_Capture();
+      pick.~SEQ_Pick();
     }
 
     ~SEQ_DataStore() { if(inited) Destroy(); }
+
 
     //------------------------------------NOTE-------------------------------------//
 
@@ -1110,20 +1112,20 @@ namespace MatrixOS::MidiCenter
 
     void            DeletePattern(uint8_t patternNum) {}
 
-    //------------------------------------CAPTURE----------------------------------//
+    //--------------------------------------PICK------------------------------------//
 
-    CapBlock        Capture(uint8_t channel, uint8_t byte1, uint8_t byte2) { return capturer.Capture(channel, byte1, byte2); }
+    PickBlock       Pick(uint8_t channel, uint8_t byte1, uint8_t byte2) { return pick.Pick(channel, byte1, byte2); }
 
-    void            Capture_ChangeState(CapState state, bool updateCap = false) { capturer.ChangeState(state, updateCap); }
+    void            Pick_ChangeState(PickState state, bool updatePick = false) { pick.ChangeState(state, updatePick); }
 
-    void            Capture_UpdateCap(SEQ_Pos position) { if(Step(position)) capturer.GetCap()->CopyNotes(*Step(position)); }
+    void            Pick_Update(SEQ_Pos position) { if(Step(position)) pick.GetPick()->CopyNotes(*Step(position)); }
 
-    void            Capture_Editing(SEQ_Pos position) {
+    void            Pick_Editing(SEQ_Pos position) {
       SEQ_Step* step = Step(position, true);
-      if(step) capturer.Editing(position, step);
+      if(step) pick.Editing(position, step);
     }
 
-    void            Capture_SaveHold(SEQ_Pos position)
+    void            Pick_SaveHold(SEQ_Pos position)
     {
       SEQ_Step* step = Step(position);
       if(!step) return;
@@ -1131,35 +1133,35 @@ namespace MatrixOS::MidiCenter
       if(step->Empty()) 
       {
         step->ClearNote();
-        capturer.ChangeState(CAP_NORMAL, !capturer.EditingStepEmpty());
+        pick.ChangeState(PICK_NORMAL, !pick.EditingStepEmpty());
         if (step->Empty()) DeleteStep(position);
         return; 
       }
 
-      capturer.ChangeState(CAP_NORMAL, true);
+      pick.ChangeState(PICK_NORMAL, true);
     }
 
-    void            Capture_SaveClick(SEQ_Pos position)
+    void            Pick_SaveClick(SEQ_Pos position)
     {
-      if(!capturer.EditingStepEmpty())
+      if(!pick.EditingStepEmpty())
       {
         ClearNote(position);
-        capturer.ChangeState(CAP_NORMAL);
+        pick.ChangeState(PICK_NORMAL);
         return;
       }
 
-      if(capturer.GetCap()->NoteEmpty())
+      if(pick.GetPick()->NoteEmpty())
       {
         if(channelConfig != nullptr)
           AddNote(position, SEQ_Note(channelConfig->activeNote[position.ChannelNum()], MatrixOS::UserVar::defaultVelocity));
       }
       else
-        Step(position)->CopyNotes(*(capturer.GetCap()));
+        Step(position)->CopyNotes(*(pick.GetPick()));
 
-      capturer.ChangeState(CAP_NORMAL);
+      pick.ChangeState(PICK_NORMAL);
     }
 
-    void            Capture_SaveSingle(SEQ_Pos position)
+    void            Pick_SaveSingle(SEQ_Pos position)
     {
       uint8_t channel = MatrixOS::UserVar::global_channel;
       uint8_t activeNote = channelConfig->activeNote[channel];
@@ -1168,14 +1170,14 @@ namespace MatrixOS::MidiCenter
       else 
         DeleteNote(position, activeNote);
       
-      capturer.ChangeState(CAP_NORMAL);
+      pick.ChangeState(PICK_NORMAL);
     }
 
-    void            Capture_Clear() { capturer.Clear(); }
+    void            Pick_Clear() { pick.Clear(); }
 
-    uint8_t         Capture_CapCount() { return capturer.GetCap()->NoteCount(); }
+    uint8_t         Pick_PickCount() { return pick.GetPick()->NoteCount(); }
 
-    void            Capture_EndEditing() { capturer.EndEditing(); }
+    void            Pick_EndEditing() { pick.EndEditing(); }
 
   private:
     inline int16_t  StepID (SEQ_Pos position) { return Clip(position.ChannelNum(), position.ClipNum())->StepID (position.BarNum(), position.Number()); }

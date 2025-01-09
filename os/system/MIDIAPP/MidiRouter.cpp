@@ -46,7 +46,7 @@ namespace MatrixOS::MidiCenter
           seq->Record(channel, byte1, byte2);
         }
       }
-      if(seqData->Capture(channel, byte1, byte2) == BLOCK) return;
+      if(seqData->Pick(channel, byte1, byte2) == BLOCK) return;
     }
 
     if (to == NODE_MIDIOUT)

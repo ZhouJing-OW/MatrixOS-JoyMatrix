@@ -171,7 +171,7 @@ namespace Device
 // LED
 #define MAX_LED_LAYERS 8
   inline gpio_num_t led_pin;
-  inline uint16_t fps = 30;  // Depends on the FreeRTOS tick speed
+  inline uint16_t fps = 50;  // Depends on the FreeRTOS tick speed
   inline uint8_t brightness_level[8] = {8, 12, 24, 40, 63, 90, 120, 142};
 #define FINE_LED_BRIGHTNESS
   inline uint8_t fine_brightness_level[12] = {4, 8, 12, 16, 20, 28, 36, 48, 64, 80, 98, 128};

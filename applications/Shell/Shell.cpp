@@ -45,7 +45,7 @@ void Shell::AddCommonBarInUI(UI* ui) {
           }
         }
       }));
-  ui->AddUIComponent(commonBarBtns.back(), Point(0, 3));
+  ui->AddUIComponent(commonBarBtns.back(), Point(15, 3));
 
 #if MATRIXOS_LOG_LEVEL == LOG_LEVEL_DEBUG  // Logging Mode Indicator
 #define SHELL_SYSTEM_SETTING_COLOR Color(0xFFBF00)
@@ -133,7 +133,7 @@ void Shell::HiddenApplicationLauncher() {
   // Iterate though map
   for (auto const& [app_id, application] : applications)
   {
-    if (application->visibility)
+    if (!application->visibility)
     { invisable_app_count++; }
   }
 
