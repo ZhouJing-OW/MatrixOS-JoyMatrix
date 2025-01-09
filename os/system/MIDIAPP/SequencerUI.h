@@ -320,6 +320,10 @@ namespace MatrixOS::MidiCenter
         ChangeUIMode(NORMAL);
       }
 
+      if (sequencer->recording) {
+        barNum = sequencer->playHead / STEP_MAX;
+      }
+
       PadType padTypeNow = (PadType)channelConfig->padType[channel];
       if(padTypeNow != lastPadType)                                                        // Check pad type change
       {

@@ -12,19 +12,36 @@ namespace MatrixOS::MidiCenter
       if(!end) End();
       return;
     }
+    end = false;
+        // 检查是否需要退出录音状态
+    if(transportState.record && channel == MatrixOS::UserVar::global_channel && !recording)
+    {
+      recording = true;
+    }
+    if (!transportState.record || channel != MatrixOS::UserVar::global_channel) {
+        if (recording) {
+            if (!recNotes.empty()) {
+                SetRecNoteGate();
+            }
+            recording = false;
+        }
+    }
+
+
 
     clipNum = seqData->EditingClip(channel);
     quarterTickPerStep = speedToQuarterTick[seqData->Clip(channel, clipNum)->speed];
     stepInterval = quarterInterval * quarterTickPerStep;
     scale = channelConfig->padType[channel] == DRUM_PAD ? 0x0FFF : notePadConfig[channelConfig->activePadConfig[channel][channelConfig->padType[channel]]].scale;
+    
 
-    end = false;
     if (!firstStepBuff) FirstStepBuff();
     Trigger();
     
     if((quarterTick % quarterTickPerStep == (quarterTickPerStep / 2)) && !noteBuff)
     {
       // if(channel == 0) MLOGD("Sequencer", "tickCount: %d, PlayHead: %d", tickCount, playHead);
+      stepTime = stepInterval / 2 + MatrixOS::SYS::Millis();
       MoveHead(buffHead);
       GetNoteQueue();
       noteBuff = true;
@@ -37,40 +54,20 @@ namespace MatrixOS::MidiCenter
 
   void Sequencer::Record(uint8_t channel, uint8_t byte1, uint8_t byte2)
   {
-    if (channel != MatrixOS::UserVar::global_channel)
-    {
-        if(!recNotes.empty()) SetRecNoteGate();
-        return;
-    } 
-
-    SEQ_Clip* clip = seqData->Clip(this->channel, clipNum);
-    if (clip->HasLoop()) {
-        // 确保录音在 loop 范围内
-        uint16_t loopStart = clip->loopStart * STEP_MAX;
-        uint16_t loopEnd = (clip->loopEnd + 1) * STEP_MAX - 1;
-        
-        if (playHead > loopEnd || playHead < loopStart) {
-            // 如果录音位置在 loop 范围外，不进行录音
-            return;
-        }
-    }
-
-    if(byte2 > 0)
-    {
+    if (!recording) return;
+    if (byte2 > 0) {
         SEQ_Step* recStep = seqData->Step(SEQ_Pos(channel, clipNum, buffHead / STEP_MAX, buffHead % STEP_MAX), true);
         uint32_t now = MatrixOS::SYS::Millis();
         int8_t offset = ((now - stepTime) * 120) / stepInterval;
         offset = std::clamp(offset, int8_t(-60), int8_t(60));
         recStep->AddNote(SEQ_Note(byte1, byte2, 0, offset));
         recNotes.emplace(byte1, std::make_pair(stepTime, recStep));
-        recording = true;
         return;
-    }
-    else
+    } else {
         SetRecNoteGate(byte1);
+    }
   }
 
-  bool Sequencer::AutoGrouth() { return transportState.record && transportState.autoGrouth && recording; }
 
   void Sequencer::End()
   {
@@ -89,7 +86,7 @@ namespace MatrixOS::MidiCenter
     }
     
     firstStepBuff = false;
-    recording = false;
+    recording = false;  // 确保退出时清除录音状态
     end = true;
   }
 
@@ -97,42 +94,50 @@ namespace MatrixOS::MidiCenter
   {
     head++;
     SEQ_Clip* clip = seqData->Clip(channel, clipNum);
+    if (!clip) return;
 
-    if (clip->HasLoop()) {
-        // 在 loop 范围内循环
-        uint16_t loopStart = clip->loopStart * STEP_MAX;
-        uint16_t loopEnd = (clip->loopEnd + 1) * STEP_MAX - 1;
-        
-        // 如果超出 loop 范围，回到 loop 起始位置
-        if (head > loopEnd) {
-            head = loopStart;
-        }
-        // 如果在 loop 范围外，移动到 loop 起始位置
-        else if (head < loopStart) {
-            head = loopStart;
-        }
-        
-        // 处理每个 bar 内的 step 限制
-        if (head % STEP_MAX >= clip->barStepMax) {
-            head = (head / STEP_MAX + 1) * STEP_MAX;
-            if (head > loopEnd) {
-                head = loopStart;
-            }
-        }
-    } else {
-        // 原有的非 loop 逻辑
-        uint8_t stepMax = clip->barStepMax + (clip->barMax - 1) * STEP_MAX;
-        if(head >= stepMax && AutoGrouth())
-        {
-            clip->barMax = std::min(int(clip->barMax + 1), BAR_MAX);
-            stepMax = clip->barStepMax + (clip->barMax - 1) * STEP_MAX;
-        }
-        if(head % STEP_MAX >= clip->barStepMax)
-            head = head + STEP_MAX - (head % STEP_MAX);
-        if(head >= stepMax)
-            head = head % STEP_MAX;
+    if (head % STEP_MAX >= clip->barStepMax) {
+      head = (head / STEP_MAX + 1) * STEP_MAX;
     }
-    stepTime = stepInterval / 2 + MatrixOS::SYS::Millis();
+
+    uint8_t currentBar = head / STEP_MAX;
+    uint8_t currentStep = head % STEP_MAX;
+    
+    if (clip->HasLoop()) {
+      uint16_t loopStart = clip->loopStart * STEP_MAX;
+      uint16_t loopEnd = clip->loopEnd * STEP_MAX + clip->barStepMax;
+
+      if(head >= loopEnd) { head = loopStart; }
+
+      if (recording) {
+        if (!HasNoteInRange(channel, clipNum, clip->loopStart, clip->loopEnd)) {
+          head = clip->loopStart * STEP_MAX + currentStep;
+          return;
+        }
+      }
+    } else {
+      
+      if (recording) {
+        if (!HasNoteInRange(channel, clipNum, 0, clip->barMax - 1)) {
+          head = currentStep;
+          currentBar = 0;
+        }
+
+        if (currentBar >= clip->barMax - 1 && clip->barMax < BAR_MAX) {
+          clip->barMax = currentBar + 1;
+        }
+
+        if (currentBar >= BAR_MAX) {
+          head = 0;
+        }
+        return;
+      } 
+
+      if(currentBar >= clip->barMax ) { head = 0; }
+      
+    }
+    
+    
   }
 
   void Sequencer::GetNoteQueue(bool firstStep)
@@ -180,12 +185,6 @@ namespace MatrixOS::MidiCenter
 
   void Sequencer::FirstStepBuff()
   {
-    std::queue<std::pair<uint32_t, SEQ_Note>>().swap(notesQueue);
-    GetNoteQueue(true);
-    firstStepBuff = true;
-    stepTime = MatrixOS::SYS::Millis();
-    
-    // 确保初始播放位置在 loop 范围内
     SEQ_Clip* clip = seqData->Clip(channel, clipNum);
     if (clip->HasLoop()) {
         if (playHead < clip->loopStart * STEP_MAX || 
@@ -194,6 +193,11 @@ namespace MatrixOS::MidiCenter
             buffHead = playHead;
         }
     }
+
+    std::queue<std::pair<uint32_t, SEQ_Note>>().swap(notesQueue);
+    GetNoteQueue(true);
+    firstStepBuff = true;
+    stepTime = MatrixOS::SYS::Millis();
   }
 
   void Sequencer::Trigger()
@@ -391,29 +395,12 @@ namespace MatrixOS::MidiCenter
     note->note = std::clamp(pitch + octaveShift * 12, pitch % 12, 120 + pitch % 12 > 127 ? 108 + pitch % 12 : 120 + pitch % 12);
   }
 
-  void Sequencer::Update()
-  {
-    // 更新播放头位置
-    playHead++;
-    
-    SEQ_Clip* clip = seqData->Clip(channel, clipNum);
-    if (clip->HasLoop()) {
-        // 在 loop 范围内循环
-        uint16_t loopStart = clip->loopStart * STEP_MAX;
-        uint16_t loopEnd = (clip->loopEnd + 1) * STEP_MAX - 1;
-        
-        if (playHead > loopEnd) {
-            playHead = loopStart;
-        }
-        // 如果播放头在 loop 范围外，移动到 loop 起始位置
-        else if (playHead < loopStart) {
-            playHead = loopStart;
-        }
-    } else {
-        // 在整个 clip 范围内循环
-        if (playHead >= clip->barMax * STEP_MAX) {
-            playHead = 0;
+  bool Sequencer::HasNoteInRange(uint8_t channel, uint8_t clipNum, int8_t startBar, int8_t endBar) {
+    for (int8_t bar = startBar; bar <= endBar; bar++) {
+        if (seqData->FindNoteInBar(channel, clipNum, bar)) {
+            return true;
         }
     }
+    return false;
   }
 }

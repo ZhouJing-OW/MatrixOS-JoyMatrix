@@ -34,11 +34,10 @@ namespace MatrixOS::MidiCenter
 
     void Scan();
     void Record(uint8_t channel, uint8_t byte1, uint8_t byte2);
-    bool AutoGrouth();
     void End();
-    void Update();
 
    private:
+    bool HasNoteInRange(uint8_t channel, uint8_t clipNum, int8_t startBar, int8_t endBar);
     void MoveHead(int16_t& head);
     void GetNoteQueue(bool firstStep = false);
     void GetAutomQueue();
