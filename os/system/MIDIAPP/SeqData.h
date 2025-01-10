@@ -601,6 +601,49 @@ namespace MatrixOS::MidiCenter
     }
 
     friend class SEQ_DataStore;
+
+    // 移动所有 steps，正数右移，负数左移
+    void ShiftSteps(int8_t distance) {
+        if (distance == 0) return;
+
+        // 确定移动范围
+        uint16_t startBar = HasLoop() ? loopStart : 0;
+        uint16_t endBar = HasLoop() ? loopEnd : barMax - 1;
+        uint16_t totalSteps = (endBar - startBar + 1) * barStepMax;
+
+        // 保存需要移动的元素
+        std::vector<int16_t> tempStepIDs;
+        std::vector<bool> tempMarks;
+        
+        // 收集需要移动的元素
+        for (uint16_t bar = startBar; bar <= endBar; bar++) {
+            for (uint16_t step = 0; step < barStepMax; step++) {
+                uint16_t id = bar * STEP_MAX + step;
+                tempStepIDs.push_back(stepID[id]);
+                tempMarks.push_back(stepMark[id]);
+            }
+        }
+
+        // 应用移动
+        for (uint16_t i = 0; i < totalSteps; i++) {
+            // 计算新位置
+            int32_t newPos = i + distance;
+            while (newPos < 0) newPos += totalSteps;
+            newPos %= totalSteps;
+            
+            // 计算实际数组位置
+            uint16_t srcBar = startBar + (i / barStepMax);
+            uint16_t srcStep = i % barStepMax;
+            uint16_t srcId = srcBar * STEP_MAX + srcStep;
+            
+            uint16_t dstBar = startBar + (newPos / barStepMax);
+            uint16_t dstStep = newPos % barStepMax;
+            uint16_t dstId = dstBar * STEP_MAX + dstStep;
+            
+            stepID[dstId] = tempStepIDs[i];
+            stepMark[dstId] = tempMarks[i];
+        }
+    }
   };
 
   class   SEQ_Pattern
@@ -1199,6 +1242,66 @@ namespace MatrixOS::MidiCenter
                 dstStep->AddNote(*srcNote);
                 break;
             }
+        }
+    }
+
+    // 移动 steps 的公共接口
+    void ShiftSteps(SEQ_Pos position, int8_t distance, uint8_t note = 255) {
+        SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
+        if (!clip || distance == 0) return;
+
+        if (note == 255) {
+            clip->ShiftSteps(distance);
+            return;
+        }
+
+        // 移动特定音符
+        struct NoteInfo {
+            SEQ_Note note;
+            uint16_t bar;
+            uint16_t step;
+        };
+        std::vector<NoteInfo> notes;
+
+        // 确定移动范围
+        uint16_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+        uint16_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+
+        // 1. 收集所有匹配的音符并删除原位置的音符
+        for (uint16_t bar = startBar; bar <= endBar; bar++) {
+            for (uint16_t step = 0; step < clip->barStepMax; step++) {
+                SEQ_Step* curStep = Step(SEQ_Pos(position.ChannelNum(), position.ClipNum(), bar, step));
+                if (curStep && curStep->FindNote(note)) {
+                    std::vector<const SEQ_Note*> stepNotes = curStep->GetNotes();
+                    for (const SEQ_Note* stepNote : stepNotes) {
+                        if (stepNote->note == note) {
+                            notes.push_back({*stepNote, bar, step});
+                        }
+                    }
+                    curStep->DeleteNote(note);
+                }
+            }
+        }
+
+        // 2. 将音符写入新位置
+        uint16_t totalSteps = (endBar - startBar + 1) * clip->barStepMax;
+        
+        for (const auto& noteInfo : notes) {
+            // 计算相对位置
+            int32_t relativePos = (noteInfo.bar - startBar) * clip->barStepMax + noteInfo.step;
+            
+            // 计算新位置
+            int32_t newRelativePos = relativePos + distance;
+            while (newRelativePos < 0) newRelativePos += totalSteps;
+            newRelativePos %= totalSteps;
+            
+            // 转换回绝对位置
+            uint16_t newBar = startBar + (newRelativePos / clip->barStepMax);
+            uint16_t newStep = newRelativePos % clip->barStepMax;
+            
+            // 添加音符到新位置
+            AddNote(SEQ_Pos(position.ChannelNum(), position.ClipNum(), newBar, newStep), 
+                   noteInfo.note);
         }
     }
 

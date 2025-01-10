@@ -36,7 +36,7 @@ namespace MatrixOS::MidiCenter
     // const char      tripletName[8]        = "Triplet";
     //       BtnFunc   TripletBtn            = [&]()->void { ChangeUIMode(TRIPLET);};
 
-    const Color     settingBtnColor       = Color(VIOLET).DimIfNot(mode == SETTING);
+    const Color     settingBtnColor       = Color(VIOLET);
     const char      settingBtnName[8]     = "Setting";
           BtnFunc   settingBtn            = [&]()->void { ChangeUIMode(SETTING);};
 
@@ -137,6 +137,14 @@ namespace MatrixOS::MidiCenter
     const Color     deleteBtnColor       = Color(RED);      // 删除按钮颜色
     const char      deleteBtnName[7]     = "Delete";
 
+    const Point     leftShiftBtnPos      = Point(2, 3);     // 左移按钮位置
+    const Color     leftShiftBtnColor    = Color(ORANGE);   // 左移按钮颜色
+    const char      leftShiftBtnName[5]  = "Left";
+
+    const Point     rightShiftBtnPos     = Point(3, 3);     // 右移按钮位置
+    const Color     rightShiftBtnColor   = Color(ORANGE);   // 右移按钮颜色
+    const char      rightShiftBtnName[6] = "Right";
+
   public : SequencerUI() {
     channel = MatrixOS::UserVar::global_channel;
     channelPrv = 255;
@@ -192,7 +200,10 @@ namespace MatrixOS::MidiCenter
             Color deleteColor = editBlock.deleteKeyHeld ? Color(WHITE) : deleteBtnColor;
             ButtonRender(origin, deleteBtnPos, deleteColor);
 
-            ButtonRender(origin, settingBtnPos, settingBtnColor);
+            Color settingColor = settingBtnColor;
+            ButtonRender(origin, settingBtnPos, settingColor.Dim());
+            ButtonRender(origin, leftShiftBtnPos, leftShiftBtnColor);
+            ButtonRender(origin, rightShiftBtnPos, rightShiftBtnColor);
           }
           break;
         case TRIPLET:  
@@ -267,6 +278,10 @@ namespace MatrixOS::MidiCenter
                 return true;
               }
             }
+            if(InArea(xy, leftShiftBtnPos, Dimension(1, 1)))
+              return ShiftBtnKeyEvent(xy, leftShiftBtnPos, keyInfo, true);
+            if(InArea(xy, rightShiftBtnPos, Dimension(1, 1)))
+              return ShiftBtnKeyEvent(xy, rightShiftBtnPos, keyInfo, false);
           }
 
           if(InArea(xy, seqPos, seqArea))
@@ -1022,6 +1037,27 @@ namespace MatrixOS::MidiCenter
             default:
                 return false;
         }
+    }
+
+    bool ShiftBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo, bool isLeft)
+    {
+        if (!clip) return false;
+
+        if(keyInfo->state == RELEASED && !keyInfo->hold)
+        { // 短按：移动一步
+          seqData->ShiftSteps(SEQ_Pos(channel, clipNum, 0, 0), 
+                  isLeft ? -1 : 1, 
+                  monoMode ? channelConfig->activeNote[channel] : 255);
+          return true;
+        }
+        if(keyInfo->state == HOLD)
+        { // 长按：移动一个 bar
+          seqData->ShiftSteps(SEQ_Pos(channel, clipNum, 0, 0), 
+              isLeft ? -clip->barStepMax : clip->barStepMax,
+              monoMode ? channelConfig->activeNote[channel] : 255);
+          return true;
+        }
+        return false;
     }
   };
 }
