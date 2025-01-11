@@ -1126,6 +1126,8 @@ namespace MatrixOS::MidiCenter
 
         if(keyInfo->state == RELEASED && !keyInfo->hold)
         { // 短按：移动一步
+          seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+          seqData->EnableTempSnapshot();
           seqData->ShiftSteps(SEQ_Pos(channel, clipNum, 0, 0), 
                   isLeft ? -1 : 1, 
                   monoMode ? channelConfig->activeNote[channel] : 255);
@@ -1133,6 +1135,8 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         { // 长按：移动一个 bar
+          seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+          seqData->EnableTempSnapshot();
           seqData->ShiftSteps(SEQ_Pos(channel, clipNum, 0, 0), 
               isLeft ? -clip->barStepMax : clip->barStepMax,
               monoMode ? channelConfig->activeNote[channel] : 255);
