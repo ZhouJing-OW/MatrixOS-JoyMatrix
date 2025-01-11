@@ -17,14 +17,10 @@ namespace MatrixOS::MidiCenter
     if(transportState.record && channel == MatrixOS::UserVar::global_channel && !recording)
     {
       recording = true;
+      seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
     }
     if (!transportState.record || channel != MatrixOS::UserVar::global_channel) {
-        if (recording) {
-            if (!recNotes.empty()) {
-                SetRecNoteGate();
-            }
-            recording = false;
-        }
+        recording = false;
     }
 
 
@@ -55,7 +51,10 @@ namespace MatrixOS::MidiCenter
   void Sequencer::Record(uint8_t channel, uint8_t byte1, uint8_t byte2)
   {
     if (!recording) return;
-    if (byte2 > 0) {
+
+    if (byte2 > 0) {  // Note On
+        seqData->EnableTempSnapshot();
+        
         SEQ_Step* recStep = seqData->Step(SEQ_Pos(channel, clipNum, buffHead / STEP_MAX, buffHead % STEP_MAX), true);
         uint32_t now = MatrixOS::SYS::Millis();
         int8_t offset = ((now - stepTime) * 120) / stepInterval;
@@ -63,7 +62,7 @@ namespace MatrixOS::MidiCenter
         recStep->AddNote(SEQ_Note(byte1, byte2, 0, offset));
         recNotes.emplace(byte1, std::make_pair(stepTime, recStep));
         return;
-    } else {
+    } else {  // Note Off
         SetRecNoteGate(byte1);
     }
   }
@@ -74,6 +73,8 @@ namespace MatrixOS::MidiCenter
     std::queue<std::pair<uint32_t, SEQ_Note>>().swap(notesQueue);
     SetRecNoteGate(); 
     cycleStep.clear();
+    
+    recording = false;
     
     // 根据 loop 状态设置初始播放位置
     SEQ_Clip* clip = seqData->Clip(channel, clipNum);
@@ -86,7 +87,6 @@ namespace MatrixOS::MidiCenter
     }
     
     firstStepBuff = false;
-    recording = false;  // 确保退出时清除录音状态
     end = true;
   }
 

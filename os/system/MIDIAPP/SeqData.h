@@ -23,6 +23,7 @@ namespace MatrixOS::MidiCenter
   #define AUTOM_MAX     STEP_MAX  // < 16
   #define STEP_ALL      16 * CLIP_MAX * BAR_MAX * STEP_MAX
   #define AUTOM_ALL     16 * CLIP_MAX * AUTOM_MAX
+  #define UNDO_POINT_MAX 20
 
   class   SEQ_Pos
   {
@@ -545,8 +546,8 @@ namespace MatrixOS::MidiCenter
     uint8_t quantize        = 100;        // 0% - 100%
     uint8_t barMax          = 1;          // 1 - 4
     uint8_t barStepMax      = STEP_MAX;   // 8 - 16
-    int8_t loopStart = -1;  // -1 表示未设置 loop
-    int8_t loopEnd = -1;
+    int8_t  loopStart       = -1;         // -1 表示未设置 loop
+    int8_t  loopEnd         = -1;
     
     bool HasLoop() const { return loopStart >= 0 && loopEnd >= 0; }
     void ClearLoop() { loopStart = -1; loopEnd = -1; }
@@ -566,11 +567,14 @@ namespace MatrixOS::MidiCenter
 
     void            CopySettings(const SEQ_Clip& src)
     {
+      this->speed = src.speed;
       this->quantize = src.quantize;
+      this->direction = src.direction;
+      this->tair = src.tair;
       this->barMax = src.barMax;
       this->barStepMax = src.barStepMax;
-      this->speed = src.speed;
-      this->tair = src.tair;
+      this->loopStart = src.loopStart;
+      this->loopEnd = src.loopEnd;
     }
 
     int16_t         StepID (uint8_t BarNum, uint8_t stepNum) const 
@@ -585,7 +589,10 @@ namespace MatrixOS::MidiCenter
       return automID[BarNum * AUTOM_MAX + automNum]; 
     }
 
-    bool            Empty() const { return stepMark.none() && automMark.none(); }
+    bool            Empty(int8_t bar = -1) const { 
+      if(bar == -1) return stepMark.none() && automMark.none();
+      return stepMark[bar * STEP_MAX + 0] == 0 && automMark[bar * AUTOM_MAX + 0] == 0;
+    }
 
   private:
     void            SetStepID(uint8_t BarNum, uint8_t stepNum, int16_t id) 
@@ -631,11 +638,7 @@ namespace MatrixOS::MidiCenter
             while (newPos < 0) newPos += totalSteps;
             newPos %= totalSteps;
             
-            // 计算实际数组位置
-            uint16_t srcBar = startBar + (i / barStepMax);
-            uint16_t srcStep = i % barStepMax;
-            uint16_t srcId = srcBar * STEP_MAX + srcStep;
-            
+            // 计算目标位置
             uint16_t dstBar = startBar + (newPos / barStepMax);
             uint16_t dstStep = newPos % barStepMax;
             uint16_t dstId = dstBar * STEP_MAX + dstStep;
@@ -679,6 +682,7 @@ namespace MatrixOS::MidiCenter
     std::set<uint8_t> inputList;
     PickState state = PICK_NORMAL;
     bool editingStepEmpty = true;
+    bool changed = false;
 
    public:
     PickBlock        Pick(uint8_t channel, uint8_t byte1, uint8_t byte2)
@@ -699,8 +703,10 @@ namespace MatrixOS::MidiCenter
     {
       if (byte2 > 0) 
       {
+        
         SEQ_Step* step = CNTR_SeqEditStep.front().second;
         if(!step) return PickBlock(transportState.play); // when play, block input
+        changed = true;
         if (step->FindNote(byte1)) step->DeleteNote(byte1);
         else step->AddNote(SEQ_Note(byte1, byte2, step->noteTemplate.gate, 0));
         return PickBlock(transportState.play);
@@ -758,6 +764,7 @@ namespace MatrixOS::MidiCenter
       capStep.ClearNote();
       inputList.clear();
       editingStepEmpty = true;
+      changed = false;
     }
 
     void            EndEditing()
@@ -768,7 +775,26 @@ namespace MatrixOS::MidiCenter
 
     bool            EditingStepEmpty() const { return editingStepEmpty; }
 
+    bool            Changed() const { return changed; }
+
     SEQ_Step*       GetPick(){return &capStep;}
+  };
+
+  struct SEQ_Snapshot {
+    int16_t undoPoint = -1;
+    SEQ_Pos position = SEQ_Pos(0);
+    SEQ_Clip clip;                      // 保存整个clip
+    std::map<int16_t, SEQ_Step> steps;  // 保存clip引用的所有steps
+    std::map<int16_t, SEQ_Autom> automs;// 保存clip引用的所有automs
+  };
+
+  struct SEQ_History
+  {
+    std::vector<SEQ_Snapshot, PSRAMAllocator<SEQ_Snapshot>> snapshots; 
+    SEQ_Snapshot tempSnapshot;
+    int16_t currentUndoPoint = 0;
+    int16_t lastUndoPoint = 0;
+    int16_t firstUndoPoint = 0;
   };
 
   class   SEQ_DataStore
@@ -781,8 +807,8 @@ namespace MatrixOS::MidiCenter
     std::set<int16_t> patternChanged, stepChanged, automChanged; // stepID, automID
     std::set<SEQ_Step*> compEdit;
     SEQ_Pick pick;
+    SEQ_History history;
     bool inited = false;
-
 
    public:
     void Init()
@@ -796,6 +822,7 @@ namespace MatrixOS::MidiCenter
       new (&automChanged)   std::set<int16_t>();
       new (&compEdit)       std::set<SEQ_Step*>();
       new (&pick)   SEQ_Pick();
+      new (&history) SEQ_History();
       inited = true;
     }
 
@@ -810,6 +837,7 @@ namespace MatrixOS::MidiCenter
       automChanged.~set();
       compEdit.~set();
       pick.~SEQ_Pick();
+      history.~SEQ_History();
     }
 
     ~SEQ_DataStore() { if(inited) Destroy(); }
@@ -818,7 +846,7 @@ namespace MatrixOS::MidiCenter
     //------------------------------------NOTE-------------------------------------//
 
     void            AddNote(SEQ_Pos position, SEQ_Note note, bool markChange = true) 
-    { 
+    {
       auto step = Step(position,true);
       if(step)
       {
@@ -1025,7 +1053,6 @@ namespace MatrixOS::MidiCenter
 
     SEQ_Step*       Step(SEQ_Pos position, bool AddNew = false) 
     {
-      
       int16_t stepID = StepID(position);
       if (stepID == -1) return AddNew ? AddStep(SEQ_Step(), position) : nullptr;
       auto it = steps.find(stepID);
@@ -1129,12 +1156,12 @@ namespace MatrixOS::MidiCenter
         {
           int16_t stepID = Clip(channel, clipNum)->StepID(bar, s);
           if (stepID != -1)
-            DeleteStep(Step(stepID)->Position());
+            DeleteStep(SEQ_Pos(channel, clipNum,bar, s));
         }
-        for (uint8_t a = 0; a < AUTOM_ALL; a++) {
+        for (uint8_t a = 0; a < AUTOM_MAX; a++) {
           int16_t automID = Clip(channel, clipNum)->AutomID(bar, a);
           if (automID != -1)
-            DeleteAutom(Autom(automID)->Position());
+            DeleteAutom(SEQ_Pos(channel, clipNum,bar, a));
         }
       }
     }
@@ -1173,29 +1200,31 @@ namespace MatrixOS::MidiCenter
       if(step) pick.Editing(position, step);
     }
 
-    void            Pick_SaveHold(SEQ_Pos position)
+    bool            Pick_SaveHold(SEQ_Pos position)
     {
+      bool changed = pick.Changed();
       SEQ_Step* step = Step(position);
-      if(!step) return;
+      if(!step) return changed;
 
       if(step->Empty()) 
       {
         step->ClearNote();
         pick.ChangeState(PICK_NORMAL, !pick.EditingStepEmpty());
         if (step->Empty()) DeleteStep(position);
-        return; 
+        return changed; 
       }
 
       pick.ChangeState(PICK_NORMAL, true);
+      return changed;
     }
 
-    void            Pick_SaveClick(SEQ_Pos position)
+    bool            Pick_SaveClick(SEQ_Pos position)
     {
       if(!pick.EditingStepEmpty())
       {
         ClearNote(position);
         pick.ChangeState(PICK_NORMAL);
-        return;
+        return true;
       }
 
       if(pick.GetPick()->NoteEmpty())
@@ -1207,9 +1236,10 @@ namespace MatrixOS::MidiCenter
         Step(position)->CopyNotes(*(pick.GetPick()));
 
       pick.ChangeState(PICK_NORMAL);
+      return true;
     }
 
-    void            Pick_SaveSingle(SEQ_Pos position)
+    bool            Pick_SaveSingle(SEQ_Pos position)
     {
       uint8_t channel = MatrixOS::UserVar::global_channel;
       uint8_t activeNote = channelConfig->activeNote[channel];
@@ -1219,6 +1249,7 @@ namespace MatrixOS::MidiCenter
         DeleteNote(position, activeNote);
       
       pick.ChangeState(PICK_NORMAL);
+      return true;
     }
 
     void            Pick_Clear() { pick.Clear(); }
@@ -1229,23 +1260,23 @@ namespace MatrixOS::MidiCenter
 
     void CopyNote(SEQ_Pos src, SEQ_Pos dst, uint8_t note)
     {
+        // 1. 检查源位置是否有指定音符
+        if (!FindNote(src, note)) return;
+
+        // 2. 获取源位置的 step
         SEQ_Step* srcStep = Step(src);
-        if (!srcStep || !srcStep->FindNote(note)) return;
+        if (!srcStep) return;
 
-        SEQ_Step* dstStep = Step(dst, true);
-        if (!dstStep) return;
-
-        // 使用公有方法复制音符
+        // 3. 获取音符列表并找到目标音符
         std::vector<const SEQ_Note*> notes = srcStep->GetNotes();
         for (const SEQ_Note* srcNote : notes) {
             if (srcNote->note == note) {
-                dstStep->AddNote(*srcNote);
+                AddNote(dst, *srcNote);
                 break;
             }
         }
     }
 
-    // 移动 steps 的公共接口
     void ShiftSteps(SEQ_Pos position, int8_t distance, uint8_t note = 255) {
         SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
         if (!clip || distance == 0) return;
@@ -1305,6 +1336,130 @@ namespace MatrixOS::MidiCenter
         }
     }
 
+    //----------------------------------UNDO REDO------------------------------------//
+
+    void CreateTempSnapshot(SEQ_Pos position)
+    {
+      // 暂存clip
+      SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
+      history.tempSnapshot.clip = *clip;
+      history.tempSnapshot.undoPoint = history.currentUndoPoint;
+      history.tempSnapshot.position = position;
+
+      // 保存clip引用的所有steps
+      for (uint8_t bar = 0; bar < clip->barMax; bar++) {
+          for (uint8_t step = 0; step < clip->barStepMax; step++) {
+              int16_t stepID = clip->StepID(bar, step);
+              if (stepID >= 0) {history.tempSnapshot.steps[stepID] = steps[stepID];}
+          }
+      }
+
+      // 保存clip引用的所有automs
+      for (uint8_t bar = 0; bar < clip->barMax; bar++) {
+          for (uint8_t autom = 0; autom < AUTOM_MAX; autom++) {
+              int16_t automID = clip->AutomID(bar, autom);
+              if (automID >= 0) {history.tempSnapshot.automs[automID] = automs[automID];}
+          }
+      }
+      MLOGD("SEQ", "CreateTempSnapshot. undoPoint %d.", history.currentUndoPoint);
+    }
+
+    void EnableTempSnapshot() {
+      if(history.tempSnapshot.undoPoint == -1) return;
+
+      RemoveSnapshotFrom(history.currentUndoPoint);
+      history.snapshots.push_back(history.tempSnapshot);
+      history.lastUndoPoint = history.currentUndoPoint;
+      history.currentUndoPoint++;
+      MLOGD("SEQ", "EnableTempSnapshot. lastUndoPoint %d. currentUndoPoint %d.", history.lastUndoPoint, history.currentUndoPoint);
+      
+      if(history.snapshots.size() > UNDO_POINT_MAX) {
+        history.snapshots.erase(history.snapshots.begin());
+        history.firstUndoPoint++;
+        MLOGD("SEQ", "Move . firstUndoPoint %d.", history.firstUndoPoint);
+      }
+      
+      history.tempSnapshot = SEQ_Snapshot();
+    }
+
+    void RestoreSnapshot(int16_t undoPoint) {
+        // 查找对应还原点的快照
+        if(undoPoint < history.firstUndoPoint || undoPoint > history.lastUndoPoint)  return;
+        
+        auto it = std::find_if(history.snapshots.begin(), history.snapshots.end(),
+            [undoPoint](const SEQ_Snapshot& snap) { return snap.undoPoint == undoPoint; });
+        if (it == history.snapshots.end()) return;
+        ClearClip(it->position.ChannelNum(), it->position.ClipNum());
+        SEQ_Clip* clip = Clip(it->position.ChannelNum(), it->position.ClipNum());
+        if(!clip) return;
+        clip->CopySettings(it->clip);
+
+        // 3. 还原所有steps
+        for (const auto& step : it->steps) {
+            // 添加新的step，会自动分配新的ID
+            SEQ_Step newStep = step.second;
+            SEQ_Pos stepPos = newStep.Position();
+            AddStep(newStep, stepPos);
+        }
+
+        // 4. 还原所有automs
+        for (const auto& autom : it->automs) {
+            // 添加新的autom，会自动分配新的ID
+            SEQ_Autom newAutom = autom.second;
+            SEQ_Pos automPos = newAutom.Position();
+            AddAutom(newAutom, automPos);
+        }
+        MLOGD("SEQ", "Restorechannel %d. clip %d.", it->position.ChannelNum(), it->position.ClipNum());
+        MLOGD("SEQ", "lastUndoPoint %d. currentUndoPoint %d.", history.lastUndoPoint, history.currentUndoPoint);
+    }
+
+    // 删除还原点之后的快照
+    void RemoveSnapshotFrom(int16_t undoPoint) {
+        if (history.snapshots.empty()) return;
+        if(undoPoint > history.lastUndoPoint || undoPoint < history.firstUndoPoint) return;
+
+        history.snapshots.erase(
+            history.snapshots.begin() + (undoPoint - history.firstUndoPoint),
+            history.snapshots.end()
+        );
+        history.lastUndoPoint = undoPoint - 1;
+        history.currentUndoPoint = undoPoint;
+    }
+    
+    bool CanUndo() const { 
+        return history.currentUndoPoint > history.firstUndoPoint; 
+    }
+
+    bool CanRedo() const { 
+        return history.currentUndoPoint < history.lastUndoPoint; 
+    }
+
+    void Undo() {
+        if (!CanUndo()) return;
+
+        // 如果当前undo点大于lastUndo点，则需要创建Redo快照
+        if(history.lastUndoPoint < history.currentUndoPoint){
+            CreateTempSnapshot(history.snapshots.back().position);
+            EnableTempSnapshot();
+            history.currentUndoPoint--;
+        }
+
+        history.currentUndoPoint--;
+        RestoreSnapshot(history.currentUndoPoint);
+    }
+
+    void Redo() {
+        if (!CanRedo()) return;
+
+        history.currentUndoPoint++;
+        RestoreSnapshot(history.currentUndoPoint);
+
+        // 如果当前undo点等于lastUndo点，则需要删除Redo快照
+        if(history.lastUndoPoint == history.currentUndoPoint){
+            RemoveSnapshotFrom(history.lastUndoPoint);
+        }
+    }
+
   private:
     inline int16_t  StepID (SEQ_Pos position) { return Clip(position.ChannelNum(), position.ClipNum())->StepID (position.BarNum(), position.Number()); }
     inline int16_t  AutomID(SEQ_Pos position) { return Clip(position.ChannelNum(), position.ClipNum())->AutomID(position.BarNum(), position.Number()); }
@@ -1326,8 +1481,8 @@ namespace MatrixOS::MidiCenter
       changedItems.insert(ID);
 
       string type = changedItems == stepChanged ? "Step" : "Autom";
-      MLOGD("SEQ Add " + type, "channel %d. clip %d. Bar %d. Step %d. ID %d.", 
-            position.ChannelNum(), position.ClipNum(), position.BarNum(),position.Number(), ID);
+      // MLOGD("SEQ Add " + type, "channel %d. clip %d. Bar %d. Step %d. ID %d.", 
+      //       position.ChannelNum(), position.ClipNum(), position.BarNum(),position.Number(), ID);
       return &items[ID];
     }
 
@@ -1348,9 +1503,9 @@ namespace MatrixOS::MidiCenter
       items.emplace(ID, lastItem);
       (Clip(lastItem.ChannelNum(), lastItem.ClipNum())->*setID)(lastItem.BarNum(), lastItem.Number(), ID);
 
-      string type = changedItems == stepChanged ? "Step" : "Autom";
-      MLOGD("SEQ Delete " + type, "channel %d. clip %d. Bar %d. Step %d. ID %d.", 
-            position.ChannelNum(), position.ClipNum(), position.BarNum(),position.Number(), ID);
+      // string type = changedItems == stepChanged ? "Step" : "Autom";
+      // MLOGD("SEQ Delete " + type, "channel %d. clip %d. Bar %d. Step %d. ID %d.", 
+      //       position.ChannelNum(), position.ClipNum(), position.BarNum(),position.Number(), ID);
     }
 
   };

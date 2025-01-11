@@ -18,6 +18,42 @@ namespace MatrixOS::MidiCenter
         LOOP_BAR,       // bar loop状态
     };
 
+    struct StepEditing {
+      bool edited           = false;
+      SEQ_Pos pos           = SEQ_Pos(0);
+      Point   point         = Point(0xFFF, 0xFFF);
+      uint32_t time         = 0;
+      int16_t step          = -1;
+      uint8_t note          = 255;
+      uint8_t noteCount     = 0;
+      int16_t velocity      = -1;
+      int16_t lastVelocity  = -1;
+      std::bitset<BAR_MAX * STEP_MAX> gateMap;
+    } stepEditing;
+
+    struct EditBlock {
+        EditState state = EDIT_NONE;
+        int8_t barStart = -1;
+        int8_t barEnd = -1;
+        int8_t stepStart = -1;
+        int8_t stepEnd = -1;
+        int8_t loopEditBar = -1;
+        bool barKeyStates[BAR_MAX] = {false};
+        uint8_t barKeyCount = 0;
+        bool copyKeyHeld = false;
+        bool deleteKeyHeld = false;
+        Point deleteBarTarget = Point(-1, -1);
+        Point deleteStepTarget = Point(-1, -1);
+    } editBlock;
+
+    struct ClipSettingValue 
+    {
+      int16_t speed = 0;
+      int16_t gate = 0;
+      int16_t quantize = 0;
+      int16_t step = 0;
+    } tempSetting;
+
     //-----------------------------------NORMAL-----------------------------------//
 
     const Color stepColor[2]          ={Color(LAWN_LS),             Color(LAWN)};                                    // poly, mono
@@ -40,26 +76,15 @@ namespace MatrixOS::MidiCenter
     const char      settingBtnName[8]     = "Setting";
           BtnFunc   settingBtn            = [&]()->void { ChangeUIMode(SETTING);};
 
-    const Point     settingBtnPos         = Point(15, 3);           // Setting 按钮移到第四行
-
-    //-----------------------------------EDITING------------------------------------//
-    
-    const Color     OffsetColor           = Color(YELLOW);
-          Point     OffsetLPos1()         { return Point(0,  editing.point.y > 0 ? editing.point.y - 1 : 1);}
-          Point     OffsetLPos2()         { return Point(14, editing.point.y > 0 ? editing.point.y - 1 : 1);}
-          BtnFunc   OffsetLBtn            = [&]()->void { seqData->SetOffset(editing.pos, std::max(seqData->GetOffset(editing.pos) - 1 , -5));};
-
-          Point     OffsetRPos1()         { return Point(1,  editing.point.y > 0 ? editing.point.y - 1 : 1);}
-          Point     OffsetRPos2()         { return Point(15, editing.point.y > 0 ? editing.point.y - 1 : 1);}
-          BtnFunc   OffsetRBtn            = [&]()->void { seqData->SetOffset(editing.pos, std::min(seqData->GetOffset(editing.pos) + 1 , 5)); };
+    const Point     settingBtnPos         = Point(15, 3);
 
     //-----------------------------------SETTING------------------------------------//
 
-    const Color settingColor[4]       = {GREEN,      LAWN,       TURQUOISE,  BLUE};
-    const Color setLabelColor[4]      = {VIOLET,     VIOLET,     VIOLET,     VIOLET};
-    const char  settingName[4][9]     = {"Speed",    "Gate",     "Quantize", "Step/bar"};
-    const Color speedColor[10]        = {GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN,      GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL };
-    const char  speedName[10][5]      = {"4x",       "3x",       "2x",       "1.5x",     "1x",       "2/3",      "1/2",      "1/4",      "1/8",      "1/16" };
+    const Color     settingColor[4]       = {GREEN,      LAWN,       TURQUOISE,  BLUE};
+    const Color     setLabelColor[4]      = {VIOLET,     VIOLET,     VIOLET,     VIOLET};
+    const char      settingName[4][9]     = {"Speed",    "Gate",     "Quantize", "Step/bar"};
+    const Color     speedColor[10]        = {GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN,      GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL,   GREEN_HL };
+    const char      speedName[10][5]      = {"4x",       "3x",       "2x",       "1.5x",     "1x",       "2/3",      "1/2",      "1/4",      "1/8",      "1/16" };
 
     const Point     settingLabelPos       = Point(6, 3);            const Dimension settingLabelArea      = Dimension(4, 1);
     const Point     speedSetPos           = Point(3, 2);            const Dimension speedSetArea          = Dimension(10, 1);
@@ -74,60 +99,11 @@ namespace MatrixOS::MidiCenter
 
     //-----------------------------------COMPONENT-----------------------------------//
 
-    const Color compColor[8]          = {TURQUOISE, CYAN,      DEEPSKY,   MAROON,    PURPLE,    VIOLET,    GOLD,      YELLOW};
-    const Color compLabelColor[8]     = {TURQUOISE, TURQUOISE, TURQUOISE, TURQUOISE, PURPLE,    PURPLE,    GOLD,      YELLOW};
-    const char  compName[8][9]        = {"Cycle"  , "Retrig",  "Chance",  "Flam",    "OCTAVE",  "PITCH",   "STURM",   "ARP"};
+    const Color     compColor[8]          = {TURQUOISE, CYAN,      DEEPSKY,   MAROON,    PURPLE,    VIOLET,    GOLD,      YELLOW};
+    const Color     compLabelColor[8]     = {TURQUOISE, TURQUOISE, TURQUOISE, TURQUOISE, PURPLE,    PURPLE,    GOLD,      YELLOW};
+    const char      compName[8][9]        = {"Cycle"  , "Retrig",  "Chance",  "Flam",    "OCTAVE",  "PITCH",   "STURM",   "ARP"};
 
-    //-------------------------------------------------------------------------------//      
-
-    struct Editing {
-      SEQ_Pos pos           = SEQ_Pos(0);
-      Point   point         = Point(0xFFF, 0xFFF);
-      uint32_t time         = 0;
-      int16_t step          = -1;
-      uint8_t note          = 255;
-      uint8_t noteCount     = 0;
-      int16_t velocity      = -1;
-      std::bitset<BAR_MAX * STEP_MAX> gateMap;
-    } editing;
-
-    SeqUIMode   mode          = NORMAL;
-    Sequencer*  sequencer     = nullptr;
-    SEQ_Clip*   clip          = nullptr;
-    uint8_t     clipNum       = 0;
-    uint8_t     clipNumPrv    = 0;
-    int8_t      barNum        = 0;
-    int8_t      barCopyFrom   = -1;
-    int8_t      scroll        = -1;
-    uint8_t     scrollMax     = 1;
-    uint8_t     settingLabel  = 0;
-    uint8_t     compLabel     = 0; 
-    PadType     lastPadType   = PIANO_PAD;
-    bool        monoMode      = false;
-
-    KnobConfig velocityKnob   = {.lock = true, .data{.varPtr = &editing.velocity}, .min = 1, .max = 127, .def = 127, .color = Color(LAWN)  };
-
-    KnobConfig speedKnob      = {.lock = true, .data{.varPtr = nullptr},           .min = 0, .max = 9,   .def = 4,   .color = settingColor[0] };
-    KnobConfig gateKnob       = {.lock = true, .data{.varPtr = nullptr},           .min = 10,.max = 100, .def = 50,  .color = settingColor[1] };
-    KnobConfig QuantizeKnob   = {.lock = true, .data{.varPtr = nullptr},           .min = 0, .max = 100, .def = 0,   .color = settingColor[2] };
-    KnobConfig stepKnob       = {.lock = true, .data{.varPtr = nullptr},           .min = 8, .max = 16,  .def = 16,  .color = settingColor[3] };
-
-    std::vector<KnobConfig*> settingKnob= {nullptr, nullptr, &speedKnob, &gateKnob, &QuantizeKnob, &stepKnob, nullptr, nullptr};
-
-    struct EditBlock {
-        EditState state = EDIT_NONE;
-        int8_t barStart = -1;
-        int8_t barEnd = -1;
-        int8_t stepStart = -1;
-        int8_t stepEnd = -1;
-        int8_t loopEditBar = -1;
-        bool barKeyStates[BAR_MAX] = {false};
-        uint8_t barKeyCount = 0;
-        bool copyKeyHeld = false;
-        bool deleteKeyHeld = false;
-        Point deleteBarTarget = Point(-1, -1);
-        Point deleteStepTarget = Point(-1, -1);
-    } editBlock;
+    //-----------------------------------EDITING-----------------------------------//      
 
     const Point     copyBtnPos           = Point(0, 3);     // 复制按钮移到第四行
     const Color     copyBtnColor         = Color(CYAN);     // 复制按钮颜色
@@ -144,6 +120,38 @@ namespace MatrixOS::MidiCenter
     const Point     rightShiftBtnPos     = Point(3, 3);     // 右移按钮位置
     const Color     rightShiftBtnColor   = Color(ORANGE);   // 右移按钮颜色
     const char      rightShiftBtnName[6] = "Right";
+
+    const Point     undoBtnPos           = Point(13, 3);     // 撤销按钮位置
+    const Color     undoBtnColor         = Color(ORANGE);   // 撤销按钮颜色
+    const char      undoBtnName[5]       = "Undo";
+
+    const Point     redoBtnPos           = Point(14, 3);     // 重做按钮位置
+    const Color     redoBtnColor         = Color(ORANGE);   // 重做按钮颜色
+    const char      redoBtnName[5]       = "Redo";
+
+    //-------------------------------------------------------------------------------// 
+    SeqUIMode   mode          = NORMAL;
+    Sequencer*  sequencer     = nullptr;
+    SEQ_Clip*   clip          = nullptr;
+    uint8_t     clipNum       = 0;
+    uint8_t     clipNumPrv    = 0;
+    int8_t      barNum        = 0;
+    int8_t      barCopyFrom   = -1;
+    int8_t      scroll        = -1;
+    uint8_t     scrollMax     = 1;
+    uint8_t     settingLabel  = 0;
+    uint8_t     compLabel     = 0; 
+    PadType     lastPadType   = PIANO_PAD;
+    bool        monoMode      = false;
+
+    KnobConfig velocityKnob   = {.lock = true, .data{.varPtr = &stepEditing.velocity}, .min = 1, .max = 127, .def = 127, .color = Color(LAWN)  };
+
+    KnobConfig speedKnob      = {.lock = true, .data{.varPtr = nullptr},           .min = 0, .max = 9,   .def = 4,   .color = settingColor[0] };
+    KnobConfig gateKnob       = {.lock = true, .data{.varPtr = nullptr},           .min = 10,.max = 100, .def = 50,  .color = settingColor[1] };
+    KnobConfig QuantizeKnob   = {.lock = true, .data{.varPtr = nullptr},           .min = 0, .max = 100, .def = 0,   .color = settingColor[2] };
+    KnobConfig stepKnob       = {.lock = true, .data{.varPtr = nullptr},           .min = 8, .max = 16,  .def = 16,  .color = settingColor[3] };
+
+    std::vector<KnobConfig*> settingKnob= {nullptr, nullptr, &speedKnob, &gateKnob, &QuantizeKnob, &stepKnob, nullptr, nullptr};
 
   public : SequencerUI() {
     channel = MatrixOS::UserVar::global_channel;
@@ -176,7 +184,7 @@ namespace MatrixOS::MidiCenter
       }
 
       this->mode = mode;
-      ResetEditing(true);
+      ResetStepEditing();
     }
 
     virtual bool Render(Point origin) 
@@ -204,6 +212,11 @@ namespace MatrixOS::MidiCenter
             ButtonRender(origin, settingBtnPos, settingColor.Dim());
             ButtonRender(origin, leftShiftBtnPos, leftShiftBtnColor);
             ButtonRender(origin, rightShiftBtnPos, rightShiftBtnColor);
+
+            Color undoColor = undoBtnColor; 
+            ButtonRender(origin, undoBtnPos, undoColor.DimIfNot(seqData->CanUndo()));
+            Color redoColor = redoBtnColor;
+            ButtonRender(origin, redoBtnPos, redoColor.DimIfNot(seqData->CanRedo()));
           }
           break;
         case TRIPLET:  
@@ -255,10 +268,14 @@ namespace MatrixOS::MidiCenter
               return DeleteBtnKeyEvent(xy, deleteBtnPos, keyInfo);
             if(InArea(xy, settingBtnPos, Dimension(1, 1)))
               return SettingBtnKeyEvent(xy, settingBtnPos, keyInfo);
+            if(InArea(xy, undoBtnPos, Dimension(1, 1)))
+              return UndoBtnKeyEvent(xy, undoBtnPos, keyInfo);
+            if(InArea(xy, redoBtnPos, Dimension(1, 1)))
+              return RedoBtnKeyEvent(xy, redoBtnPos, keyInfo);
             
             if(editBlock.copyKeyHeld && editBlock.state == EDIT_NONE)
             {
-              if(InArea(xy, Point(0, 1), Dimension(16, 1)) && keyInfo->state == PRESSED)
+              if(InArea(xy, seqPos, seqArea) && keyInfo->state == PRESSED)
               {
                 editBlock.state = COPY_STEP;
                 Point ui = xy - Point(0, 1);
@@ -339,7 +356,7 @@ namespace MatrixOS::MidiCenter
         if (channel != channelPrv) sequencer = (Sequencer*)GetNodePtr(NODE_SEQ);
         channelPrv = channel;
         clipNumPrv = clipNum;
-        ResetEditing(true);
+        ResetStepEditing();
         barNum = 0;
         ChangeUIMode(NORMAL);
       }
@@ -356,7 +373,7 @@ namespace MatrixOS::MidiCenter
         else monoMode = false;
       }
       
-      SaveVelocity(editing.note);                                                          // Check velocity edited.
+      SaveVelocity(stepEditing.note);                                                          // Check velocity edited.
     
       if (seqData->Comp_InEditing())                                                     // Check component editing
         ChangeUIMode(COMPONENT);
@@ -365,56 +382,57 @@ namespace MatrixOS::MidiCenter
 
       //--------------------------------------EDITING--------------------------------------//
 
-      if(editing.point == Point(0xFFF, 0xFFF))  
+      if(stepEditing.step < 0)  
       {
         return; 
       }
                   
-      if(!Device::KeyPad::GetKey(Device::KeyPad::XY2ID(editing.point - origin))->active()) // Check editing point button release
+      if(!Device::KeyPad::GetKey(Device::KeyPad::XY2ID(stepEditing.point - origin))->active()) // Check editing point button release
       {
         MLOGD("SEQ", "Reset Editing");
-        ResetEditing(true);
+        ResetStepEditing();
       }
 
       if(monoMode)                                                                         // Check editing note change in mono mode
       {
-        if (editing.note != channelConfig->activeNote[channel])
+        if (stepEditing.note != channelConfig->activeNote[channel])
         {
           Device::AnalogInput::DisableDial();
-          SaveVelocity(editing.note);
-          editing.note = channelConfig->activeNote[channel];
-          editing.velocity = seqData->GetVelocity(editing.pos, editing.note);
-          if(!seqData->FindNote(editing.pos, editing.note))
-            editing.gateMap.reset();
+          SaveVelocity(stepEditing.note);
+          stepEditing.note = channelConfig->activeNote[channel];
+          stepEditing.velocity = seqData->GetVelocity(stepEditing.pos, stepEditing.note);
+          stepEditing.lastVelocity = stepEditing.velocity;
+          if(!seqData->FindNote(stepEditing.pos, stepEditing.note))
+            stepEditing.gateMap.reset();
           else
           {
-            GateRenderMap(seqData->GetGate(editing.pos, editing.note));
-            EditVelocity(editing.point, editing.pos);
+            GateRenderMap(seqData->GetGate(stepEditing.pos, stepEditing.note));
+            EditVelocity(stepEditing.point, stepEditing.pos);
           }
           return;
         }
       }
 
-      if(seqData->NoteCount(editing.pos, editing.note) != editing.noteCount)               // Check NoteCount change
+      if(seqData->NoteCount(stepEditing.pos, stepEditing.note) != stepEditing.noteCount)               // Check NoteCount change
       {
-        if(!seqData->NoteCount(editing.pos, editing.note))
-          editing.gateMap.reset();
+        if(!seqData->NoteCount(stepEditing.pos, stepEditing.note))
+          stepEditing.gateMap.reset();
         else
-          GateRenderMap(seqData->GetGate(editing.pos, editing.note));
+          GateRenderMap(seqData->GetGate(stepEditing.pos, stepEditing.note));
         
-        if(seqData->NoteCount(editing.pos, editing.note) > editing.noteCount)                            
-          EditVelocity(editing.point, editing.pos);
+        if(seqData->NoteCount(stepEditing.pos, stepEditing.note) > stepEditing.noteCount)                            
+          EditVelocity(stepEditing.point, stepEditing.pos);
           
-        editing.noteCount = seqData->NoteCount(editing.pos, editing.note);
+        stepEditing.noteCount = seqData->NoteCount(stepEditing.pos, stepEditing.note);
       }
-      if(!editing.noteCount) Device::AnalogInput::DisableDial();      
+      if(!stepEditing.noteCount) Device::AnalogInput::DisableDial();      
     }
 
     void ResetUI()
     {
       mode = NORMAL;
       barNum = 0;
-      ResetEditing(true);
+      ResetStepEditing();
     }
 
     void SeqRender(Point origin, Point offset)
@@ -436,23 +454,23 @@ namespace MatrixOS::MidiCenter
           SEQ_Pos pos = SEQ_Pos(channel, clipNum, stepNum / STEP_MAX, stepNum % STEP_MAX);
           if(stepNum % STEP_MAX >= clip->barStepMax)
             MatrixOS::LED::SetColor(xy, backColor[0]);
-          else if (editing.step >= 0 && editing.step == stepNum)   // renderEditing
+          else if (stepEditing.step >= 0 && stepEditing.step == stepNum)   // renderEditing
           {
             Color thisColor = Color(WHITE);
-            uint8_t velocity = seqData->GetVelocity(pos, editing.note);
+            uint8_t velocity = seqData->GetVelocity(pos, stepEditing.note);
             uint8_t scale =  velocity * 239 / 127 + 16;
             MatrixOS::LED::SetColor(xy, thisColor.Scale(scale));
           }
-          else if(editing.step >= 0 && editing.gateMap.test(stepNum))
+          else if(stepEditing.step >= 0 && stepEditing.gateMap.test(stepNum))
           {
-            bool hasNote = seqData->FindNote(pos, editing.note);
+            bool hasNote = seqData->FindNote(pos, stepEditing.note);
             Color thisColor = playHead ? playHeadColor[recording] : stepColor[hasNote];
             MatrixOS::LED::SetColor(xy, thisColor.Scale(127));
           }
           else if (monoMode ? seqData->FindNote(pos, channelConfig->activeNote[channel]) : !seqData->NoteEmpty(pos))
           {
             bool poly = monoMode ? false : seqData->NoteCount(pos) > 1;
-            Color thisColor = (editing.time > 0 && editing.time + 200 <= MatrixOS::SYS::Millis()) ? backColor[1 + !monoMode] : stepColor[poly];
+            Color thisColor = (stepEditing.time > 0 && stepEditing.time + 200 <= MatrixOS::SYS::Millis()) ? backColor[1 + !monoMode] : stepColor[poly];
             thisColor = playHead ? playHeadColor[recording] : thisColor;
             uint8_t velocity = seqData->GetVelocity(pos, channelConfig->activeNote[channel]);
             uint8_t scale =  velocity * 239 / 127 + 16;
@@ -482,6 +500,16 @@ namespace MatrixOS::MidiCenter
           {
             bool hasNote = seqData->FindNote(pos);
             Color thisColor = playHead ? playHeadColor[recording] : backColor[1 + monoMode - monoMode * hasNote];
+
+            if (editBlock.state == COPY_STEP) {
+                if (editBlock.stepStart >= 0) {
+                    int16_t start = std::min(editBlock.stepStart, editBlock.stepEnd);
+                    int16_t end = std::max(editBlock.stepStart, editBlock.stepEnd);
+                    if (stepNum >= start && stepNum <= end) {
+                        thisColor = thisColor.Blink_Color(true, Color(CYAN).Scale(64));
+                    }
+                }
+            }
             MatrixOS::LED::SetColor(xy, thisColor);
           }
         }
@@ -498,7 +526,7 @@ namespace MatrixOS::MidiCenter
         // 首先检查步进是否有效
         if(localStep >= clip->barStepMax || localStep / STEP_MAX >= clip->barMax) return false;
 
-        // 删除操作应该优先于其他操作
+        // 删除操作
         if (editBlock.deleteKeyHeld) {
             Point ui = xy - offset;
             editBlock.deleteStepTarget = ui;  // 使用 deleteStepTarget
@@ -509,15 +537,21 @@ namespace MatrixOS::MidiCenter
                 if (monoMode) {
                     uint8_t activeNote = channelConfig->activeNote[channel];
                     if (seqData->FindNote(pos, activeNote)) {
+                        seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                        seqData->EnableTempSnapshot();
                         seqData->DeleteNote(pos, activeNote);
                     }
                 } else {
+                  if(seqData->FindNote(pos)) {
+                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                    seqData->EnableTempSnapshot();
                     seqData->ClearNote(pos);
+                  }
                 }
                 editBlock.deleteStepTarget = Point(-1, -1);  // 重置删除目标位置
                 return true;
             }
-            return false;  // 删除键按住时阻止其他操作
+            return false; 
         }
 
         // 复制操作
@@ -535,6 +569,8 @@ namespace MatrixOS::MidiCenter
                 int16_t copyRange = std::min<int16_t>(range, maxSteps);
                 
                 if (copyRange > 0) {
+                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                    seqData->EnableTempSnapshot();
                     for (int16_t i = 0; i < copyRange; i++) {
                         SEQ_Pos srcPos = SEQ_Pos(channel, clipNum, 
                             (start + i) / STEP_MAX,    // 源bar
@@ -582,58 +618,65 @@ namespace MatrixOS::MidiCenter
         {
           case true:
 
-            if(editing.step == localStep && keyInfo->state == RELEASED)
+            if(stepEditing.step == localStep && keyInfo->state == RELEASED)
             {
-              ResetEditing();
               if(!keyInfo->hold)
-                seqData->Pick_SaveSingle(pos);
-              else
-                seqData->Pick_SaveHold(pos);
+              {
+                if(seqData->Pick_SaveSingle(pos)) 
+                  stepEditing.edited = true;
+                ResetStepEditing();
+                return true;
+              }
+
+              if(seqData->Pick_SaveHold(pos)) 
+                stepEditing.edited = true;
+              ResetStepEditing();
               return true;
             }
 
             if(keyInfo->state == PRESSED)
             {
-              if (editing.step >= 0)
+              if (stepEditing.step >= 0)
               {
-                if(seqData->FindNote(editing.pos, editing.note))
+                if(seqData->FindNote(stepEditing.pos, stepEditing.note))
                   SetGate(localStep);
                 return true;
               }
-              // if(!seqData->NoteEmpty(pos)) EditVelocity(xy, pos);
+
               seqData->Pick_Editing(pos);
-              SetEditing(pos, xy, localStep);
+              SetStepEditing(pos, xy, localStep);
               return true;
             }
             return false;
         
           case false:
 
-            if(editing.step == localStep && keyInfo->state == RELEASED)
+            if(stepEditing.step == localStep && keyInfo->state == RELEASED)
             {
-              ResetEditing();
               if(keyInfo->shortHold)
               {
-                ResetEditing();
-                seqData->Pick_SaveHold(pos);
+                if(seqData->Pick_SaveHold(pos)) 
+                  stepEditing.edited = true;
+                ResetStepEditing();
                 return true;
               }
 
-              seqData->Pick_SaveClick(pos);
-              ResetEditing();
+              if(seqData->Pick_SaveClick(pos)) 
+                stepEditing.edited = true;
+              ResetStepEditing();
               return true;
             }
 
             if (keyInfo->state == PRESSED)
             {
-              if (editing.step >= 0)
+              if (stepEditing.step >= 0)
               {
-                if(seqData->FindNote(editing.pos, editing.note))
+                if(seqData->FindNote(stepEditing.pos, stepEditing.note))
                   SetGate(localStep);
                 return true;
               }
               seqData->Pick_Editing(pos);
-              SetEditing(pos, xy, localStep);
+              SetStepEditing(pos, xy, localStep);
               // MLOGD("Seq", "Editing x: %d, y: %d", editingPos.x, editingPos.y);
               return true;
             }
@@ -724,15 +767,22 @@ namespace MatrixOS::MidiCenter
             
             if (keyInfo->state == RELEASED && !keyInfo->hold) {
                 if (thisBar < clip->barMax) {
-                    seqData->ClearBar(SEQ_Pos(channel, clipNum, thisBar, 0));
-                    if (thisBar >= clip->barMax - 1 && clip->barMax > 1) 
-                    {
-                      clip->barMax--;
-                      if (barNum >= clip->barMax) {
-                          barNum = clip->barMax - 1;
+                    if(seqData->Clip(channel, clipNum)->Empty(thisBar)){
+                      seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                      seqData->EnableTempSnapshot();
+                      seqData->ClearBar(SEQ_Pos(channel, clipNum, thisBar, 0));
+                    
+                      // 如果删除的是最后一个 bar，则减少 barMax
+                      if (thisBar >= clip->barMax - 1 && clip->barMax > 1) 
+                      {
+                        clip->barMax--;
+                        if (barNum >= clip->barMax) {
+                            barNum = clip->barMax - 1;
+                        }
                       }
                     }
                     editBlock.deleteBarTarget = Point(-1, -1);
+                    
                 }
             }
             return true;
@@ -749,6 +799,8 @@ namespace MatrixOS::MidiCenter
                 int8_t copyRange = std::min<int8_t>(range, maxRange);
                 
                 if (copyRange > 0) {
+                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                    seqData->EnableTempSnapshot();
                     for (int8_t i = 0; i < copyRange; i++) {
                         seqData->CopyBar(
                             SEQ_Pos(channel, clipNum, start + i, 0),
@@ -792,6 +844,8 @@ namespace MatrixOS::MidiCenter
                     
                     // 设置 loop 范围
                     if (end - start + 1 != BAR_MAX) {
+                        seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                        seqData->EnableTempSnapshot();
                         clip->loopStart = start;
                         clip->loopEnd = end;
                         
@@ -805,6 +859,8 @@ namespace MatrixOS::MidiCenter
                     }
                 }
                 else if (editBlock.barKeyCount == 1) {
+                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                    seqData->EnableTempSnapshot();
                     if (clip->HasLoop()) {
                         clip->ClearLoop();
                     } else {
@@ -833,7 +889,9 @@ namespace MatrixOS::MidiCenter
                 if (editBlock.copyKeyHeld || editBlock.deleteKeyHeld || 
                     !clip->HasLoop() || (thisBar >= clip->loopStart && thisBar <= clip->loopEnd)) {
                     if(thisBar >= clip->barMax) {
-                        clip->barMax = thisBar + 1;
+                      seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                      seqData->EnableTempSnapshot();
+                      clip->barMax = thisBar + 1;
                     }
                     barNum = thisBar;
                 }
@@ -845,13 +903,17 @@ namespace MatrixOS::MidiCenter
     void SetGate(uint8_t stepNum)
     {
         uint8_t invaildStep = STEP_MAX - clip->barStepMax;
-        if(stepNum < editing.step) stepNum += clip->barMax * STEP_MAX;
+        if(stepNum < stepEditing.step) stepNum += clip->barMax * STEP_MAX;
         stepNum -= (stepNum / STEP_MAX - 1 ) * invaildStep;
-        uint8_t editNum = editing.step - (editing.step / STEP_MAX - 1 ) * invaildStep;
+        uint8_t editNum = stepEditing.step - (stepEditing.step / STEP_MAX - 1 ) * invaildStep;
         uint8_t gate = stepNum - editNum;
-        uint8_t currentGate = seqData->GetGate(editing.pos, editing.note);
-        seqData->SetGate(editing.pos, gate == currentGate ? 0 : gate, editing.note);
-        GateRenderMap(seqData->GetGate(editing.pos, editing.note));
+        uint8_t currentGate = seqData->GetGate(stepEditing.pos, stepEditing.note);
+        if(seqData->GetGate(stepEditing.pos, stepEditing.note) != gate)
+        {
+          seqData->SetGate(stepEditing.pos, gate == currentGate ? 0 : gate, stepEditing.note);
+          stepEditing.edited = true;
+        }
+        GateRenderMap(seqData->GetGate(stepEditing.pos, stepEditing.note));
     }
 
     void GateRenderMap(uint8_t gateLength)
@@ -859,59 +921,59 @@ namespace MatrixOS::MidiCenter
         uint8_t inUseStep = clip->barStepMax;
         uint8_t stepAll = clip->barMax * STEP_MAX;
         uint8_t tail = gateLength / inUseStep * STEP_MAX + gateLength % inUseStep;
-        uint8_t edit = editing.step;
-        editing.gateMap.reset();
+        uint8_t edit = stepEditing.step;
+        stepEditing.gateMap.reset();
         while (tail)
         {
             edit++; tail--;
             if (edit % STEP_MAX >= inUseStep) edit += STEP_MAX - edit % STEP_MAX;
             if (edit >= stepAll) edit = 0;
-            editing.gateMap.set(edit);
+            stepEditing.gateMap.set(edit);
         }
     }
 
     void SaveVelocity(uint8_t note)
     {
-      if(editing.velocity > 0 && !Device::AnalogInput::GetDialPtr())
+      if(stepEditing.velocity != stepEditing.lastVelocity)
       {
-        seqData->SetVelocity(editing.pos, editing.velocity, note);
-        if(!seqData->NoteEmpty(editing.pos))
-          seqData->Pick_Update(editing.pos);
-        editing.velocity = -1;
+        stepEditing.edited = true;
+        seqData->SetVelocity(stepEditing.pos, stepEditing.velocity, note);
+        if(!seqData->NoteEmpty(stepEditing.pos))
+          seqData->Pick_Update(stepEditing.pos);
+        stepEditing.lastVelocity = stepEditing.velocity;
       }
     }
 
     void EditVelocity(Point xy, SEQ_Pos position)
     {
-      editing.velocity = seqData->GetVelocity(position, editing.note);
+      stepEditing.velocity = seqData->GetVelocity(position, stepEditing.note);
+      stepEditing.lastVelocity = stepEditing.velocity;
       Device::AnalogInput::UseDial(xy, &velocityKnob);
     }
 
-    void SetEditing(SEQ_Pos pos, Point xy, uint8_t stepNum)
+    void SetStepEditing(SEQ_Pos pos, Point xy, uint8_t stepNum)
     { 
-      editing.point = xy;
-      editing.pos = pos;
-      editing.step = stepNum;
-      editing.note = monoMode ? channelConfig->activeNote[channel] : 255;
-      editing.noteCount = seqData->NoteCount(pos, editing.note);
-      editing.time = MatrixOS::SYS::Millis();
-      GateRenderMap(seqData->GetGate(pos, editing.note));
+      seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+      stepEditing.point = xy;
+      stepEditing.pos = pos;
+      stepEditing.step = stepNum;
+      stepEditing.note = monoMode ? channelConfig->activeNote[channel] : 255;
+      stepEditing.noteCount = seqData->NoteCount(pos, stepEditing.note);
+      stepEditing.time = MatrixOS::SYS::Millis();
+      GateRenderMap(seqData->GetGate(pos, stepEditing.note));
       if(!seqData->NoteEmpty(pos)) EditVelocity(xy, pos);
     }
 
-    void ResetEditing(bool EndEditing = false)
+    void ResetStepEditing()
     {
-      editing.point = Point(0xFFF,0xFFF);
-      editing.step = -1;
-      editing.note = monoMode ? channelConfig->activeNote[channel] : 255;
-      editing.noteCount = 0;
-      editing.time = 0;
+      if(stepEditing.step < 0) return;
+      MLOGD("SEQ", "ResetStepEditing. step %d.", stepEditing.step);
+      if(stepEditing.edited) seqData->EnableTempSnapshot();
+      SaveVelocity(stepEditing.note);
+      stepEditing = StepEditing();
       Device::AnalogInput::DisableDial();
-      if(EndEditing) 
-      {
-        seqData->Comp_EndEditing();
-        seqData->Pick_EndEditing();
-      }
+      seqData->Comp_EndEditing();
+      seqData->Pick_EndEditing();
     }
 
     bool DeleteBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
@@ -942,19 +1004,30 @@ namespace MatrixOS::MidiCenter
         }
         return false;
     }
+    
+    bool UndoBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
+    {
+      if(keyInfo->state == PRESSED)
+      {
+        if(seqData->CanUndo()) seqData->Undo();
+        return true;
+      }
+      return false;
+    }
+
+    bool RedoBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
+    {
+      if(keyInfo->state == PRESSED)
+      {
+        if(seqData->CanRedo()) seqData->Redo();
+        return true;
+      }
+      return false;
+    }
 
     void ResetEditBlock()
     {
-        editBlock.state = EDIT_NONE;
-        editBlock.barStart = -1;
-        editBlock.barEnd = -1;
-        editBlock.stepStart = -1;
-        editBlock.stepEnd = -1;
-        editBlock.loopEditBar = -1;  // 重置 loopEditBar
-        editBlock.copyKeyHeld = false;
-        editBlock.deleteKeyHeld = false;
-        editBlock.deleteBarTarget = Point(-1, -1);
-        editBlock.deleteStepTarget = Point(-1, -1);
+        editBlock = EditBlock();
 
         if (clip->HasLoop()) {
             if (barNum < clip->loopStart || barNum > clip->loopEnd) {
@@ -969,9 +1042,18 @@ namespace MatrixOS::MidiCenter
         {
             case PRESSED:
                 if (mode == NORMAL) {
+                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                    tempSetting.speed = clip->speed; tempSetting.gate = clip->tair;
+                    tempSetting.quantize = clip->quantize; tempSetting.step = clip->barStepMax;
                     ChangeUIMode(SETTING);
                 } else if (mode == SETTING) {
-                    ChangeUIMode(NORMAL);
+                    if(tempSetting.speed != clip->speed || tempSetting.gate != clip->tair || 
+                       tempSetting.quantize != clip->quantize || tempSetting.step != clip->barStepMax)
+                    {
+                      seqData->EnableTempSnapshot();
+                      tempSetting = ClipSettingValue();
+                    }
+                      ChangeUIMode(NORMAL);
                 }
                 return true;
             case HOLD:
@@ -1012,10 +1094,10 @@ namespace MatrixOS::MidiCenter
         switch(keyInfo->state)
         {
             case PRESSED:
-                if (step >= 3) {  // 最小允许3个step
+                if (step >= 3 && clip->barStepMax != step) {  // 最小允许3个step
                     clip->barStepMax = step;
-                    if (editing.step >= 0) {
-                        GateRenderMap(seqData->GetGate(editing.pos, editing.note));
+                    if (stepEditing.step >= 0) {
+                        GateRenderMap(seqData->GetGate(stepEditing.pos, stepEditing.note));
                     }
                 }
                 return true;
