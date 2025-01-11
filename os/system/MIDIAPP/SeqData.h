@@ -1361,7 +1361,7 @@ namespace MatrixOS::MidiCenter
               if (automID >= 0) {history.tempSnapshot.automs[automID] = automs[automID];}
           }
       }
-      MLOGD("SEQ", "CreateTempSnapshot. undoPoint %d.", history.currentUndoPoint);
+      //MLOGD("SEQ", "CreateTempSnapshot. undoPoint %d.", history.currentUndoPoint);
     }
 
     void EnableTempSnapshot() {
@@ -1371,12 +1371,12 @@ namespace MatrixOS::MidiCenter
       history.snapshots.push_back(history.tempSnapshot);
       history.lastUndoPoint = history.currentUndoPoint;
       history.currentUndoPoint++;
-      MLOGD("SEQ", "EnableTempSnapshot. lastUndoPoint %d. currentUndoPoint %d.", history.lastUndoPoint, history.currentUndoPoint);
+      //MLOGD("SEQ", "EnableTempSnapshot. lastUndoPoint %d. currentUndoPoint %d.", history.lastUndoPoint, history.currentUndoPoint);
       
       if(history.snapshots.size() > UNDO_POINT_MAX) {
         history.snapshots.erase(history.snapshots.begin());
         history.firstUndoPoint++;
-        MLOGD("SEQ", "Move . firstUndoPoint %d.", history.firstUndoPoint);
+        //MLOGD("SEQ", "Move . firstUndoPoint %d.", history.firstUndoPoint);
       }
       
       history.tempSnapshot = SEQ_Snapshot();
@@ -1409,8 +1409,8 @@ namespace MatrixOS::MidiCenter
             SEQ_Pos automPos = newAutom.Position();
             AddAutom(newAutom, automPos);
         }
-        MLOGD("SEQ", "Restorechannel %d. clip %d.", it->position.ChannelNum(), it->position.ClipNum());
-        MLOGD("SEQ", "lastUndoPoint %d. currentUndoPoint %d.", history.lastUndoPoint, history.currentUndoPoint);
+        //MLOGD("SEQ", "Restorechannel %d. clip %d.", it->position.ChannelNum(), it->position.ClipNum());
+        //MLOGD("SEQ", "lastUndoPoint %d. currentUndoPoint %d.", history.lastUndoPoint, history.currentUndoPoint);
     }
 
     // 删除还原点之后的快照

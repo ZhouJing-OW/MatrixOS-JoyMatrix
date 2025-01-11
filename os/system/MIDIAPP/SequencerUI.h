@@ -967,7 +967,6 @@ namespace MatrixOS::MidiCenter
     void ResetStepEditing()
     {
       if(stepEditing.step < 0) return;
-      MLOGD("SEQ", "ResetStepEditing. step %d.", stepEditing.step);
       if(stepEditing.edited) seqData->EnableTempSnapshot();
       SaveVelocity(stepEditing.note);
       stepEditing = StepEditing();
