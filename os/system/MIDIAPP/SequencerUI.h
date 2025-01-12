@@ -149,6 +149,7 @@ namespace MatrixOS::MidiCenter
     bool        monoMode      = false;
     bool        transOctaveSuccess = false;
     bool        shiftBarSuccess = false;
+    bool        hasNotes = false; 
 
     KnobConfig velocityKnob   = {.lock = true, .data{.varPtr = &stepEditing.velocity}, .min = 1, .max = 127, .def = 127, .color = Color(LAWN)  };
 
@@ -211,12 +212,12 @@ namespace MatrixOS::MidiCenter
                 ButtonRender(origin, copyBtnPos, editBlock.copyKeyHeld ? Color(WHITE) : copyBtnColor);
                 ButtonRender(origin, deleteBtnPos, editBlock.deleteKeyHeld ? Color(WHITE) : deleteBtnColor);
                 ButtonRender(origin, settingBtnPos, Color(settingBtnColor).Dim());
-                ButtonRender(origin, leftShiftBtnPos, shiftBarSuccess ? leftShiftBtnColor[1] : leftShiftBtnColor[0]);
-                ButtonRender(origin, rightShiftBtnPos, shiftBarSuccess ? rightShiftBtnColor[1] : rightShiftBtnColor[0]);
+                ButtonRender(origin, leftShiftBtnPos, Color(leftShiftBtnColor[shiftBarSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, rightShiftBtnPos, Color(rightShiftBtnColor[shiftBarSuccess]).DimIfNot(hasNotes));
                 ButtonRender(origin, undoBtnPos, Color(undoBtnColor).DimIfNot(seqData->CanUndo()));
                 ButtonRender(origin, redoBtnPos, Color(redoBtnColor).DimIfNot(seqData->CanRedo()));
-                ButtonRender(origin, transUpBtnPos, transOctaveSuccess ? transUpBtnColor[1] : transUpBtnColor[0]);
-                ButtonRender(origin, transDownBtnPos, transOctaveSuccess ? transUpBtnColor[1] : transDownBtnColor[0]);
+                ButtonRender(origin, transUpBtnPos, Color(transUpBtnColor[transOctaveSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, transDownBtnPos, Color(transDownBtnColor[transOctaveSuccess]).DimIfNot(hasNotes));
             }
             break;
         case TRIPLET:  
@@ -351,6 +352,8 @@ namespace MatrixOS::MidiCenter
   private:
     void StateCheck(Point origin)
     {
+      if (!seqData) return;
+
       channel = MatrixOS::UserVar::global_channel;
       clipNum = seqData->EditingClip(channel);
       clip    = seqData->Clip(channel, clipNum);
@@ -366,6 +369,15 @@ namespace MatrixOS::MidiCenter
 
       if (sequencer->recording) {
         clip->activeBar = sequencer->playHead / STEP_MAX;
+      }
+
+      if (stepEditing.step >= 0) {
+        SEQ_Step* step = seqData->Step(stepEditing.pos);
+        if (step) {
+          hasNotes = !step->Empty();
+        }
+      } else {
+        hasNotes = !seqData->ClipEmpty(channel, clipNum);
       }
 
       PadType padTypeNow = (PadType)channelConfig->padType[channel];
@@ -1003,20 +1015,10 @@ namespace MatrixOS::MidiCenter
 
     bool ShiftBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo, bool isLeft)
     {
-        if (!clip) return false;
-
-        // 检查是否有音符
-        bool hasNotes = false;
-        if (stepEditing.step >= 0) {
-            // 编辑模式下检查当前step是否有音符
-            SEQ_Step* step = seqData->Step(stepEditing.pos);
-            hasNotes = step && !step->Empty();
-        } else {
-            // 非编辑模式下检查整个clip是否有音符
-            hasNotes = !seqData->ClipEmpty(channel, clipNum);
+        if (!clip || !hasNotes) {
+          if(shiftBarSuccess) shiftBarSuccess = false;
+          return false;
         }
-
-        if (!hasNotes) return false;  // 如果没有音符则不进行移动
 
         if(keyInfo->state == RELEASED)
         { 
@@ -1062,20 +1064,10 @@ namespace MatrixOS::MidiCenter
 
     bool TransBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo, bool isUp)
     {
-        if (!clip) return false;
-
-        // 检查是否有音符
-        bool hasNotes = false;
-        if (stepEditing.step >= 0) {
-            // 编辑模式下检查当前step是否有音符
-            SEQ_Step* step = seqData->Step(stepEditing.pos);
-            hasNotes = step && !step->Empty();
-        } else {
-            // 非编辑模式下检查整个clip是否有音符
-            hasNotes = !seqData->ClipEmpty(channel, clipNum);
+        if (!clip || !hasNotes) {
+          if(transOctaveSuccess) transOctaveSuccess = false;
+          return false;
         }
-
-        if (!hasNotes) return false;  // 如果没有音符则不进行转调
 
         int8_t padType = channelConfig->padType[channel];
         if(keyInfo->state == RELEASED)
@@ -1134,11 +1126,8 @@ namespace MatrixOS::MidiCenter
         uint8_t editNum = stepEditing.step - (stepEditing.step / STEP_MAX - 1 ) * invaildStep;
         uint8_t gate = stepNum - editNum;
         uint8_t currentGate = seqData->GetGate(stepEditing.pos, stepEditing.note);
-        if(seqData->GetGate(stepEditing.pos, stepEditing.note) != gate)
-        {
-          seqData->SetGate(stepEditing.pos, gate == currentGate ? 0 : gate, stepEditing.note);
-          stepEditing.edited = true;
-        }
+        seqData->SetGate(stepEditing.pos, gate == currentGate ? 0 : gate, stepEditing.note);
+        stepEditing.edited = true;
         GateRenderMap(seqData->GetGate(stepEditing.pos, stepEditing.note));
     }
 

@@ -1141,7 +1141,7 @@ namespace MatrixOS::MidiCenter
         }
     }
 
-    void            TransposeStep(SEQ_Pos position, int8_t interval, uint16_t scale = 0b111111111111,  uint8_t root = 0, uint8_t note = 255)
+    void            TransposeStep(SEQ_Pos position, int8_t interval, uint16_t scale = 0b111111111111, uint8_t root = 0, uint8_t note = 255)
     {
         SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
         if (!clip) return;
@@ -1153,7 +1153,14 @@ namespace MatrixOS::MidiCenter
         // 根据根音转位音阶
         uint16_t shiftedScale = ((scale << root) | (scale >> (12 - root))) & 0xFFF;
 
-        // 获取需要处理的音符
+        // 收集并排序音符
+        struct NoteInfo {
+            SEQ_Note note;
+            int8_t newNote;
+        };
+        std::vector<NoteInfo> notesToMove;
+
+        // 收集音符并计算新音符值
         std::vector<const SEQ_Note*> notes = step->GetNotes();
         for (const SEQ_Note* stepNote : notes) {
             // 如果指定了音符且不匹配，则跳过
@@ -1161,7 +1168,7 @@ namespace MatrixOS::MidiCenter
 
             // 计算新的音符值
             int8_t newNote = stepNote->note + interval;
-
+            
             // 如果不是八度转调，需要找到最近的音阶音
             if (interval % 12 != 0) {
                 // 计算相对音阶位置
@@ -1193,11 +1200,27 @@ namespace MatrixOS::MidiCenter
 
             // 确保音符在有效范围内
             if (newNote >= 0) {
-                SEQ_Note tempNote = *stepNote;
-                tempNote.note = newNote;
-                DeleteNote(position, stepNote->note, stepNote->offset, true);
-                AddNote(position, tempNote);
+                notesToMove.push_back({*stepNote, newNote});
             }
+        }
+
+        // 根据转调方向排序
+        if (interval > 0) {
+            // 向上转调时从高音到低音处理
+            std::sort(notesToMove.begin(), notesToMove.end(), 
+                [](const NoteInfo& a, const NoteInfo& b) { return a.note.note > b.note.note; });
+        } else {
+            // 向下转调时从低音到高音处理
+            std::sort(notesToMove.begin(), notesToMove.end(), 
+                [](const NoteInfo& a, const NoteInfo& b) { return a.note.note < b.note.note; });
+        }
+
+        // 按排序顺序移动音符
+        for (const auto& noteInfo : notesToMove) {
+            DeleteNote(position, noteInfo.note.note, noteInfo.note.offset, true);
+            SEQ_Note newNote = noteInfo.note;
+            newNote.note = noteInfo.newNote;
+            AddNote(position, newNote);
         }
     }
 
