@@ -548,9 +548,39 @@ namespace MatrixOS::MidiCenter
     uint8_t barStepMax      = STEP_MAX;   // 8 - 16
     int8_t  loopStart       = -1;         // -1 表示未设置 loop
     int8_t  loopEnd         = -1;
+    uint8_t activeBar       = 0;          // 添加activeBar变量
     
     bool HasLoop() const { return loopStart >= 0 && loopEnd >= 0; }
     void ClearLoop() { loopStart = -1; loopEnd = -1; }
+    void SetLoop(int8_t start, int8_t end)
+    {
+        // 确保start和end在有效范围内
+        if (start < 0 || end < 0 || start >= BAR_MAX || end >= BAR_MAX || start > end) {
+            return;
+        }
+        
+        // 如果loop范围超出当前barMax，则更新barMax
+        if (end >= barMax) {
+            barMax = end + 1;
+        }
+        
+        loopStart = start;
+        loopEnd = end;
+
+        checkActiveBar();
+    }
+    void checkActiveBar() {
+      if (!HasLoop())
+      {
+        if (activeBar >= barMax) {
+          activeBar = barMax - 1;
+        }
+      } else {
+        if (activeBar > loopEnd || activeBar < loopStart) {
+          activeBar = loopStart;
+        }
+      }
+    }
 
   private:
     std::bitset<BAR_MAX * STEP_MAX>  stepMark;
@@ -575,6 +605,7 @@ namespace MatrixOS::MidiCenter
       this->barStepMax = src.barStepMax;
       this->loopStart = src.loopStart;
       this->loopEnd = src.loopEnd;
+      this->activeBar = src.activeBar;
     }
 
     int16_t         StepID (uint8_t BarNum, uint8_t stepNum) const 
@@ -646,7 +677,7 @@ namespace MatrixOS::MidiCenter
     bool changed = false;
 
    public:
-    PickBlock        Pick(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    PickBlock         Pick(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if(channel != MatrixOS::UserVar::global_channel) return UNBLOCK;
 
@@ -660,7 +691,7 @@ namespace MatrixOS::MidiCenter
       return UNBLOCK;
     }
 
-    PickBlock        EditPick(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    PickBlock         EditPick(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if (byte2 > 0) 
       {
@@ -680,7 +711,7 @@ namespace MatrixOS::MidiCenter
       return PickBlock(transportState.play);
     }
 
-    PickBlock        NormalPick(uint8_t channel, uint8_t byte1, uint8_t byte2)
+    PickBlock         NormalPick(uint8_t channel, uint8_t byte1, uint8_t byte2)
     {
       if (byte2 > 0) 
       {
@@ -694,7 +725,7 @@ namespace MatrixOS::MidiCenter
       return UNBLOCK;
     }
 
-    void            ChangeState(PickState changeState , bool updatePick = false)
+    void              ChangeState(PickState changeState , bool updatePick = false)
     {
       switch(changeState)
       {
@@ -709,7 +740,7 @@ namespace MatrixOS::MidiCenter
       this->state = changeState;
     }
 
-    void            Editing(SEQ_Pos pos, SEQ_Step* step)
+    void              Editing(SEQ_Pos pos, SEQ_Step* step)
     {
       editingStepEmpty = step->NoteEmpty();
       if (!inputList.empty())
@@ -718,7 +749,7 @@ namespace MatrixOS::MidiCenter
       ChangeState(PICK_EDIT);
     }
 
-    void            Clear(bool resetState = true)
+    void              Clear(bool resetState = true)
     {
       if(resetState) state = PICK_NORMAL;
       CNTR_SeqEditStep.clear();
@@ -728,20 +759,20 @@ namespace MatrixOS::MidiCenter
       changed = false;
     }
 
-    void            EndEditing()
+    void              EndEditing()
     {
       state = PICK_NORMAL;
       CNTR_SeqEditStep.clear();
     }
 
-    bool            EditingStepEmpty() const { return editingStepEmpty; }
+    bool              EditingStepEmpty() const { return editingStepEmpty; }
 
-    bool            Changed() const { return changed; }
+    bool              Changed() const { return changed; }
 
-    SEQ_Step*       GetPick(){return &capStep;}
+    SEQ_Step*         GetPick(){return &capStep;}
   };
 
-  struct SEQ_Snapshot {
+  struct  SEQ_Snapshot {
     int16_t undoPoint = -1;
     SEQ_Pos position = SEQ_Pos(0);
     SEQ_Clip clip;                      // 保存整个clip
@@ -749,10 +780,11 @@ namespace MatrixOS::MidiCenter
     std::map<int16_t, SEQ_Autom> automs;// 保存clip引用的所有automs
   };
 
-  struct SEQ_History
+  struct  SEQ_History
   {
     std::vector<SEQ_Snapshot, PSRAMAllocator<SEQ_Snapshot>> snapshots; 
     SEQ_Snapshot tempSnapshot;
+    uint32_t timestamp = 0;
     int16_t currentUndoPoint = 0;
     int16_t lastUndoPoint = 0;
     int16_t firstUndoPoint = 0;
@@ -893,6 +925,25 @@ namespace MatrixOS::MidiCenter
           stepChanged.insert(StepID(position));
     }
 
+    void            CopyNote(SEQ_Pos src, SEQ_Pos dst, uint8_t note)
+    {
+        // 1. 检查源位置是否有指定音符
+        if (!FindNote(src, note)) return;
+
+        // 2. 获取源位置的 step
+        SEQ_Step* srcStep = Step(src);
+        if (!srcStep) return;
+
+        // 3. 获取音符列表并找到目标音符
+        std::vector<const SEQ_Note*> notes = srcStep->GetNotes();
+        for (const SEQ_Note* srcNote : notes) {
+            if (srcNote->note == note) {
+                AddNote(dst, *srcNote);
+                break;
+            }
+        }
+    }
+    
     //------------------------------------COMP-------------------------------------//
 
     bool            Comp_InEditing() { return !compEdit.empty(); }
@@ -1042,6 +1093,114 @@ namespace MatrixOS::MidiCenter
       stepChanged.insert(StepID(dst));
     }
 
+    void            ShiftStep(SEQ_Pos position, int8_t distance, uint8_t note = 255)
+    {
+        SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
+        if (!clip || distance == 0) return;
+
+        // 获取当前step
+        SEQ_Step* step = Step(position);
+        if (!step) return;
+
+        // 确定移动范围
+        uint16_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+        uint16_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+        uint16_t totalSteps = (endBar - startBar + 1) * clip->barStepMax;
+
+        // 计算当前位置相对于范围起点的偏移
+        int32_t relativePos = (position.BarNum() - startBar) * clip->barStepMax + position.Number();
+        
+        // 计算新位置
+        int32_t newRelativePos = relativePos + distance;
+        while (newRelativePos < 0) newRelativePos += totalSteps;
+        newRelativePos %= totalSteps;
+        
+        // 转换回绝对位置
+        uint16_t newBar = startBar + (newRelativePos / clip->barStepMax);
+        uint16_t newStep = newRelativePos % clip->barStepMax;
+        SEQ_Pos newPos(position.ChannelNum(), position.ClipNum(), newBar, newStep);
+
+        if (note != 255) {
+            // 移动特定音符
+            if (step->FindNote(note)) {
+                std::vector<const SEQ_Note*> notes = step->GetNotes();
+                for (const SEQ_Note* stepNote : notes) {
+                    if (stepNote->note == note) {
+                        // 先添加到新位置
+                        AddNote(newPos, *stepNote);
+                        // 再从原位置删除
+                        DeleteNote(position, note, stepNote->offset, true);
+                    }
+                }
+            }
+        } else {
+            // 移动整个step
+            SEQ_Step tempStep = *step;
+            DeleteStep(position);
+            AddStep(tempStep, newPos);
+        }
+    }
+
+    void            TransposeStep(SEQ_Pos position, int8_t interval, uint16_t scale = 0b111111111111,  uint8_t root = 0, uint8_t note = 255)
+    {
+        SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
+        if (!clip) return;
+
+        // 获取当前step
+        SEQ_Step* step = Step(position);
+        if (!step) return;
+
+        // 根据根音转位音阶
+        uint16_t shiftedScale = ((scale << root) | (scale >> (12 - root))) & 0xFFF;
+
+        // 获取需要处理的音符
+        std::vector<const SEQ_Note*> notes = step->GetNotes();
+        for (const SEQ_Note* stepNote : notes) {
+            // 如果指定了音符且不匹配，则跳过
+            if (note != 255 && stepNote->note != note) continue;
+
+            // 计算新的音符值
+            int8_t newNote = stepNote->note + interval;
+
+            // 如果不是八度转调，需要找到最近的音阶音
+            if (interval % 12 != 0) {
+                // 计算相对音阶位置
+                int8_t notePos = (newNote + 12) % 12;
+                
+                // 如果新位置不在音阶内，根据转调方向寻找最近的音阶音
+                if (!(shiftedScale & (1 << notePos))) {
+                    if (interval > 0) {
+                        // 向上找最近的音阶音
+                        for (int8_t i = 0; i < 12; i++) {
+                            int8_t testPos = (notePos + i) % 12;
+                            if (shiftedScale & (1 << testPos)) {
+                                newNote += i;
+                                break;
+                            }
+                        }
+                    } else {
+                        // 向下找最近的音阶音
+                        for (int8_t i = 0; i < 12; i++) {
+                            int8_t testPos = (notePos - i + 12) % 12;
+                            if (shiftedScale & (1 << testPos)) {
+                                newNote -= i;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 确保音符在有效范围内
+            if (newNote >= 0) {
+                SEQ_Note tempNote = *stepNote;
+                tempNote.note = newNote;
+                DeleteNote(position, stepNote->note, stepNote->offset, true);
+                AddNote(position, tempNote);
+            }
+        }
+    }
+
     //------------------------------------AUTOM------------------------------------//
 
     SEQ_Autom*      Autom(SEQ_Pos position, bool AddNew = false) 
@@ -1086,12 +1245,53 @@ namespace MatrixOS::MidiCenter
       { CopyAutom(SEQ_Pos(src.ChannelNum(), src.ClipNum(), src.BarNum(), a), SEQ_Pos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), a)); }
     }
 
-    void            ClearBar(SEQ_Pos pos) 
+    void            ClearBar(SEQ_Pos pos, uint8_t note = 255) 
     { 
-      for (uint8_t s = 0; s < STEP_MAX;  s++) 
-      { DeleteStep (SEQ_Pos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), s)); }
-      for (uint8_t a = 0; a < AUTOM_MAX; a++)
-      { DeleteAutom(SEQ_Pos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), a)); }
+        SEQ_Clip* clip = Clip(pos.ChannelNum(), pos.ClipNum());
+        if (!clip) return;
+
+        // 如果指定了音符，则只处理该音符
+        if (note != 255) {
+            bool hasOtherNotes = false;
+            for (uint8_t s = 0; s < STEP_MAX; s++) {
+                SEQ_Pos stepPos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), s);
+                SEQ_Step* step = Step(stepPos);
+                if (step) {
+                    if (step->FindNote(note)) {
+                        // 获取所有音符并逐个检查删除
+                        std::vector<const SEQ_Note*> notes = step->GetNotes();
+                        for (const SEQ_Note* stepNote : notes) {
+                            if (stepNote->note == note) {
+                                DeleteNote(stepPos, note, stepNote->offset, true);
+                            }
+                        }
+                    }
+                    if (!step->NoteEmpty()) {
+                        hasOtherNotes = true;
+                    }
+                }
+            }
+            // 如果是最后一个bar且没有任何音符，则删除整个bar
+            if (pos.BarNum() == clip->barMax - 1 && !hasOtherNotes) {
+                clip->barMax--;
+                clip->checkActiveBar();
+            }
+            return;
+        }
+
+        // 清空当前bar的所有内容
+        for (uint8_t s = 0; s < STEP_MAX; s++) {
+            DeleteStep(SEQ_Pos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), s));
+        }
+        for (uint8_t a = 0; a < AUTOM_MAX; a++) {
+            DeleteAutom(SEQ_Pos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), a));
+        }
+
+        // 如果是最后一个bar且不是第一个bar，则删除这个bar
+        if (pos.BarNum() > 0 && pos.BarNum() == clip->barMax - 1) {
+            clip->barMax--;
+            clip->checkActiveBar();
+        }
     }
 
     //------------------------------------CLIP-------------------------------------//
@@ -1138,6 +1338,117 @@ namespace MatrixOS::MidiCenter
           CopyAutom(SEQ_Pos(channel_src, clip_src, bar, a), SEQ_Pos(channel_dst, clip_dst, bar, a));
       }
       Clip(channel_dst, clip_dst)->CopySettings(*Clip(channel_src, clip_src));
+    }
+
+    void            ShiftClip(SEQ_Pos position, int8_t distance, uint8_t note = 255)
+    {
+        SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
+        if (!clip || distance == 0) return;
+
+        // 确定移动范围
+        uint16_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+        uint16_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+        uint16_t totalSteps = (endBar - startBar + 1) * clip->barStepMax;
+
+        // 使用map存储所有需要移动的steps，键为原始位置
+        std::map<SEQ_Pos, SEQ_Step> tempSteps;
+        
+        // 1. 收集所有需要移动的steps
+        for (uint16_t bar = startBar; bar <= endBar; bar++) {
+            for (uint16_t step = 0; step < clip->barStepMax; step++) {
+                SEQ_Pos curPos(position.ChannelNum(), position.ClipNum(), bar, step);
+                SEQ_Step* curStep = Step(curPos);
+                if (curStep) {
+                    if (note != 255) {
+                        // 只移动特定音符
+                        if (curStep->FindNote(note)) {
+                            SEQ_Step newStep;
+                            std::vector<const SEQ_Note*> notes = curStep->GetNotes();
+                            for (const SEQ_Note* stepNote : notes) {
+                                if (stepNote->note == note) {
+                                    newStep.AddNote(*stepNote);
+                                }
+                            }
+                            if (!newStep.Empty()) {
+                                tempSteps[curPos] = newStep;
+                            }
+                        }
+                    } else {
+                        // 移动整个step
+                        tempSteps[curPos] = *curStep;
+                    }
+                }
+            }
+        }
+
+        // 2. 删除原位置的steps/notes
+        for (const auto& pair : tempSteps) {
+            SEQ_Pos oldPos = pair.first;
+            if (note != 255) {
+                SEQ_Step* step = Step(oldPos);
+                if (step) {
+                    step->DeleteNote(note);
+                    if (step->Empty()) {
+                        DeleteStep(oldPos);
+                    }
+                }
+            } else {
+                DeleteStep(oldPos);
+            }
+        }
+
+        // 3. 将steps写入新位置
+        for (const auto& pair : tempSteps) {
+            SEQ_Pos oldPos = pair.first;
+            SEQ_Step step = pair.second;
+            
+            // 计算相对位置
+            int32_t relativePos = (oldPos.BarNum() - startBar) * clip->barStepMax + oldPos.Number();
+            
+            // 计算新位置
+            int32_t newRelativePos = relativePos + distance;
+            while (newRelativePos < 0) newRelativePos += totalSteps;
+            newRelativePos %= totalSteps;
+            
+            // 转换回绝对位置
+            uint16_t newBar = startBar + (newRelativePos / clip->barStepMax);
+            uint16_t newStep = newRelativePos % clip->barStepMax;
+            
+            // 添加到新位置
+            SEQ_Pos newPos(position.ChannelNum(), position.ClipNum(), newBar, newStep);
+            if (note != 255) {
+                // 如果是移动特定音符，需要将音符添加到目标位置的step中
+                std::vector<const SEQ_Note*> notes = step.GetNotes();
+                for (const SEQ_Note* stepNote : notes) {
+                    AddNote(newPos, *stepNote);
+                }
+            } else {
+                // 如果是移动整个step，直接添加step
+                AddStep(step, newPos);
+            }
+        }
+    }
+
+    void            TransposeClip(SEQ_Pos position, int8_t interval, uint16_t scale = 0b111111111111, uint8_t root = 0, uint8_t note = 255)
+    {
+        SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
+        if (!clip) return;
+
+        // 确定转调范围
+        uint16_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+        uint16_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+
+        // 遍历范围内的所有steps
+        for (uint16_t bar = startBar; bar <= endBar; bar++) {
+            for (uint16_t step = 0; step < clip->barStepMax; step++) {
+                SEQ_Pos stepPos(position.ChannelNum(), position.ClipNum(), bar, step);
+                SEQ_Step* curStep = Step(stepPos);
+                if (curStep) {
+                    // 对当前step进行转调
+                    TransposeStep(stepPos, interval, scale, root, note);
+                }
+            }
+        }
     }
 
     //------------------------------------PATTERN----------------------------------//
@@ -1219,125 +1530,24 @@ namespace MatrixOS::MidiCenter
 
     void            Pick_EndEditing() { pick.EndEditing(); }
 
-    void CopyNote(SEQ_Pos src, SEQ_Pos dst, uint8_t note)
-    {
-        // 1. 检查源位置是否有指定音符
-        if (!FindNote(src, note)) return;
-
-        // 2. 获取源位置的 step
-        SEQ_Step* srcStep = Step(src);
-        if (!srcStep) return;
-
-        // 3. 获取音符列表并找到目标音符
-        std::vector<const SEQ_Note*> notes = srcStep->GetNotes();
-        for (const SEQ_Note* srcNote : notes) {
-            if (srcNote->note == note) {
-                AddNote(dst, *srcNote);
-                break;
-            }
-        }
-    }
-
-    void ShiftSteps(SEQ_Pos position, int8_t distance, uint8_t note = 255) {
-        SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
-        if (!clip || distance == 0) return;
-
-        // 确定移动范围
-        uint16_t startBar = clip->HasLoop() ? clip->loopStart : 0;
-        uint16_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
-        uint16_t totalSteps = (endBar - startBar + 1) * clip->barStepMax;
-
-        // 如果是移动所有音符
-        if (note == 255) {
-            std::map<int32_t, SEQ_Step> tempSteps;
-            
-            // 1. 收集所有steps并记录其原始位置
-            for (uint16_t bar = startBar; bar <= endBar; bar++) {
-                for (uint16_t step = 0; step < clip->barStepMax; step++) {
-                    SEQ_Pos curPos(position.ChannelNum(), position.ClipNum(), bar, step);
-                    int16_t stepID = clip->StepID(bar, step);
-                    if (stepID >= 0) {
-                        tempSteps[stepID] = steps[stepID];
-                        // 删除原位置的step
-                        DeleteStep(curPos);
-                    }
-                }
-            }
-
-            // 2. 将steps写入新位置
-            for (const auto& pair : tempSteps) {
-                SEQ_Step step = pair.second;
-                SEQ_Pos oldPos = step.Position();
-                
-                // 计算相对位置
-                int32_t relativePos = (oldPos.BarNum() - startBar) * clip->barStepMax + oldPos.Number();
-                
-                // 计算新位置
-                int32_t newRelativePos = relativePos + distance;
-                while (newRelativePos < 0) newRelativePos += totalSteps;
-                newRelativePos %= totalSteps;
-                
-                // 转换回绝对位置
-                uint16_t newBar = startBar + (newRelativePos / clip->barStepMax);
-                uint16_t newStep = newRelativePos % clip->barStepMax;
-                
-                // 添加step到新位置
-                AddStep(step, SEQ_Pos(position.ChannelNum(), position.ClipNum(), newBar, newStep));
-            }
-        }
-        // 如果是移动特定音符
-        else {
-            struct NoteInfo {
-                SEQ_Note note;
-                uint16_t bar;
-                uint16_t step;
-            };
-            std::vector<NoteInfo> notes;
-
-            // 1. 收集所有匹配的音符并删除原位置的音符
-            for (uint16_t bar = startBar; bar <= endBar; bar++) {
-                for (uint16_t step = 0; step < clip->barStepMax; step++) {
-                    SEQ_Step* curStep = Step(SEQ_Pos(position.ChannelNum(), position.ClipNum(), bar, step));
-                    if (curStep && curStep->FindNote(note)) {
-                        std::vector<const SEQ_Note*> stepNotes = curStep->GetNotes();
-                        for (const SEQ_Note* stepNote : stepNotes) {
-                            if (stepNote->note == note) {
-                                notes.push_back({*stepNote, bar, step});
-                            }
-                        }
-                        curStep->DeleteNote(note);
-                        if (curStep->Empty()) {
-                            DeleteStep(SEQ_Pos(position.ChannelNum(), position.ClipNum(), bar, step));
-                        }
-                    }
-                }
-            }
-
-            // 2. 将音符写入新位置
-            for (const auto& noteInfo : notes) {
-                // 计算相对位置
-                int32_t relativePos = (noteInfo.bar - startBar) * clip->barStepMax + noteInfo.step;
-                
-                // 计算新位置
-                int32_t newRelativePos = relativePos + distance;
-                while (newRelativePos < 0) newRelativePos += totalSteps;
-                newRelativePos %= totalSteps;
-                
-                // 转换回绝对位置
-                uint16_t newBar = startBar + (newRelativePos / clip->barStepMax);
-                uint16_t newStep = newRelativePos % clip->barStepMax;
-                
-                // 添加音符到新位置
-                AddNote(SEQ_Pos(position.ChannelNum(), position.ClipNum(), newBar, newStep), 
-                       noteInfo.note);
-            }
-        }
-    }
-
     //----------------------------------UNDO REDO------------------------------------//
 
-    void CreateTempSnapshot(SEQ_Pos position)
+    void            CreateTempSnapshot(SEQ_Pos position, bool ignoreTimeStamp = false)
     {
+      uint32_t timestamp = MatrixOS::SYS::Millis();
+      SEQ_Pos lastPosition = SEQ_Pos(0);
+      if(!history.snapshots.empty()) {
+        lastPosition = history.snapshots.back().position;
+      }
+      // 如果当前快照是同一个clip且时间间隔小于1秒，则不创建新快照
+      if (!ignoreTimeStamp && timestamp - history.timestamp < 1000 &&
+          lastPosition.ChannelNum() == position.ChannelNum() &&
+          lastPosition.ClipNum() == position.ClipNum()) {
+          history.timestamp = timestamp;
+          return;
+      }
+      history.timestamp = ignoreTimeStamp ? 0 : timestamp;
+
       // 暂存clip
       SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
       history.tempSnapshot.clip = *clip;
@@ -1362,7 +1572,7 @@ namespace MatrixOS::MidiCenter
       //MLOGD("SEQ", "CreateTempSnapshot. undoPoint %d.", history.currentUndoPoint);
     }
 
-    void EnableTempSnapshot() {
+    void            EnableTempSnapshot() {
       if(history.tempSnapshot.undoPoint == -1) return;
 
       RemoveSnapshotFrom(history.currentUndoPoint);
@@ -1380,7 +1590,7 @@ namespace MatrixOS::MidiCenter
       history.tempSnapshot = SEQ_Snapshot();
     }
 
-    void RestoreSnapshot(int16_t undoPoint) {
+    void            RestoreSnapshot(int16_t undoPoint) {
         // 查找对应还原点的快照
         if(undoPoint < history.firstUndoPoint || undoPoint > history.lastUndoPoint)  return;
         
@@ -1391,6 +1601,7 @@ namespace MatrixOS::MidiCenter
         SEQ_Clip* clip = Clip(it->position.ChannelNum(), it->position.ClipNum());
         if(!clip) return;
         clip->CopySettings(it->clip);
+        clip->checkActiveBar();
 
         // 3. 还原所有steps
         for (const auto& step : it->steps) {
@@ -1407,12 +1618,14 @@ namespace MatrixOS::MidiCenter
             SEQ_Pos automPos = newAutom.Position();
             AddAutom(newAutom, automPos);
         }
+
+        history.tempSnapshot = SEQ_Snapshot();
+        history.timestamp = 0;
         //MLOGD("SEQ", "Restorechannel %d. clip %d.", it->position.ChannelNum(), it->position.ClipNum());
         //MLOGD("SEQ", "lastUndoPoint %d. currentUndoPoint %d.", history.lastUndoPoint, history.currentUndoPoint);
     }
-
-    // 删除还原点之后的快照
-    void RemoveSnapshotFrom(int16_t undoPoint) {
+  
+    void            RemoveSnapshotFrom(int16_t undoPoint) {
         if (history.snapshots.empty()) return;
         if(undoPoint > history.lastUndoPoint || undoPoint < history.firstUndoPoint) return;
 
@@ -1424,20 +1637,20 @@ namespace MatrixOS::MidiCenter
         history.currentUndoPoint = undoPoint;
     }
     
-    bool CanUndo() const { 
+    bool            CanUndo() const { 
         return history.currentUndoPoint > history.firstUndoPoint; 
     }
 
-    bool CanRedo() const { 
+    bool            CanRedo() const { 
         return history.currentUndoPoint < history.lastUndoPoint; 
     }
 
-    void Undo() {
+    void            Undo() {
         if (!CanUndo()) return;
 
         // 如果当前undo点大于lastUndo点，则需要创建Redo快照
         if(history.lastUndoPoint < history.currentUndoPoint){
-            CreateTempSnapshot(history.snapshots.back().position);
+            CreateTempSnapshot(history.snapshots.back().position, true);
             EnableTempSnapshot();
             history.currentUndoPoint--;
         }
@@ -1446,7 +1659,7 @@ namespace MatrixOS::MidiCenter
         RestoreSnapshot(history.currentUndoPoint);
     }
 
-    void Redo() {
+    void            Redo() {
         if (!CanRedo()) return;
 
         history.currentUndoPoint++;
@@ -1457,6 +1670,8 @@ namespace MatrixOS::MidiCenter
             RemoveSnapshotFrom(history.lastUndoPoint);
         }
     }
+
+    //-------------------------------------------------------------------------------//
 
   private:
     inline int16_t  StepID (SEQ_Pos position) { return Clip(position.ChannelNum(), position.ClipNum())->StepID (position.BarNum(), position.Number()); }
