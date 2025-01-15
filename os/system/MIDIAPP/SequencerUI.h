@@ -14,15 +14,15 @@ namespace MatrixOS::MidiCenter
     enum EditState : uint8_t {EDIT_NONE, COPY_BAR, COPY_STEP,};
 
     struct StepEditing {
-      bool edited           = false;
-      SEQ_Pos pos           = SEQ_Pos(0);
-      Point   point         = Point(0xFFF, 0xFFF);
-      uint32_t time         = 0;
-      int16_t step          = -1;
-      uint8_t note          = 255;
-      uint8_t noteCount     = 0;
-      int16_t velocity      = -1;
-      int16_t lastVelocity  = -1;
+      bool edited = false;
+      bool editing = false;
+      SEQ_Pos pos = SEQ_Pos(0);
+      Point point = Point(0xFFF, 0xFFF);
+      uint32_t time = 0;
+      uint8_t note = 255;
+      uint8_t noteCount = 0;
+      int16_t velocity = -1;
+      int16_t lastVelocity = -1;
       std::bitset<BAR_MAX * STEP_MAX> gateMap;
     } stepEditing;
 
@@ -371,7 +371,7 @@ namespace MatrixOS::MidiCenter
         clip->activeBar = sequencer->playHead / STEP_MAX;
       }
 
-      if (stepEditing.step >= 0) {
+      if (stepEditing.editing) {
         SEQ_Step* step = seqData->Step(stepEditing.pos);
         if (step) {
           hasNotes = !step->Empty();
@@ -397,7 +397,7 @@ namespace MatrixOS::MidiCenter
 
       //--------------------------------------EDITING--------------------------------------//
 
-      if(stepEditing.step < 0)  
+      if(!stepEditing.editing)  
       {
         return; 
       }
@@ -457,27 +457,30 @@ namespace MatrixOS::MidiCenter
       for(uint8_t x = 0; x < seqArea.x; x++) {
         for(uint8_t y = 0; y < seqArea.y; y++) {
           Point xy = origin + offset + Point(x, y);
-          uint8_t stepNum = x + y * dimension.x + clip->activeBar * STEP_MAX;
+          uint16_t localStep = x + y * dimension.x;
+          uint16_t bar  = localStep / STEP_MAX + clip->activeBar;
+          uint16_t step = localStep % STEP_MAX;
+          uint16_t globalStep = bar * STEP_MAX + step;
+          SEQ_Pos pos = SEQ_Pos(channel, clipNum, bar, step);
           
-          if (stepNum >= clip->barMax * STEP_MAX) 
+          if (bar >= clip->barMax) 
           {
             MatrixOS::LED::SetColor(xy, backColor[0]);
             continue;
           }
           bool playHead = false;  
-          if(sequencer && transportState.play) playHead = sequencer->playHead == stepNum;
+          if(sequencer && transportState.play) playHead = sequencer->playHead == globalStep;
           
-          SEQ_Pos pos = SEQ_Pos(channel, clipNum, stepNum / STEP_MAX, stepNum % STEP_MAX);
-          if(stepNum % STEP_MAX >= clip->barStepMax)
+          if(step % STEP_MAX >= clip->barStepMax)
             MatrixOS::LED::SetColor(xy, backColor[0]);
-          else if (stepEditing.step >= 0 && stepEditing.step == stepNum)   // renderEditing
+          else if (stepEditing.editing && stepEditing.pos == pos)   // renderEditing
           {
             Color thisColor = Color(WHITE);
             uint8_t velocity = seqData->GetVelocity(pos, stepEditing.note);
             uint8_t scale =  velocity * 239 / 127 + 16;
             MatrixOS::LED::SetColor(xy, thisColor.Scale(scale));
           }
-          else if(stepEditing.step >= 0 && stepEditing.gateMap.test(stepNum))
+          else if(stepEditing.editing && stepEditing.gateMap.test(globalStep))
           {
             bool hasNote = seqData->FindNote(pos, stepEditing.note);
             Color thisColor = playHead ? playHeadColor[recording] : stepColor[hasNote];
@@ -504,7 +507,7 @@ namespace MatrixOS::MidiCenter
                 if (editBlock.stepStart >= 0) {
                     int16_t start = std::min(editBlock.stepStart, editBlock.stepEnd);
                     int16_t end = std::max(editBlock.stepStart, editBlock.stepEnd);
-                    if (stepNum >= start && stepNum <= end) {
+                    if (globalStep >= start && globalStep <= end) {
                         thisColor = thisColor.Blink_Color(true, Color(CYAN));
                     }
                 }
@@ -521,7 +524,7 @@ namespace MatrixOS::MidiCenter
                 if (editBlock.stepStart >= 0) {
                     int16_t start = std::min(editBlock.stepStart, editBlock.stepEnd);
                     int16_t end = std::max(editBlock.stepStart, editBlock.stepEnd);
-                    if (stepNum >= start && stepNum <= end) {
+                    if (globalStep >= start && globalStep <= end) {
                         thisColor = thisColor.Blink_Color(true, Color(CYAN).Scale(64));
                     }
                 }
@@ -536,11 +539,13 @@ namespace MatrixOS::MidiCenter
     {
         Point ui = xy - offset;
         uint8_t localStep = ui.x + ui.y * dimension.x;
-        uint8_t globalStep = localStep + clip->activeBar * STEP_MAX;
-        SEQ_Pos pos = SEQ_Pos(channel, clipNum, clip->activeBar, localStep);
+        uint8_t step = localStep % STEP_MAX;
+        uint8_t bar  = localStep / STEP_MAX + clip->activeBar;
+        uint8_t globalStep = bar * STEP_MAX + step;
+        SEQ_Pos pos = SEQ_Pos(channel, clipNum, bar, step);
 
-        // 首先检查步进是否有效
-        if(localStep >= clip->barStepMax || localStep / STEP_MAX >= clip->barMax) return false;
+        // 检查步进是否有效
+        if(step >= clip->barStepMax || bar >= clip->barMax) return false;
 
         // 删除操作
         if (editBlock.deleteKeyHeld) {
@@ -548,7 +553,6 @@ namespace MatrixOS::MidiCenter
             editBlock.deleteStepTarget = ui;  // 使用 deleteStepTarget
             
             if (keyInfo->state == RELEASED && !keyInfo->hold) {
-                if(localStep >= clip->barStepMax) return false;
 
                 if (monoMode) {
                     uint8_t activeNote = channelConfig->activeNote[channel];
@@ -558,11 +562,11 @@ namespace MatrixOS::MidiCenter
                         seqData->DeleteNote(pos, activeNote);
                     }
                 } else {
-                  if(seqData->FindNote(pos)) {
-                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
-                    seqData->EnableTempSnapshot();
-                    seqData->ClearNote(pos);
-                  }
+                    if(seqData->FindNote(pos)) {
+                        seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                        seqData->EnableTempSnapshot();
+                        seqData->ClearNote(pos);
+                    }
                 }
                 editBlock.deleteStepTarget = Point(-1, -1);  // 重置删除目标位置
                 return true;
@@ -572,7 +576,6 @@ namespace MatrixOS::MidiCenter
 
         // 复制操作
         if (editBlock.copyKeyHeld && editBlock.state == COPY_STEP) {
-            if(localStep >= clip->barStepMax) return false;
 
             if (keyInfo->state == PRESSED) {
                 int16_t start = std::min<int16_t>(editBlock.stepStart, editBlock.stepEnd);
@@ -632,71 +635,69 @@ namespace MatrixOS::MidiCenter
         // 普通音符编辑
         switch(monoMode)
         {
-          case true:
+            case true:
+                if(stepEditing.pos == pos && keyInfo->state == RELEASED)
+                {
+                    if(!keyInfo->hold)
+                    {
+                        if(seqData->Pick_SaveSingle(pos)) 
+                            stepEditing.edited = true;
+                        ResetStepEditing();
+                        return true;
+                    }
 
-            if(stepEditing.step == localStep && keyInfo->state == RELEASED)
-            {
-              if(!keyInfo->hold)
-              {
-                if(seqData->Pick_SaveSingle(pos)) 
-                  stepEditing.edited = true;
-                ResetStepEditing();
+                    if(seqData->Pick_SaveHold(pos)) 
+                        stepEditing.edited = true;
+                    ResetStepEditing();
+                    return true;
+                }
+
+                if(keyInfo->state == PRESSED)
+                {
+                    if (stepEditing.editing)
+                    {
+                        if(seqData->FindNote(stepEditing.pos, stepEditing.note))
+                            SetGate(pos);
+                        return true;
+                    }
+
+                    seqData->Pick_Editing(pos);
+                    SetStepEditing(pos, xy);
+                    return true;
+                }
+                return false;
+
+            case false:
+                if(stepEditing.pos == pos && keyInfo->state == RELEASED)
+                {
+                    if(!keyInfo->hold)
+                    {
+                        if(seqData->Pick_SaveClick(pos)) 
+                            stepEditing.edited = true;
+                        ResetStepEditing();
+                        return true;
+                    }
+
+                    if(seqData->Pick_SaveHold(pos)) 
+                        stepEditing.edited = true;
+                    ResetStepEditing();
+                    return true;
+                }
+
+                if (keyInfo->state == PRESSED)
+                {
+                    if (stepEditing.editing)
+                    {
+                        if(seqData->FindNote(stepEditing.pos, stepEditing.note))
+                            SetGate(pos);
+                        return true;
+                    }
+                    seqData->Pick_Editing(pos);
+                    SetStepEditing(pos, xy);
+                    // MLOGD("Seq", "Editing x: %d, y: %d", editingPos.x, editingPos.y);
+                    return true;
+                }
                 return true;
-              }
-
-              if(seqData->Pick_SaveHold(pos)) 
-                stepEditing.edited = true;
-              ResetStepEditing();
-              return true;
-            }
-
-            if(keyInfo->state == PRESSED)
-            {
-              if (stepEditing.step >= 0)
-              {
-                if(seqData->FindNote(stepEditing.pos, stepEditing.note))
-                  SetGate(localStep);
-                return true;
-              }
-
-              seqData->Pick_Editing(pos);
-              SetStepEditing(pos, xy, localStep);
-              return true;
-            }
-            return false;
-        
-          case false:
-
-            if(stepEditing.step == localStep && keyInfo->state == RELEASED)
-            {
-              if(keyInfo->shortHold)
-              {
-                if(seqData->Pick_SaveHold(pos)) 
-                  stepEditing.edited = true;
-                ResetStepEditing();
-                return true;
-              }
-
-              if(seqData->Pick_SaveClick(pos)) 
-                stepEditing.edited = true;
-              ResetStepEditing();
-              return true;
-            }
-
-            if (keyInfo->state == PRESSED)
-            {
-              if (stepEditing.step >= 0)
-              {
-                if(seqData->FindNote(stepEditing.pos, stepEditing.note))
-                  SetGate(localStep);
-                return true;
-              }
-              seqData->Pick_Editing(pos);
-              SetStepEditing(pos, xy, localStep);
-              // MLOGD("Seq", "Editing x: %d, y: %d", editingPos.x, editingPos.y);
-              return true;
-            }
-            return true;
         }
     }
 
@@ -709,7 +710,7 @@ namespace MatrixOS::MidiCenter
     {
       return false;
     }
-    
+
     void BarRender(Point origin, Point offset)
     {
         for (uint8_t x = 0; x < BAR_MAX; x++)
@@ -911,7 +912,7 @@ namespace MatrixOS::MidiCenter
             case PRESSED:
                 if (step >= 3 && clip->barStepMax != step) {  // 最小允许3个step
                     clip->barStepMax = step;
-                    if (stepEditing.step >= 0) {
+                    if (stepEditing.editing) {
                         GateRenderMap(seqData->GetGate(stepEditing.pos, stepEditing.note));
                     }
                 }
@@ -1025,7 +1026,7 @@ namespace MatrixOS::MidiCenter
             shiftBarSuccess = false;  // 松开按键时重置状态
             if(!keyInfo->hold)
             { // 短按：移动一步
-                if (stepEditing.step >= 0) {
+                if (stepEditing.editing) {
                     stepEditing.edited = true;
                     seqData->ShiftStep(stepEditing.pos, 
                         isLeft ? -1 : 1, 
@@ -1042,7 +1043,7 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         { // 长按：移动一个 bar
-            if (stepEditing.step >= 0) {
+            if (stepEditing.editing) {
                 // 如果正在编辑某个step，移动该step一个bar的距离
                 stepEditing.edited = true;
                 seqData->ShiftStep(stepEditing.pos,
@@ -1075,7 +1076,7 @@ namespace MatrixOS::MidiCenter
             transOctaveSuccess = false;  // 松开按键时重置状态
             if(!keyInfo->hold)
             { // 短按：转调一个音程
-                if (stepEditing.step >= 0) {
+                if (stepEditing.editing) {
                     stepEditing.edited = true;
                     seqData->TransposeStep(stepEditing.pos,
                         isUp ? 1 : -1, 
@@ -1096,7 +1097,7 @@ namespace MatrixOS::MidiCenter
         }
         if(keyInfo->state == HOLD)
         { // 长按：转调一个八度
-            if (stepEditing.step >= 0) {
+            if (stepEditing.editing) {
                 // 如果正在编辑某个step，只转调该step一个八度
                 stepEditing.edited = true;
                 seqData->TransposeStep(stepEditing.pos,
@@ -1118,32 +1119,88 @@ namespace MatrixOS::MidiCenter
         return false;
     }
 
-    void SetGate(uint8_t stepNum)
+    void SetGate(SEQ_Pos targetPos)
     {
-        uint8_t invaildStep = STEP_MAX - clip->barStepMax;
-        if(stepNum < stepEditing.step) stepNum += clip->barMax * STEP_MAX;
-        stepNum -= (stepNum / STEP_MAX - 1 ) * invaildStep;
-        uint8_t editNum = stepEditing.step - (stepEditing.step / STEP_MAX - 1 ) * invaildStep;
-        uint8_t gate = stepNum - editNum;
+        // 计算全局step位置
+        uint16_t editStep = stepEditing.pos.BarNum() * STEP_MAX + stepEditing.pos.Number();
+        uint16_t targetStep = targetPos.BarNum() * STEP_MAX + targetPos.Number();
+        
+        // 确定循环范围
+        uint16_t loopStart = (clip->HasLoop() ? clip->loopStart : 0) * STEP_MAX;
+        uint16_t loopEnd = ((clip->HasLoop() ? clip->loopEnd : clip->barMax - 1) + 1) * STEP_MAX - 1;
+        
+        // 计算有效step数
+        uint16_t validSteps = 0;
+        
+        if(targetStep < editStep) {
+            // 如果目标在编辑点之前，计算从编辑点到循环结束的有效step
+            for(uint16_t step = editStep + 1; step <= loopEnd; step++) {
+                if(step % STEP_MAX < clip->barStepMax) {
+                    validSteps++;
+                }
+            }
+            
+            // 加上从循环起始到目标点的有效step
+            for(uint16_t step = loopStart; step <= targetStep; step++) {
+                if(step % STEP_MAX < clip->barStepMax) {
+                    validSteps++;
+                }
+            }
+        } else {
+            // 如果目标在编辑点之后，直接计算中间的有效step
+            for(uint16_t step = editStep + 1; step <= targetStep; step++) {
+                if(step % STEP_MAX < clip->barStepMax) {
+                    validSteps++;
+                }
+            }
+        }
+        
+        // 获取当前gate值并比较
         uint8_t currentGate = seqData->GetGate(stepEditing.pos, stepEditing.note);
-        seqData->SetGate(stepEditing.pos, gate == currentGate ? 0 : gate, stepEditing.note);
+        uint8_t newGate = validSteps;
+        
+        if(newGate == currentGate) {
+            newGate = 0;
+        }
+        
+        seqData->SetGate(stepEditing.pos, newGate, stepEditing.note);
         stepEditing.edited = true;
-        GateRenderMap(seqData->GetGate(stepEditing.pos, stepEditing.note));
+        GateRenderMap(newGate);
     }
 
     void GateRenderMap(uint8_t gateLength)
     {
-        uint8_t inUseStep = clip->barStepMax;
-        uint8_t stepAll = clip->barMax * STEP_MAX;
-        uint8_t tail = gateLength / inUseStep * STEP_MAX + gateLength % inUseStep;
-        uint8_t edit = stepEditing.step;
         stepEditing.gateMap.reset();
-        while (tail)
-        {
-            edit++; tail--;
-            if (edit % STEP_MAX >= inUseStep) edit += STEP_MAX - edit % STEP_MAX;
-            if (edit >= stepAll) edit = 0;
-            stepEditing.gateMap.set(edit);
+        if(gateLength == 0) return;
+        
+        // 设置起始音符位置
+        uint16_t startStep = stepEditing.pos.BarNum() * STEP_MAX + stepEditing.pos.Number();
+        stepEditing.gateMap.set(startStep);
+        
+        // 确定循环范围（以step为单位）
+        uint16_t loopStart = (clip->HasLoop() ? clip->loopStart : 0) * STEP_MAX;
+        uint16_t loopEnd = ((clip->HasLoop() ? clip->loopEnd : clip->barMax - 1) + 1) * STEP_MAX - 1;
+        
+        // 从起始音符后一个step开始计算
+        uint16_t remainLength = gateLength;
+        uint16_t currentStep = startStep + 1;
+        
+        while(remainLength > 0) {
+            // 如果超出循环范围，回到循环起始位置
+            if(currentStep > loopEnd) {
+                currentStep = loopStart;
+            }
+            
+            // 如果当前step在有效范围内（小于当前bar的barStepMax）
+            if(currentStep % STEP_MAX < clip->barStepMax) {
+                stepEditing.gateMap.set(currentStep);
+                remainLength--;
+            }
+            
+            currentStep++;
+            
+            // 防止无限循环（如果所有可用step都已经设置）
+            if(currentStep == startStep) break;
         }
     }
 
@@ -1166,22 +1223,22 @@ namespace MatrixOS::MidiCenter
       Device::AnalogInput::UseDial(xy, &velocityKnob);
     }
 
-    void SetStepEditing(SEQ_Pos pos, Point xy, uint8_t stepNum)
+    void SetStepEditing(SEQ_Pos pos, Point xy)
     { 
-      seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
-      stepEditing.point = xy;
-      stepEditing.pos = pos;
-      stepEditing.step = stepNum;
-      stepEditing.note = monoMode ? channelConfig->activeNote[channel] : 255;
-      stepEditing.noteCount = seqData->NoteCount(pos, stepEditing.note);
-      stepEditing.time = MatrixOS::SYS::Millis();
-      GateRenderMap(seqData->GetGate(pos, stepEditing.note));
-      if(!seqData->NoteEmpty(pos)) EditVelocity(xy, pos);
+        seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+        stepEditing.editing = true;
+        stepEditing.point = xy;
+        stepEditing.pos = pos;
+        stepEditing.note = monoMode ? channelConfig->activeNote[channel] : 255;
+        stepEditing.noteCount = seqData->NoteCount(pos, stepEditing.note);
+        stepEditing.time = MatrixOS::SYS::Millis();
+        GateRenderMap(seqData->GetGate(pos, stepEditing.note));
+        if(!seqData->NoteEmpty(pos)) EditVelocity(xy, pos);
     }
 
     void ResetStepEditing()
     {
-      if(stepEditing.step < 0) return;
+      if(!stepEditing.editing) return;
       if(stepEditing.edited) seqData->EnableTempSnapshot();
       SaveVelocity(stepEditing.note);
       stepEditing = StepEditing();
