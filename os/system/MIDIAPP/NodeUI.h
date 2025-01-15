@@ -12,6 +12,7 @@ namespace MatrixOS::MidiCenter
     public:
     Dimension dimension = Dimension(16, 2);
     int8_t fullScreen = 0;
+    bool enableMiniPad = false;
     uint8_t channel;
     uint8_t channelPrv;
     

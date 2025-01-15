@@ -20,7 +20,10 @@ bool MultiPad::DrumRender(Point origin)
         {
           Color thisColor = GetPadColor((con + i)->byte1);
           thisColor = thisColor != Color(BLANK) ? thisColor : (con + i)->color;
-          MatrixOS::LED::SetColor(xy, thisColor.Blink_Key(Device::KeyPad::fnState));
+          if ((con + i)->byte1 == channelConfig->activeNote[channel])
+            MatrixOS::LED::SetColor(xy, thisColor.Blink_Key(Device::KeyPad::fnState));
+          else
+            MatrixOS::LED::SetColor(xy, thisColor.Scale(64).Blink_Key(Device::KeyPad::fnState));
         }
         else
           MatrixOS::LED::SetColor(xy, Color(BLANK));
@@ -31,10 +34,7 @@ bool MultiPad::DrumRender(Point origin)
         if (i < 16){
           Color thisColor = GetPadColor((con + i)->byte1);
           thisColor = thisColor != Color(BLANK) ? thisColor : (con + i)->color;
-          if ((con + i)->byte1 == channelConfig->activeNote[channel])
-            MatrixOS::LED::SetColor(xy, thisColor.Blink_Key(Device::KeyPad::fnState));
-          else
-            MatrixOS::LED::SetColor(xy, thisColor.Scale(64).Blink_Key(Device::KeyPad::fnState));
+          MatrixOS::LED::SetColor(xy, thisColor.Blink_Key(Device::KeyPad::fnState));
         }
         else
           MatrixOS::LED::SetColor(xy, Color(BLANK));

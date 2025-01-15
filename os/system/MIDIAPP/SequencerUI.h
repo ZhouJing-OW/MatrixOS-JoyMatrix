@@ -101,19 +101,19 @@ namespace MatrixOS::MidiCenter
 
     //-----------------------------------EDITING-----------------------------------//      
 
-    const Point     copyBtnPos           = Point(0, 3);     // 复制按钮移到第四行
+    const Point     copyBtnPos           = Point(13, 2);     // 复制按钮移到第四行
     const Color     copyBtnColor         = Color(CYAN);     // 复制按钮颜色
     const char      copyBtnName[5]       = "Copy";
 
-    const Point     deleteBtnPos         = Point(1, 3);     // 删除按钮移到第四行
+    const Point     deleteBtnPos         = Point(14, 2);     // 删除按钮移到第四行
     const Color     deleteBtnColor       = Color(RED);      // 删除按钮颜色
     const char      deleteBtnName[7]     = "Delete";
 
-    const Point     leftShiftBtnPos      = Point(2, 3);     // 左移按钮位置
+    const Point     leftShiftBtnPos      = Point(0, 3);     // 左移按钮位置
     const Color     leftShiftBtnColor[2] = {Color(GOLD), Color(GOLD_HL)};   // 左移按钮颜色
     const char      leftShiftBtnName[5]  = "Left";
 
-    const Point     rightShiftBtnPos     = Point(3, 3);     // 右移按钮位置
+    const Point     rightShiftBtnPos     = Point(2, 3);     // 右移按钮位置
     const Color     rightShiftBtnColor[2]= {Color(GOLD), Color(GOLD_HL)};   // 右移按钮颜色
     const char      rightShiftBtnName[6] = "Right";
 
@@ -125,11 +125,11 @@ namespace MatrixOS::MidiCenter
     const Color     redoBtnColor         = Color(ORANGE);   // 重做按钮颜色
     const char      redoBtnName[5]       = "Redo";
 
-    const Point     transUpBtnPos    = Point(4, 3);     // 向上转调按钮位置
+    const Point     transUpBtnPos    = Point(1, 2);     // 向上转调按钮位置
     const Color     transUpBtnColor[2]  = {Color(PURPLE), Color(PURPLE_HL)};   // 向上转调按钮颜色
     const char      transUpBtnName[3]= "Up";
 
-    const Point     transDownBtnPos  = Point(5, 3);     // 向下转调按钮位置
+    const Point     transDownBtnPos  = Point(1, 3);     // 向下转调按钮位置
     const Color     transDownBtnColor[2]= {Color(PURPLE), Color(PURPLE_HL)};   // 向下转调按钮颜色
     const char      transDownBtnName[5]= "Down";
 
@@ -167,6 +167,7 @@ namespace MatrixOS::MidiCenter
       monoMode = true;
     else
       monoMode = false;
+    enableMiniPad = true;
   }
 
     ~SequencerUI() { seqData->Pick_EndEditing();}
@@ -179,17 +180,21 @@ namespace MatrixOS::MidiCenter
     {
       switch(mode)
       { 
-        case NORMAL: break;
+        case NORMAL: 
+          enableMiniPad = true; 
+          break;
         case TRIPLET: 
+          enableMiniPad = true;
           break;
         case SETTING: 
           settingLabel = 0;
+          enableMiniPad = false;
           break;
         case COMPONENT:
+          enableMiniPad = false;
           compLabel = 0;
           break;
       }
-
       this->mode = mode;
       shiftBarSuccess = false;
       transOctaveSuccess = false;
@@ -1070,26 +1075,31 @@ namespace MatrixOS::MidiCenter
           return false;
         }
 
+        uint16_t scale = 0xFFF;
+        uint8_t rootKey = 0;
         int8_t padType = channelConfig->padType[channel];
+        if(padType != DRUM_PAD)
+        {
+          scale = notePadConfig[channelConfig->activePadConfig[channel][padType]].scale;
+          rootKey = notePadConfig[channelConfig->activePadConfig[channel][padType]].rootKey;
+        }
+
         if(keyInfo->state == RELEASED)
         { 
             transOctaveSuccess = false;  // 松开按键时重置状态
+
             if(!keyInfo->hold)
             { // 短按：转调一个音程
                 if (stepEditing.editing) {
                     stepEditing.edited = true;
                     seqData->TransposeStep(stepEditing.pos,
-                        isUp ? 1 : -1, 
-                        notePadConfig[channelConfig->activePadConfig[channel][padType]].scale,
-                        notePadConfig[channelConfig->activePadConfig[channel][padType]].rootKey,
+                        isUp ? 1 : -1, scale, rootKey,
                         monoMode ? channelConfig->activeNote[channel] : 255);
                 } else {
                     seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
                     seqData->EnableTempSnapshot();
                     seqData->TransposeClip(SEQ_Pos(channel, clipNum, 0, 0), 
-                        isUp ? 1 : -1, 
-                        notePadConfig[channelConfig->activePadConfig[channel][padType]].scale,
-                        notePadConfig[channelConfig->activePadConfig[channel][padType]].rootKey,
+                        isUp ? 1 : -1, scale, rootKey,
                         monoMode ? channelConfig->activeNote[channel] : 255);
                 }
             }
@@ -1101,16 +1111,14 @@ namespace MatrixOS::MidiCenter
                 // 如果正在编辑某个step，只转调该step一个八度
                 stepEditing.edited = true;
                 seqData->TransposeStep(stepEditing.pos,
-                    isUp ? 12 : -12,
-                    notePadConfig[channelConfig->activePadConfig[channel][padType]].scale,
-                    notePadConfig[channelConfig->activePadConfig[channel][padType]].rootKey,
+                    isUp ? 12 : -12, scale, rootKey,
                     monoMode ? channelConfig->activeNote[channel] : 255);
             } else {
                 // 否则转调整个clip
+                seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                seqData->EnableTempSnapshot();
                 seqData->TransposeClip(SEQ_Pos(channel, clipNum, 0, 0), 
-                    isUp ? 12 : -12,
-                    notePadConfig[channelConfig->activePadConfig[channel][padType]].scale,
-                    notePadConfig[channelConfig->activePadConfig[channel][padType]].rootKey,
+                    isUp ? 12 : -12, scale, rootKey,
                     monoMode ? channelConfig->activeNote[channel] : 255);
             }
             transOctaveSuccess = true;  // 设置转调成功状态

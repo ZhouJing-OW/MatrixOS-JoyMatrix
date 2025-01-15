@@ -24,6 +24,10 @@ namespace MatrixOS::MidiCenter
     int8_t largePad[16];
     bool holdFN = false;
 
+    enum MultiPadType                       { FULL_PAD,         HALF_PAD,           MINI_PAD };
+    const Point MultiPadOrigin[3] =         {Point(0, 0),       Point(0, 2),        Point(4, 2)};
+    const Dimension MultiPadDimension[3] =  {Dimension(16, 4),  Dimension(16, 2),   Dimension(8, 2)};
+
     MidiAppUI(Dimension dimension = Dimension(16, 4))
     {
       this->dimension = dimension;
@@ -97,12 +101,12 @@ namespace MatrixOS::MidiCenter
 
       if(largePad[channel] && !Device::KeyPad::fnState.active())                                                         // full screen keyboard
       {
-        multiPad->dimension = Dimension(16, 4);
         Color chordColor = nodesInfo[NODE_CHORD].color;
         Color arpColor = nodesInfo[NODE_ARP].color;
         MatrixOS::LED::SetColor(Point(0, 0), Color(chordColor).DimIfNot(FindNode(NODE_CHORD)));
         MatrixOS::LED::SetColor(Point(0, 1), Color(arpColor).DimIfNot(FindNode(NODE_ARP)));
-        multiPad->Render(origin);
+        multiPad->dimension = MultiPadDimension[FULL_PAD];
+        multiPad->Render(origin + MultiPadOrigin[FULL_PAD]);
         return true;
       }
 
@@ -111,10 +115,16 @@ namespace MatrixOS::MidiCenter
           MatrixOS::LED::SetColor(Point(x, y) + origin, Color(BLANK));
       // MatrixOS::LED::SetColor(origin, Color(RED));                                  // the back button
 
-      if(ui != nullptr && ui->fullScreen && !Device::KeyPad::fnState.active())      // full screen node
-      { ui->Render(origin); return true; }
-
-
+      if(ui != nullptr && ui->fullScreen && !Device::KeyPad::fnState.active())
+      { 
+        ui->Render(origin); 
+        if(ui->enableMiniPad)
+        {
+            multiPad->dimension = MultiPadDimension[MINI_PAD];
+            multiPad->Render(origin + MultiPadOrigin[MINI_PAD]);
+        }
+        return true; 
+      }
 
       if (Device::KeyPad::fnState.active() || activeUI[channel] == NODE_NONE)       // node router
       {
@@ -134,8 +144,8 @@ namespace MatrixOS::MidiCenter
       }
       else if (ui != nullptr)                                          
         ui->Render(origin);                                                         // half screen ui
-      multiPad->dimension = Dimension(16, 2);                                       // half screen keyboard
-      multiPad->Render(origin + Point(0, 2));
+      multiPad->dimension = MultiPadDimension[HALF_PAD];
+      multiPad->Render(origin + MultiPadOrigin[HALF_PAD]);
 
       return true;
     }
@@ -144,7 +154,7 @@ namespace MatrixOS::MidiCenter
 
       if (Device::KeyPad::fnState.active() || activeUI[channel] == NODE_NONE)
       {
-        if (xy.y > 1)  return multiPad->KeyEvent(xy - Point(0, 2), keyInfo);
+        if (xy.y > 1)  return multiPad->KeyEvent(xy - MultiPadOrigin[HALF_PAD], keyInfo);
         switch(xy.x)
         {
           case 2: case 3: case 4: case 5:
@@ -165,7 +175,7 @@ namespace MatrixOS::MidiCenter
       {
         if (largePad[channel])
         {
-          if (multiPad->KeyEvent(xy, keyInfo)) return true; // full screen keyboard
+          if (multiPad->KeyEvent(xy - MultiPadOrigin[FULL_PAD], keyInfo)) return true; // full screen keyboard
 
           if (xy == Point(0, 0)) // chord
           {
@@ -189,10 +199,21 @@ namespace MatrixOS::MidiCenter
         }
         else
         {
-          if (ui != nullptr && ui->fullScreen) return ui->KeyEvent(xy, keyInfo);
+          if (ui != nullptr && ui->fullScreen)
+          {
+            if(ui->enableMiniPad)
+            {
+                if(xy.x >= MultiPadOrigin[MINI_PAD].x && xy.x < MultiPadOrigin[MINI_PAD].x + MultiPadDimension[MINI_PAD].x &&
+                   xy.y >= MultiPadOrigin[MINI_PAD].y && xy.y < MultiPadOrigin[MINI_PAD].y + MultiPadDimension[MINI_PAD].y)
+                {
+                    return multiPad->KeyEvent(xy - MultiPadOrigin[MINI_PAD], keyInfo);
+                }
+            }
+            return ui->KeyEvent(xy, keyInfo);
+          }
 
-          if (xy.y > 1)  return multiPad->KeyEvent(xy - Point(0, 2), keyInfo);      // half screen keyboard
-          else if (ui != nullptr) return ui->KeyEvent(xy, keyInfo);                 // half screen ui
+          if (xy.y > 1)  return multiPad->KeyEvent(xy - MultiPadOrigin[HALF_PAD], keyInfo);       // half screen keyboard
+          else if (ui != nullptr) return ui->KeyEvent(xy, keyInfo);                               // half screen ui
         }
       }
 

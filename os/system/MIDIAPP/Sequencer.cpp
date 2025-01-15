@@ -106,6 +106,7 @@ namespace MatrixOS::MidiCenter
       uint16_t loopEnd = clip->loopEnd * STEP_MAX + clip->barStepMax;
 
       if(head >= loopEnd) { head = loopStart; }
+      if(head < loopStart) { head = loopStart + currentStep; }
 
       if (recording) {
         if (!HasNoteInRange(channel, clipNum, clip->loopStart, clip->loopEnd)) {
