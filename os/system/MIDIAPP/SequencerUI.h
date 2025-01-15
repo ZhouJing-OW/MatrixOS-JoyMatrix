@@ -54,7 +54,7 @@ namespace MatrixOS::MidiCenter
     const Color stepColor[2]          ={Color(LAWN_LS),             Color(LAWN)};                                    // poly, mono
     const Color backColor[3]          ={Color(BLANK),               Color(BLUE).Scale(8),    Color(CYAN).Scale(8)};  // invalid Step, poly track, mono track
     const Color barColor[3]           ={Color(VIOLET).Scale(8),     Color(BLUE_LS),          Color(BLUE)};           // noBar, hasBar, hasNote
-    const Color loopBarColor[3]       ={Color(VIOLET).Scale(8),     Color(VIOLET_HL),        Color(VIOLET)};         // noBar, hasBar, hasNote
+    const Color loopBarColor[3]       ={Color(RED).Scale(8),     Color(VIOLET_HL),        Color(VIOLET)};         // noBar, hasBar, hasNote
     const Color playHeadColor[2]      ={Color(GREEN),               Color(ORANGE)};                                  // play, record
 
           Point seqPos                = Point(0, 1);                Dimension seqArea        = Dimension(16, 1);

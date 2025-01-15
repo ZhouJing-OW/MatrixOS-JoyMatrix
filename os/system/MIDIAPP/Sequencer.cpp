@@ -2,8 +2,8 @@
 
 namespace MatrixOS::MidiCenter
 {
-  std::map<uint16_t, uint32_t> CNTR_Seq; // midiID, offTime
-  std::vector<std::pair<SEQ_Pos, SEQ_Step*>> CNTR_SeqEditStep;
+  std::map<uint16_t, uint32_t>                CNTR_Seq; // midiID, offTime
+  std::vector<std::pair<SEQ_Pos, SEQ_Step*>>  CNTR_SeqEditStep;
 
   void Sequencer::Scan()
   {
@@ -22,8 +22,6 @@ namespace MatrixOS::MidiCenter
     if (!transportState.record || channel != MatrixOS::UserVar::global_channel) {
         recording = false;
     }
-
-
 
     clipNum = seqData->EditingClip(channel);
     quarterTickPerStep = speedToQuarterTick[seqData->Clip(channel, clipNum)->speed];

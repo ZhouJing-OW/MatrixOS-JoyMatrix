@@ -776,8 +776,8 @@ namespace MatrixOS::MidiCenter
     int16_t undoPoint = -1;
     SEQ_Pos position = SEQ_Pos(0);
     SEQ_Clip clip;                      // 保存整个clip
-    std::map<int16_t, SEQ_Step> steps;  // 保存clip引用的所有steps
-    std::map<int16_t, SEQ_Autom> automs;// 保存clip引用的所有automs
+    std::map<int16_t, SEQ_Step,   std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Step>>> steps;  // 保存clip引用的所有steps
+    std::map<int16_t, SEQ_Autom,  std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Autom>>> automs;// 保存clip引用的所有automs
   };
 
   struct  SEQ_History
@@ -1310,8 +1310,8 @@ namespace MatrixOS::MidiCenter
             DeleteAutom(SEQ_Pos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), a));
         }
 
-        // 如果是最后一个bar且不是第一个bar，则删除这个bar
-        if (pos.BarNum() > 0 && pos.BarNum() == clip->barMax - 1) {
+        // 如果是最后一个bar且不是第一个bar且不在loop范围内，则删除这个bar
+        if (pos.BarNum() > 0 && pos.BarNum() == clip->barMax - 1 && pos.BarNum() > clip->loopEnd) {
             clip->barMax--;
             clip->checkActiveBar();
         }

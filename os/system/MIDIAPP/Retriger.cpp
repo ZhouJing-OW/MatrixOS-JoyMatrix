@@ -21,8 +21,8 @@
 
     if (transportState.play)
     {
-      uint16_t ticknum = 96 * rateToRatio[rate];
-      uint16_t nextStep = (quarterTick / 24) * 24 + 24;
+      uint32_t ticknum = 96 * rateToRatio[rate];
+      uint32_t nextStep = (quarterTick / 24) * 24 + 24;
       if (ticknum < 24)
       {
         retrigInfo.quarterTick = quarterTick / 96 * 96 + quarterTick % 96 / ticknum * ticknum + ticknum;

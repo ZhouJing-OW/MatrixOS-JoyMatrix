@@ -31,14 +31,14 @@ namespace MatrixOS::MidiCenter
   extern ArpConfig*         arpConfig;
   extern ChorderConfig*     chordConfig;
   
-  extern std::set<uint16_t>                           CNTR_PadMidiID;   // midiID
-  extern std::map<uint16_t, uint16_t>                 CNTR_PadHold;     // keyID, midiID
-  extern std::set<uint16_t>                           CNTR_PadToggle;   // midiID
-  extern std::map<uint16_t, uint32_t>                 CNTR_Seq;         // midiID, offTime
-  extern std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep; // SEQ_Pos, SEQ_Step*
-  extern std::set<uint16_t>                           CNTR_Chord;       // midiID
-  extern std::map<uint16_t, uint32_t>                 CNTR_Arp;         // midiID, offTime
-  extern std::unordered_map<uint16_t, uint8_t*>       CNTR_FeedBack;    // midiID, value*
+  extern std::set<uint16_t>                                   CNTR_PadMidiID;   // midiID
+  extern std::map<uint16_t, uint16_t>                         CNTR_PadHold;     // keyID, midiID
+  extern std::set<uint16_t>                                   CNTR_PadToggle;   // midiID
+  extern std::map<uint16_t, uint32_t>                         CNTR_Seq;         // midiID, offTime
+  extern std::vector<std::pair<SEQ_Pos, SEQ_Step*>>           CNTR_SeqEditStep; // SEQ_Pos, SEQ_Step*
+  extern std::set<uint16_t>                                   CNTR_Chord;       // midiID
+  extern std::map<uint16_t, uint32_t>                         CNTR_Arp;         // midiID, offTime
+  extern std::unordered_map<uint16_t, uint8_t*>               CNTR_FeedBack;    // midiID, value*
   extern RetrigInfo retrigInfo;
 
   extern PadCheck padCheck[127]; // in globle channel;
