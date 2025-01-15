@@ -109,19 +109,19 @@ namespace MatrixOS::MidiCenter
     const Color     deleteBtnColor       = Color(RED);      // 删除按钮颜色
     const char      deleteBtnName[7]     = "Delete";
 
-    const Point     leftBtnPos           = Point(0, 3);     // 左移按钮位置
+    const Point     leftBtnPos[2]        = {Point(0, 3), Point(13, 3)};     // 左移按钮位置
     const Color     leftBtnColor[2]      = {Color(GOLD), Color(GOLD_HL)};   // 左移按钮颜色
     const char      leftBtnName[5]       = "Left";
 
-    const Point     rightBtnPos          = Point(2, 3);     // 右移按钮位置
+    const Point     rightBtnPos[2]       = {Point(2, 3), Point(15, 3)};     // 右移按钮位置
     const Color     rightBtnColor[2]     = {Color(GOLD), Color(GOLD_HL)};   // 右移按钮颜色
     const char      rightBtnName[6]      = "Right";
 
-    const Point     leftOffsetBtnPos     = Point(0, 2);     // 偏移按钮位置
+    const Point     leftOffsetBtnPos[2]  = {Point(0, 2), Point(13, 2)};     // 偏移按钮位置
     const Color     leftOffsetBtnColor[2]= {Color(PURPLE), Color(PURPLE_HL)};   // 偏移按钮颜色
     const char      leftOffsetBtnName[5] = "Left";
 
-    const Point     rightOffsetBtnPos    = Point(2, 2);     // 偏移按钮位置
+    const Point     rightOffsetBtnPos[2] = {Point(2, 2), Point(15, 2)};     // 偏移按钮位置
     const Color     rightOffsetBtnColor[2]= {Color(PURPLE), Color(PURPLE_HL)};   // 偏移按钮颜色
     const char      rightOffsetBtnName[6]= "Right";
 
@@ -133,11 +133,11 @@ namespace MatrixOS::MidiCenter
     const Color     redoBtnColor         = Color(ORANGE);   // 重做按钮颜色
     const char      redoBtnName[5]       = "Redo";
 
-    const Point     transUpBtnPos    = Point(1, 2);     // 向上转调按钮位置
+    const Point     transUpBtnPos[2]    = {Point(1, 2), Point(14, 2)};     // 向上转调按钮位置
     const Color     transUpBtnColor[2]  = {Color(YELLOW), Color(YELLOW_HL)};   // 向上转调按钮颜色
     const char      transUpBtnName[3]= "Up";
 
-    const Point     transDownBtnPos  = Point(1, 3);     // 向下转调按钮位置
+    const Point     transDownBtnPos[2]  = {Point(1, 3), Point(14, 3)};     // 向下转调按钮位置
     const Color     transDownBtnColor[2]= {Color(YELLOW), Color(YELLOW_HL)};   // 向下转调按钮颜色
     const char      transDownBtnName[5]= "Down";
 
@@ -214,6 +214,7 @@ namespace MatrixOS::MidiCenter
     virtual bool Render(Point origin) 
     {
       if (!seqData) return false;
+      bool RightEdit = stepEditing.editing && stepEditing.pos.Number() / 8 == 0;
 
       StateCheck(origin);
       switch(mode)
@@ -223,19 +224,21 @@ namespace MatrixOS::MidiCenter
             SeqRender(origin, seqPos);
             if(fullScreen)
             {
+
+                ButtonRender(origin, leftBtnPos[RightEdit], Color(leftBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, rightBtnPos[RightEdit], Color(rightBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, transUpBtnPos[RightEdit], Color(transUpBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, transDownBtnPos[RightEdit], Color(transDownBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
+                if(stepEditing.editing)
+                {
+                  ButtonRender(origin, leftOffsetBtnPos[RightEdit], Color(leftOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
+                  ButtonRender(origin, rightOffsetBtnPos[RightEdit], Color(rightOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
+                }else{
                 ButtonRender(origin, copyBtnPos, editBlock.copyKeyHeld ? Color(WHITE) : copyBtnColor);
                 ButtonRender(origin, deleteBtnPos, editBlock.deleteKeyHeld ? Color(WHITE) : deleteBtnColor);
                 ButtonRender(origin, settingBtnPos, Color(settingBtnColor).Dim());
-                ButtonRender(origin, leftBtnPos, Color(leftBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
-                ButtonRender(origin, rightBtnPos, Color(rightBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
                 ButtonRender(origin, undoBtnPos, Color(undoBtnColor).DimIfNot(seqData->CanUndo()));
                 ButtonRender(origin, redoBtnPos, Color(redoBtnColor).DimIfNot(seqData->CanRedo()));
-                ButtonRender(origin, transUpBtnPos, Color(transUpBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
-                ButtonRender(origin, transDownBtnPos, Color(transDownBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
-                if(stepEditing.editing)
-                {
-                  ButtonRender(origin, leftOffsetBtnPos, Color(leftOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
-                  ButtonRender(origin, rightOffsetBtnPos, Color(rightOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
                 }
             }
             break;
@@ -276,33 +279,41 @@ namespace MatrixOS::MidiCenter
     virtual bool KeyEvent(Point xy, KeyInfo* keyInfo)
     {
       if (!seqData) return false;
+      bool RightEdit = stepEditing.editing && stepEditing.pos.Number() / 8 == 0;
 
       switch(mode)
       {
         case NORMAL:
           if(fullScreen)
           {
-            if(InArea(xy, copyBtnPos, Dimension(1, 1)))
-              return CopyBtnKeyEvent(xy, copyBtnPos, keyInfo);
-            if(InArea(xy, deleteBtnPos, Dimension(1, 1)))
-              return DeleteBtnKeyEvent(xy, deleteBtnPos, keyInfo);
-            if(InArea(xy, settingBtnPos, Dimension(1, 1)))
-              return SettingBtnKeyEvent(xy, settingBtnPos, keyInfo);
-            if(InArea(xy, undoBtnPos, Dimension(1, 1)))
-              return UndoBtnKeyEvent(xy, undoBtnPos, keyInfo);
-            if(InArea(xy, redoBtnPos, Dimension(1, 1)))
-              return RedoBtnKeyEvent(xy, redoBtnPos, keyInfo);
-            if(InArea(xy, transUpBtnPos, Dimension(1, 1)))
-              return TransBtnKeyEvent(xy, transUpBtnPos, keyInfo, true);
-            if(InArea(xy, transDownBtnPos, Dimension(1, 1)))
-              return TransBtnKeyEvent(xy, transDownBtnPos, keyInfo, false);
+            if(InArea(xy, leftBtnPos[RightEdit], Dimension(1, 1)))
+              return MoveBtnKeyEvent(xy, leftBtnPos[RightEdit], keyInfo, true);
+            if(InArea(xy, rightBtnPos[RightEdit], Dimension(1, 1)))
+              return MoveBtnKeyEvent(xy, rightBtnPos[RightEdit], keyInfo, false);
+            if(InArea(xy, transUpBtnPos[RightEdit], Dimension(1, 1)))
+              return TransBtnKeyEvent(xy, transUpBtnPos[RightEdit], keyInfo, true);
+            if(InArea(xy, transDownBtnPos[RightEdit], Dimension(1, 1)))
+              return TransBtnKeyEvent(xy, transDownBtnPos[RightEdit], keyInfo, false);
             
             if(stepEditing.editing)
             {
-              if(InArea(xy, leftOffsetBtnPos, Dimension(1, 1)))
-                return OffsetBtnKeyEvent(xy, leftOffsetBtnPos, keyInfo, true);
-              if(InArea(xy, rightOffsetBtnPos, Dimension(1, 1)))
-                return OffsetBtnKeyEvent(xy, rightOffsetBtnPos, keyInfo, false);
+              if(InArea(xy, leftOffsetBtnPos[RightEdit], Dimension(1, 1)))
+                return OffsetBtnKeyEvent(xy, leftOffsetBtnPos[RightEdit], keyInfo, true);
+              if(InArea(xy, rightOffsetBtnPos[RightEdit], Dimension(1, 1)))
+                return OffsetBtnKeyEvent(xy, rightOffsetBtnPos[RightEdit], keyInfo, false);
+            } 
+            else 
+            {
+              if(InArea(xy, copyBtnPos, Dimension(1, 1)))
+                return CopyBtnKeyEvent(xy, copyBtnPos, keyInfo);
+              if(InArea(xy, deleteBtnPos, Dimension(1, 1)))
+                return DeleteBtnKeyEvent(xy, deleteBtnPos, keyInfo);
+              if(InArea(xy, settingBtnPos, Dimension(1, 1)))
+                return SettingBtnKeyEvent(xy, settingBtnPos, keyInfo);
+              if(InArea(xy, undoBtnPos, Dimension(1, 1)))
+                return UndoBtnKeyEvent(xy, undoBtnPos, keyInfo);
+              if(InArea(xy, redoBtnPos, Dimension(1, 1)))
+                return RedoBtnKeyEvent(xy, redoBtnPos, keyInfo);
             }
             
             if(editBlock.copyKeyHeld && editBlock.state == EDIT_NONE)
@@ -327,10 +338,7 @@ namespace MatrixOS::MidiCenter
                 return true;
               }
             }
-            if(InArea(xy, leftBtnPos, Dimension(1, 1)))
-              return MoveBtnKeyEvent(xy, leftBtnPos, keyInfo, true);
-            if(InArea(xy, rightBtnPos, Dimension(1, 1)))
-              return MoveBtnKeyEvent(xy, rightBtnPos, keyInfo, false);
+
           }
 
           if(InArea(xy, seqPos, seqArea))
