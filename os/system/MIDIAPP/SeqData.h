@@ -320,13 +320,33 @@ namespace MatrixOS::MidiCenter
 
     uint8_t         GetOffset(uint8_t note) const
     {
-      if (NoteEmpty()) return noteTemplate.offset;
+      int8_t offset = 0;
+      if (NoteEmpty()) return offset;
       for (uint8_t i = 0; i < NOTE_MAX; i++)
       {
         if ((note > 127 && notes[i].note <= 127) || (note <= 127 && notes[i].note == note))
-          return notes[i].offset;
+        {
+          if(note == 255) {offset = notes[i].offset; break;}
+          else return notes[i].offset;
+        }
       }
-      return noteTemplate.offset;
+      return offset;
+    }
+
+    void            Offset(int8_t offset, uint8_t note)
+    {
+      if(NoteEmpty()) return;
+      if(offset < -60 || offset > 60 || offset == 0) return;
+      
+      for(uint8_t i = 0; i < NOTE_MAX; i++)
+        if(notes[i].note <= 127 && (note > 127 || notes[i].note == note)){
+          int8_t oldOffset = notes[i].offset;
+          notes[i].offset += offset;
+          if(oldOffset > 0 && notes[i].offset < 0) notes[i].offset = 0;
+          if(oldOffset < 0 && notes[i].offset > 0) notes[i].offset = 0;
+          if(notes[i].offset > 60) notes[i].offset = 60;
+          if(notes[i].offset < -60) notes[i].offset = -60;
+        }
     }
 
     bool            SetVelocity(uint8_t note, uint8_t velocity, int8_t offsetPos)
@@ -363,7 +383,6 @@ namespace MatrixOS::MidiCenter
 
     bool            SetOffset(uint8_t note, uint8_t offset)
     {
-      noteTemplate.offset = offset;
       if(NoteEmpty()) return false;
       std::set<uint8_t> exist;
       bool set = false;
@@ -625,6 +644,8 @@ namespace MatrixOS::MidiCenter
       return stepMark[bar * STEP_MAX + 0] == 0 && automMark[bar * AUTOM_MAX + 0] == 0;
     }
 
+    bool            NoteEmpty() const { return stepMark.none(); }
+
   private:
     void            SetStepID(uint8_t BarNum, uint8_t stepNum, int16_t id) 
     { 
@@ -670,7 +691,7 @@ namespace MatrixOS::MidiCenter
   extern  std::vector<std::pair<SEQ_Pos, SEQ_Step*>>   CNTR_SeqEditStep;
   class   SEQ_Pick 
   {
-    SEQ_Step capStep = SEQ_Step();
+    SEQ_Step pickStep = SEQ_Step();
     std::set<uint8_t> inputList;
     PickState state = PICK_NORMAL;
     bool editingStepEmpty = true;
@@ -715,13 +736,13 @@ namespace MatrixOS::MidiCenter
     {
       if (byte2 > 0) 
       {
-        if (inputList.empty()) capStep.ClearNote();
+        if (inputList.empty()) pickStep.ClearNote();
         inputList.emplace(byte1);
-        capStep.AddNote(SEQ_Note(byte1, byte2, capStep.noteTemplate.gate, 0));
+        pickStep.AddNote(SEQ_Note(byte1, byte2, pickStep.noteTemplate.gate, 0));
         return UNBLOCK;
       }
         inputList.erase(byte1);
-        capStep.DeleteNote(byte1);
+        pickStep.DeleteNote(byte1);
       return UNBLOCK;
     }
 
@@ -732,7 +753,7 @@ namespace MatrixOS::MidiCenter
         case PICK_NORMAL:
           inputList.clear(); 
           if(updatePick && !CNTR_SeqEditStep.empty())
-            capStep.CopyNotes(*(CNTR_SeqEditStep.begin()->second));
+            pickStep.CopyNotes(*(CNTR_SeqEditStep.begin()->second));
           CNTR_SeqEditStep.clear();
           break;
         case PICK_EDIT: break;
@@ -744,7 +765,7 @@ namespace MatrixOS::MidiCenter
     {
       editingStepEmpty = step->NoteEmpty();
       if (!inputList.empty())
-        step->CopyNotes(capStep);
+        step->CopyNotes(pickStep);
       CNTR_SeqEditStep.push_back({pos, step});
       ChangeState(PICK_EDIT);
     }
@@ -753,7 +774,7 @@ namespace MatrixOS::MidiCenter
     {
       if(resetState) state = PICK_NORMAL;
       CNTR_SeqEditStep.clear();
-      capStep.ClearNote();
+      pickStep.ClearNote();
       inputList.clear();
       editingStepEmpty = true;
       changed = false;
@@ -769,7 +790,7 @@ namespace MatrixOS::MidiCenter
 
     bool              Changed() const { return changed; }
 
-    SEQ_Step*         GetPick(){return &capStep;}
+    SEQ_Step*         GetPick(){return &pickStep;}
   };
 
   struct  SEQ_Snapshot {
@@ -808,6 +829,7 @@ namespace MatrixOS::MidiCenter
     {
       new (&song)   SEQ_Song();
       new (&clips)  std::array<SEQ_Clip, 16 * CLIP_MAX>();
+      new (&patterns) std::map<int16_t, SEQ_Pattern, std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Pattern>>>();
       new (&steps)  std::map<int16_t, SEQ_Step,  std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Step >>>();
       new (&automs) std::map<int16_t, SEQ_Autom, std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Autom>>>();
       new (&patternChanged) std::set<int16_t>();
@@ -823,6 +845,7 @@ namespace MatrixOS::MidiCenter
     {
       song.~SEQ_Song();
       clips.~array();
+      patterns.~map();
       steps.~map();
       automs.~map();
       patternChanged.~set();
@@ -1093,6 +1116,14 @@ namespace MatrixOS::MidiCenter
       stepChanged.insert(StepID(dst));
     }
 
+    void            OffsetStep(SEQ_Pos position, int8_t offset, uint8_t note = 255)
+    {
+      SEQ_Step* step = Step(position);
+      if(!step) return;
+      step->Offset(offset, note);
+      stepChanged.insert(StepID(position));
+    }
+
     void            ShiftStep(SEQ_Pos position, int8_t distance, uint8_t note = 255)
     {
         SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
@@ -1257,15 +1288,43 @@ namespace MatrixOS::MidiCenter
 
     //------------------------------------BAR--------------------------------------//
 
-    void            CopyBar(SEQ_Pos src, SEQ_Pos dst)
+    void            CopyBar(SEQ_Pos src, SEQ_Pos dst, uint8_t note = 255)
     {
       // MLOGD("SEQ Copy From","Channel %d. Clip %d. Bar %d.", src.ChannelNum(), src.ClipNum(), src.BarNum());
       // MLOGD("SEQ Copy To  ","Channel %d. Clip %d. Bar %d.", dst.ChannelNum(), dst.ClipNum(), dst.BarNum());
       if(src == dst) return;
-      for (uint8_t s = 0; s < STEP_MAX;  s++)
-      { CopyStep (SEQ_Pos(src.ChannelNum(), src.ClipNum(), src.BarNum(), s), SEQ_Pos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), s)); }
-      for (uint8_t a = 0; a < AUTOM_MAX; a++)
-      { CopyAutom(SEQ_Pos(src.ChannelNum(), src.ClipNum(), src.BarNum(), a), SEQ_Pos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), a)); }
+
+      if(note == 255)  // 复制整个bar
+      {
+          for (uint8_t s = 0; s < STEP_MAX; s++)
+          { 
+              CopyStep(SEQ_Pos(src.ChannelNum(), src.ClipNum(), src.BarNum(), s), 
+                      SEQ_Pos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), s)); 
+          }
+          for (uint8_t a = 0; a < AUTOM_MAX; a++)
+          { 
+              CopyAutom(SEQ_Pos(src.ChannelNum(), src.ClipNum(), src.BarNum(), a), 
+                       SEQ_Pos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), a)); 
+          }
+      }
+      else  // 复制指定音符
+      {
+          for (uint8_t s = 0; s < STEP_MAX; s++)
+          {
+              SEQ_Pos srcPos(src.ChannelNum(), src.ClipNum(), src.BarNum(), s);
+              SEQ_Pos dstPos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), s);
+              
+              // 获取源step的所有音符
+              SEQ_Step* tempStep = Step(srcPos);
+              std::vector<const SEQ_Note*> srcNotes = tempStep->GetNotes();
+              
+              for(const SEQ_Note* srcNote : srcNotes)
+              {
+                  if(srcNote->note == note)
+                      AddNote(dstPos, *srcNote);
+              }
+          }
+      }
     }
 
     void            ClearBar(SEQ_Pos pos, uint8_t note = 255) 
@@ -1278,24 +1337,14 @@ namespace MatrixOS::MidiCenter
             bool hasOtherNotes = false;
             for (uint8_t s = 0; s < STEP_MAX; s++) {
                 SEQ_Pos stepPos(pos.ChannelNum(), pos.ClipNum(), pos.BarNum(), s);
+                DeleteNote(stepPos, note);
                 SEQ_Step* step = Step(stepPos);
-                if (step) {
-                    if (step->FindNote(note)) {
-                        // 获取所有音符并逐个检查删除
-                        std::vector<const SEQ_Note*> notes = step->GetNotes();
-                        for (const SEQ_Note* stepNote : notes) {
-                            if (stepNote->note == note) {
-                                DeleteNote(stepPos, note, stepNote->offset, true);
-                            }
-                        }
-                    }
-                    if (!step->NoteEmpty()) {
-                        hasOtherNotes = true;
-                    }
+                if (step ||!step->NoteEmpty()) {
+                    hasOtherNotes = true;
                 }
             }
             // 如果是最后一个bar且没有任何音符，则删除整个bar
-            if (pos.BarNum() == clip->barMax - 1 && !hasOtherNotes) {
+            if (pos.BarNum() > 0 && pos.BarNum() == clip->barMax - 1 && pos.BarNum() > clip->loopEnd && !hasOtherNotes) {
                 clip->barMax--;
                 clip->checkActiveBar();
             }
@@ -1325,6 +1374,18 @@ namespace MatrixOS::MidiCenter
     };
 
     bool            ClipEmpty(uint8_t channel, uint8_t clipNum) { return Clip(channel, clipNum)->Empty(); }
+
+    bool            ClipNoteEmpty(uint8_t channel, uint8_t clipNum) { return Clip(channel, clipNum)->NoteEmpty(); }
+
+    bool            ClipFindNote(uint8_t channel, uint8_t clipNum, uint8_t note = 255) { 
+      for (uint8_t bar = 0; bar < BAR_MAX; bar++) {
+        for (uint8_t s = 0; s < STEP_MAX; s++) {
+          SEQ_Step* step = Step(SEQ_Pos(channel, clipNum, bar, s));
+          if (step && step->FindNote(note)) return true;
+        }
+      }
+      return false;
+    }
 
     uint8_t         EditingClip(uint8_t channel) { return song.editingClip[channel]; }
 
@@ -1407,17 +1468,8 @@ namespace MatrixOS::MidiCenter
         // 2. 删除原位置的steps/notes
         for (const auto& pair : tempSteps) {
             SEQ_Pos oldPos = pair.first;
-            if (note != 255) {
-                SEQ_Step* step = Step(oldPos);
-                if (step) {
-                    step->DeleteNote(note);
-                    if (step->Empty()) {
-                        DeleteStep(oldPos);
-                    }
-                }
-            } else {
-                DeleteStep(oldPos);
-            }
+            if (note != 255) { DeleteNote(oldPos, note); }
+            else { DeleteStep(oldPos); }
         }
 
         // 3. 将steps写入新位置

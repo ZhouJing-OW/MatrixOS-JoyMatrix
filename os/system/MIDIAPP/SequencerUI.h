@@ -13,33 +13,33 @@ namespace MatrixOS::MidiCenter
     enum SeqUIMode : uint8_t {NORMAL, TRIPLET, SETTING, COMPONENT};
     enum EditState : uint8_t {EDIT_NONE, COPY_BAR, COPY_STEP,};
 
+    struct EditBlock {
+      EditState state = EDIT_NONE;
+      int8_t    barStart = -1;
+      int8_t    barEnd = -1;
+      int8_t    stepStart = -1;
+      int8_t    stepEnd = -1;
+      int8_t    loopEditBar = -1;
+      bool      barKeyStates[BAR_MAX] = {false};
+      uint8_t   barKeyCount = 0;
+      bool      copyKeyHeld = false;
+      bool      deleteKeyHeld = false;
+      Point     deleteBarTarget = Point(-1, -1);
+      Point     deleteStepTarget = Point(-1, -1);
+    } editBlock;
+
     struct StepEditing {
-      bool edited = false;
-      bool editing = false;
-      SEQ_Pos pos = SEQ_Pos(0);
-      Point point = Point(0xFFF, 0xFFF);
-      uint32_t time = 0;
-      uint8_t note = 255;
-      uint8_t noteCount = 0;
-      int16_t velocity = -1;
-      int16_t lastVelocity = -1;
+      bool      edited = false;
+      bool      editing = false;
+      SEQ_Pos   pos = SEQ_Pos(0);
+      Point     point = Point(0xFFF, 0xFFF);
+      uint32_t  time = 0;
+      uint8_t   note = 255;
+      uint8_t   noteCount = 0;
+      int16_t   velocity = -1;
+      int16_t   lastVelocity = -1;
       std::bitset<BAR_MAX * STEP_MAX> gateMap;
     } stepEditing;
-
-    struct EditBlock {
-        EditState state = EDIT_NONE;
-        int8_t barStart = -1;
-        int8_t barEnd = -1;
-        int8_t stepStart = -1;
-        int8_t stepEnd = -1;
-        int8_t loopEditBar = -1;
-        bool barKeyStates[BAR_MAX] = {false};
-        uint8_t barKeyCount = 0;
-        bool copyKeyHeld = false;
-        bool deleteKeyHeld = false;
-        Point deleteBarTarget = Point(-1, -1);
-        Point deleteStepTarget = Point(-1, -1);
-    } editBlock;
 
     struct ClipSettingValue 
     {
@@ -109,13 +109,21 @@ namespace MatrixOS::MidiCenter
     const Color     deleteBtnColor       = Color(RED);      // 删除按钮颜色
     const char      deleteBtnName[7]     = "Delete";
 
-    const Point     leftShiftBtnPos      = Point(0, 3);     // 左移按钮位置
-    const Color     leftShiftBtnColor[2] = {Color(GOLD), Color(GOLD_HL)};   // 左移按钮颜色
-    const char      leftShiftBtnName[5]  = "Left";
+    const Point     leftBtnPos           = Point(0, 3);     // 左移按钮位置
+    const Color     leftBtnColor[2]      = {Color(GOLD), Color(GOLD_HL)};   // 左移按钮颜色
+    const char      leftBtnName[5]       = "Left";
 
-    const Point     rightShiftBtnPos     = Point(2, 3);     // 右移按钮位置
-    const Color     rightShiftBtnColor[2]= {Color(GOLD), Color(GOLD_HL)};   // 右移按钮颜色
-    const char      rightShiftBtnName[6] = "Right";
+    const Point     rightBtnPos          = Point(2, 3);     // 右移按钮位置
+    const Color     rightBtnColor[2]     = {Color(GOLD), Color(GOLD_HL)};   // 右移按钮颜色
+    const char      rightBtnName[6]      = "Right";
+
+    const Point     leftOffsetBtnPos     = Point(0, 2);     // 偏移按钮位置
+    const Color     leftOffsetBtnColor[2]= {Color(PURPLE), Color(PURPLE_HL)};   // 偏移按钮颜色
+    const char      leftOffsetBtnName[5] = "Left";
+
+    const Point     rightOffsetBtnPos    = Point(2, 2);     // 偏移按钮位置
+    const Color     rightOffsetBtnColor[2]= {Color(PURPLE), Color(PURPLE_HL)};   // 偏移按钮颜色
+    const char      rightOffsetBtnName[6]= "Right";
 
     const Point     undoBtnPos           = Point(13, 3);     // 撤销按钮位置
     const Color     undoBtnColor         = Color(ORANGE);   // 撤销按钮颜色
@@ -126,11 +134,11 @@ namespace MatrixOS::MidiCenter
     const char      redoBtnName[5]       = "Redo";
 
     const Point     transUpBtnPos    = Point(1, 2);     // 向上转调按钮位置
-    const Color     transUpBtnColor[2]  = {Color(PURPLE), Color(PURPLE_HL)};   // 向上转调按钮颜色
+    const Color     transUpBtnColor[2]  = {Color(YELLOW), Color(YELLOW_HL)};   // 向上转调按钮颜色
     const char      transUpBtnName[3]= "Up";
 
     const Point     transDownBtnPos  = Point(1, 3);     // 向下转调按钮位置
-    const Color     transDownBtnColor[2]= {Color(PURPLE), Color(PURPLE_HL)};   // 向下转调按钮颜色
+    const Color     transDownBtnColor[2]= {Color(YELLOW), Color(YELLOW_HL)};   // 向下转调按钮颜色
     const char      transDownBtnName[5]= "Down";
 
     //-------------------------------------------------------------------------------// 
@@ -147,8 +155,9 @@ namespace MatrixOS::MidiCenter
     uint8_t     compLabel     = 0; 
     PadType     lastPadType   = PIANO_PAD;
     bool        monoMode      = false;
-    bool        transOctaveSuccess = false;
-    bool        shiftBarSuccess = false;
+    bool        HoldTransSuccess = false;
+    bool        HoldMoveSuccess = false;
+    bool        HoldOffsetSuccess = false;
     bool        hasNotes = false; 
 
     KnobConfig velocityKnob   = {.lock = true, .data{.varPtr = &stepEditing.velocity}, .min = 1, .max = 127, .def = 127, .color = Color(LAWN)  };
@@ -196,8 +205,9 @@ namespace MatrixOS::MidiCenter
           break;
       }
       this->mode = mode;
-      shiftBarSuccess = false;
-      transOctaveSuccess = false;
+      HoldMoveSuccess = false;
+      HoldTransSuccess = false;
+      HoldOffsetSuccess = false;
       ResetStepEditing();
     }
 
@@ -206,7 +216,6 @@ namespace MatrixOS::MidiCenter
       if (!seqData) return false;
 
       StateCheck(origin);
-      
       switch(mode)
       {
         case NORMAL:   
@@ -217,12 +226,17 @@ namespace MatrixOS::MidiCenter
                 ButtonRender(origin, copyBtnPos, editBlock.copyKeyHeld ? Color(WHITE) : copyBtnColor);
                 ButtonRender(origin, deleteBtnPos, editBlock.deleteKeyHeld ? Color(WHITE) : deleteBtnColor);
                 ButtonRender(origin, settingBtnPos, Color(settingBtnColor).Dim());
-                ButtonRender(origin, leftShiftBtnPos, Color(leftShiftBtnColor[shiftBarSuccess]).DimIfNot(hasNotes));
-                ButtonRender(origin, rightShiftBtnPos, Color(rightShiftBtnColor[shiftBarSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, leftBtnPos, Color(leftBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, rightBtnPos, Color(rightBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
                 ButtonRender(origin, undoBtnPos, Color(undoBtnColor).DimIfNot(seqData->CanUndo()));
                 ButtonRender(origin, redoBtnPos, Color(redoBtnColor).DimIfNot(seqData->CanRedo()));
-                ButtonRender(origin, transUpBtnPos, Color(transUpBtnColor[transOctaveSuccess]).DimIfNot(hasNotes));
-                ButtonRender(origin, transDownBtnPos, Color(transDownBtnColor[transOctaveSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, transUpBtnPos, Color(transUpBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, transDownBtnPos, Color(transDownBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
+                if(stepEditing.editing)
+                {
+                  ButtonRender(origin, leftOffsetBtnPos, Color(leftOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
+                  ButtonRender(origin, rightOffsetBtnPos, Color(rightOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
+                }
             }
             break;
         case TRIPLET:  
@@ -283,6 +297,14 @@ namespace MatrixOS::MidiCenter
             if(InArea(xy, transDownBtnPos, Dimension(1, 1)))
               return TransBtnKeyEvent(xy, transDownBtnPos, keyInfo, false);
             
+            if(stepEditing.editing)
+            {
+              if(InArea(xy, leftOffsetBtnPos, Dimension(1, 1)))
+                return OffsetBtnKeyEvent(xy, leftOffsetBtnPos, keyInfo, true);
+              if(InArea(xy, rightOffsetBtnPos, Dimension(1, 1)))
+                return OffsetBtnKeyEvent(xy, rightOffsetBtnPos, keyInfo, false);
+            }
+            
             if(editBlock.copyKeyHeld && editBlock.state == EDIT_NONE)
             {
               if(InArea(xy, seqPos, seqArea) && keyInfo->state == PRESSED)
@@ -305,10 +327,10 @@ namespace MatrixOS::MidiCenter
                 return true;
               }
             }
-            if(InArea(xy, leftShiftBtnPos, Dimension(1, 1)))
-              return ShiftBtnKeyEvent(xy, leftShiftBtnPos, keyInfo, true);
-            if(InArea(xy, rightShiftBtnPos, Dimension(1, 1)))
-              return ShiftBtnKeyEvent(xy, rightShiftBtnPos, keyInfo, false);
+            if(InArea(xy, leftBtnPos, Dimension(1, 1)))
+              return MoveBtnKeyEvent(xy, leftBtnPos, keyInfo, true);
+            if(InArea(xy, rightBtnPos, Dimension(1, 1)))
+              return MoveBtnKeyEvent(xy, rightBtnPos, keyInfo, false);
           }
 
           if(InArea(xy, seqPos, seqArea))
@@ -379,10 +401,17 @@ namespace MatrixOS::MidiCenter
       if (stepEditing.editing) {
         SEQ_Step* step = seqData->Step(stepEditing.pos);
         if (step) {
-          hasNotes = !step->Empty();
+          if(monoMode)
+            hasNotes = step->FindNote(channelConfig->activeNote[channel]);
+          else
+            hasNotes = !step->NoteEmpty();
         }
       } else {
-        hasNotes = !seqData->ClipEmpty(channel, clipNum);
+
+        if(monoMode)
+          hasNotes = seqData->ClipFindNote(channel, clipNum, channelConfig->activeNote[channel]);
+        else
+          hasNotes = !seqData->ClipNoteEmpty(channel, clipNum);
       }
 
       PadType padTypeNow = (PadType)channelConfig->padType[channel];
@@ -451,8 +480,9 @@ namespace MatrixOS::MidiCenter
     void ResetUI()
     {
       mode = NORMAL;
-      shiftBarSuccess = false;
-      transOctaveSuccess = false;
+      HoldMoveSuccess = false;
+      HoldTransSuccess = false;
+      HoldOffsetSuccess = false;
       ResetStepEditing();
     }
 
@@ -536,6 +566,37 @@ namespace MatrixOS::MidiCenter
             }
             MatrixOS::LED::SetColor(xy, thisColor);
           }
+        }
+      }
+
+      // 如果在编辑状态，闪烁offset标识
+      if(stepEditing.editing && MatrixOS::SYS::Millis() / 500 % 2 == 0)
+      {
+        int8_t stepOffset = seqData->GetOffset(stepEditing.pos);
+        if (stepOffset != 0)
+        {
+          uint8_t currentStep = stepEditing.pos.Number();
+          uint8_t offsetStep;
+
+          if (stepOffset > 0)
+          {
+            // 正offset显示在下一格
+            offsetStep = (currentStep + 1) % clip->barStepMax;
+            if (currentStep == clip->barStepMax - 1)
+              offsetStep = 0;  // 如果是最后一格，显示在第一格
+          }
+          else
+          {
+            // 负offset显示在前一格
+            offsetStep = (currentStep == 0) ? clip->barStepMax - 1 :  // 如果是第一格，显示在最后一格
+                              currentStep - 1;
+          }
+
+          // 使用offset的绝对值来计算亮度
+          uint8_t scale = (std::abs(stepOffset) * 239 / 60) + 16;  // 将[-60,60]映射到[16,255]
+          Color offsetColor = stepOffset > 0 ? leftOffsetBtnColor[0] : rightOffsetBtnColor[0];
+          offsetColor = offsetColor.Scale(scale);
+          MatrixOS::LED::SetColor(origin + offset + Point(offsetStep, 0), offsetColor);
         }
       }
     }
@@ -804,7 +865,8 @@ namespace MatrixOS::MidiCenter
                     for (int8_t i = 0; i < copyRange; i++) {
                         seqData->CopyBar(
                             SEQ_Pos(channel, clipNum, start + i, 0),
-                            SEQ_Pos(channel, clipNum, thisBar + i, 0)
+                            SEQ_Pos(channel, clipNum, thisBar + i, 0),
+                            monoMode ? channelConfig->activeNote[channel] : 255
                         );
                     }
                     if (thisBar + copyRange > clip->barMax) {
@@ -1019,16 +1081,16 @@ namespace MatrixOS::MidiCenter
         }
     }
 
-    bool ShiftBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo, bool isLeft)
+    bool MoveBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo, bool isLeft)
     {
         if (!clip || !hasNotes) {
-          if(shiftBarSuccess) shiftBarSuccess = false;
-          return false;
+            if(HoldMoveSuccess) HoldMoveSuccess = false;
+            return false;
         }
 
         if(keyInfo->state == RELEASED)
         { 
-            shiftBarSuccess = false;  // 松开按键时重置状态
+            HoldMoveSuccess = false;  // 松开按键时重置状态
             if(!keyInfo->hold)
             { // 短按：移动一步
                 if (stepEditing.editing) {
@@ -1037,8 +1099,7 @@ namespace MatrixOS::MidiCenter
                         isLeft ? -1 : 1, 
                         monoMode ? channelConfig->activeNote[channel] : 255);
                 } else {
-                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
-                    seqData->EnableTempSnapshot();
+                    stepEditing.edited = true;
                     seqData->ShiftClip(SEQ_Pos(channel, clipNum, 0, 0), 
                         isLeft ? -1 : 1, 
                         monoMode ? channelConfig->activeNote[channel] : 255);
@@ -1062,7 +1123,40 @@ namespace MatrixOS::MidiCenter
                     isLeft ? -clip->barStepMax : clip->barStepMax,
                     monoMode ? channelConfig->activeNote[channel] : 255);
             }
-            shiftBarSuccess = true;  // 设置移动成功状态
+            HoldMoveSuccess = true;  // 设置移动成功状态
+            return true;
+        }
+        return false;
+    }
+
+    bool OffsetBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo, bool isLeft)
+    {
+        if (!clip || !hasNotes) {
+            if(HoldOffsetSuccess) HoldOffsetSuccess = false;
+            return false;
+        }
+
+        if(keyInfo->state == RELEASED)
+        { 
+            HoldOffsetSuccess = false;
+            if(!keyInfo->hold)
+            { 
+                // 短按: offset 5个单位
+                stepEditing.edited = true;
+                seqData->OffsetStep(stepEditing.pos,
+                    isLeft ? -5 : 5,
+                    monoMode ? channelConfig->activeNote[channel] : 255);
+                return true;
+            }
+        }
+        if(keyInfo->state == HOLD)
+        { 
+            // 长按: offset 20个单位
+            stepEditing.edited = true;
+            seqData->OffsetStep(stepEditing.pos,
+                isLeft ? -20 : 20,
+                monoMode ? channelConfig->activeNote[channel] : 255);
+            HoldOffsetSuccess = true;
             return true;
         }
         return false;
@@ -1071,7 +1165,7 @@ namespace MatrixOS::MidiCenter
     bool TransBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo, bool isUp)
     {
         if (!clip || !hasNotes) {
-          if(transOctaveSuccess) transOctaveSuccess = false;
+          if(HoldTransSuccess) HoldTransSuccess = false;
           return false;
         }
 
@@ -1086,7 +1180,7 @@ namespace MatrixOS::MidiCenter
 
         if(keyInfo->state == RELEASED)
         { 
-            transOctaveSuccess = false;  // 松开按键时重置状态
+            HoldTransSuccess = false;  // 松开按键时重置状态
 
             if(!keyInfo->hold)
             { // 短按：转调一个音程
@@ -1121,7 +1215,7 @@ namespace MatrixOS::MidiCenter
                     isUp ? 12 : -12, scale, rootKey,
                     monoMode ? channelConfig->activeNote[channel] : 255);
             }
-            transOctaveSuccess = true;  // 设置转调成功状态
+            HoldTransSuccess = true;  // 设置转调成功状态
             return true;
         }
         return false;

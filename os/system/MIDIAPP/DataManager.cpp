@@ -123,8 +123,6 @@ namespace MatrixOS::MidiCenter
       defVel.SetValue(MatrixOS::UserVar::defaultVelocity);
       brightness.SetValue(std::sqrt((uint8_t)MatrixOS::UserVar::brightness));
 
-      RegistFeedBack();
-
       appName = name;
       for(uint8_t ch = 0; ch < 16; ch++)
       {
@@ -146,6 +144,7 @@ namespace MatrixOS::MidiCenter
       else return false;
     } 
 
+    RegistFeedBack();
     ServiceStart();
     return true;
   }
@@ -168,10 +167,7 @@ namespace MatrixOS::MidiCenter
     MatrixOS::KnobCenter::SetColor(color);
     MatrixOS::FATFS::VarManageEnd(ROUTER_SUFFIX);
 
-    ResetFeedBack();
     UnRegistFeedBack();
-    
-
     MidiCenterStop();
   }
 
