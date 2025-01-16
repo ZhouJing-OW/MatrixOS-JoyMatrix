@@ -37,6 +37,7 @@ namespace MatrixOS::MidiCenter
       // if(channel == 0) MLOGD("Sequencer", "tickCount: %d, PlayHead: %d", tickCount, playHead);
       stepTime = stepInterval / 2 + MatrixOS::SYS::Millis();
       MoveHead(buffHead);
+      capHead = buffHead;
       GetNoteQueue();
       noteBuff = true;
     }
@@ -48,10 +49,8 @@ namespace MatrixOS::MidiCenter
 
   void Sequencer::Record(uint8_t channel, uint8_t byte1, uint8_t byte2)
   {
-    if (!recording) return;
-
     if (byte2 > 0) {  // Note On
-        seqData->EnableTempSnapshot();
+        if(recording) seqData->EnableTempSnapshot();
         
         SEQ_Step* recStep = seqData->Step(SEQ_Pos(channel, clipNum, buffHead / STEP_MAX, buffHead % STEP_MAX), true);
         uint32_t now = MatrixOS::SYS::Millis();
@@ -65,6 +64,43 @@ namespace MatrixOS::MidiCenter
     }
   }
 
+  void Sequencer::Capture(uint8_t channel, uint8_t byte1, uint8_t byte2)
+  {
+    SEQ_Snapshot* cap = seqData->GetCapture();
+    if(cap->position.ChannelNum() != this->channel || cap->position.ClipNum() != this->clipNum) seqData->ClearCapture(); 
+    if(cap->Point == -1) {
+      cap->position = SEQ_Pos(channel, clipNum, 0, 0);
+      if(transportState.play) capHead = buffHead; 
+      else capHead = 0;
+      cap->Point = capHead;
+    }
+
+    SEQ_Step tempStep = SEQ_Step();
+    tempStep.SetPos(SEQ_Pos(channel, clipNum, capHead / STEP_MAX, capHead % STEP_MAX));
+    uint16_t stepIndex = tempStep.Position().BarNum() * STEP_MAX + tempStep.Position().Number();
+    
+    //如果capHead > Point, 则删除capHead到 Point之间的step
+    if(capHead > cap->Point) {
+      for(uint16_t i = capHead; i > cap->Point; i--) {
+        cap->steps.erase(i);
+      }
+    }
+
+    if(byte2 > 0) {
+      if(transportState.play) {
+        uint32_t now = MatrixOS::SYS::Millis();
+        int8_t offset = ((now - stepTime) * 120) / stepInterval;
+        offset = std::clamp(offset, int8_t(-60), int8_t(60));
+        tempStep.AddNote(SEQ_Note(byte1, byte2, 0, offset));
+        auto step_it = cap->steps.emplace(stepIndex, tempStep).first;
+        recNotes.emplace(byte1, std::make_pair(stepTime,  &(step_it->second)));
+        cap->Point = capHead;
+      }
+    }
+    else {
+      SetRecNoteGate(byte1);
+    }
+  }
 
   void Sequencer::End()
   {

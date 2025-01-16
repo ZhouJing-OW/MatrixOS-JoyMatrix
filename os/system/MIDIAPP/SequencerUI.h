@@ -11,22 +11,6 @@ namespace MatrixOS::MidiCenter
   class SequencerUI : public NodeUI {
     
     enum SeqUIMode : uint8_t {NORMAL, TRIPLET, SETTING, COMPONENT};
-    enum EditState : uint8_t {EDIT_NONE, COPY_BAR, COPY_STEP,};
-
-    struct EditBlock {
-      EditState state = EDIT_NONE;
-      int8_t    barStart = -1;
-      int8_t    barEnd = -1;
-      int8_t    stepStart = -1;
-      int8_t    stepEnd = -1;
-      int8_t    loopEditBar = -1;
-      bool      barKeyStates[BAR_MAX] = {false};
-      uint8_t   barKeyCount = 0;
-      bool      copyKeyHeld = false;
-      bool      deleteKeyHeld = false;
-      Point     deleteBarTarget = Point(-1, -1);
-      Point     deleteStepTarget = Point(-1, -1);
-    } editBlock;
 
     struct StepEditing {
       bool      edited = false;
@@ -87,11 +71,13 @@ namespace MatrixOS::MidiCenter
     const char      backBtnName[5]        = "Back";
           BtnFunc   backBtn               = [&]()->void { ChangeUIMode(NORMAL);};
 
-    const Color     settingBtnColor       = Color(VIOLET);
+    const Color     settingBtnColor       = Color(GREEN);
     const char      settingBtnName[8]     = "Setting";
-          BtnFunc   settingBtn            = [&]()->void { ChangeUIMode(SETTING);};
+    const Point     settingBtnPos         = Point(0, 3);
 
-    const Point     settingBtnPos         = Point(15, 3);
+    // const Color     captureBtnColor       = Color(BLUE);
+    // const char      captureBtnName[8]     = "Capture";
+    // const Point     captureBtnPos         = Point(0, 2);
 
     //-----------------------------------COMPONENT-----------------------------------//
 
@@ -101,44 +87,44 @@ namespace MatrixOS::MidiCenter
 
     //-----------------------------------EDITING-----------------------------------//      
 
-    const Point     copyBtnPos           = Point(13, 2);     // 复制按钮移到第四行
-    const Color     copyBtnColor         = Color(CYAN);     // 复制按钮颜色
+    const Point     copyBtnPos           = Point(1, 3);
+    const Color     copyBtnColor         = Color(CYAN);
     const char      copyBtnName[5]       = "Copy";
 
-    const Point     deleteBtnPos         = Point(14, 2);     // 删除按钮移到第四行
-    const Color     deleteBtnColor       = Color(RED);      // 删除按钮颜色
+    const Point     deleteBtnPos         = Point(2, 3);
+    const Color     deleteBtnColor       = Color(RED);
     const char      deleteBtnName[7]     = "Delete";
 
-    const Point     leftBtnPos[2]        = {Point(0, 3), Point(13, 3)};     // 左移按钮位置
-    const Color     leftBtnColor[2]      = {Color(GOLD), Color(GOLD_HL)};   // 左移按钮颜色
+    const Point     leftBtnPos[2]        = {Point(13, 3), Point(0, 3)};
+    const Color     leftBtnColor[2]      = {Color(GOLD), Color(GOLD_HL)};
     const char      leftBtnName[5]       = "Left";
 
-    const Point     rightBtnPos[2]       = {Point(2, 3), Point(15, 3)};     // 右移按钮位置
-    const Color     rightBtnColor[2]     = {Color(GOLD), Color(GOLD_HL)};   // 右移按钮颜色
+    const Point     rightBtnPos[2]       = {Point(15, 3), Point(2, 3)};
+    const Color     rightBtnColor[2]     = {Color(GOLD), Color(GOLD_HL)};
     const char      rightBtnName[6]      = "Right";
 
-    const Point     leftOffsetBtnPos[2]  = {Point(0, 2), Point(13, 2)};     // 偏移按钮位置
-    const Color     leftOffsetBtnColor[2]= {Color(PURPLE), Color(PURPLE_HL)};   // 偏移按钮颜色
+    const Point     leftOffsetBtnPos[2]  = {Point(13, 2), Point(0, 2)};
+    const Color     leftOffsetBtnColor[2]= {Color(PURPLE), Color(PURPLE_HL)};
     const char      leftOffsetBtnName[5] = "Left";
 
-    const Point     rightOffsetBtnPos[2] = {Point(2, 2), Point(15, 2)};     // 偏移按钮位置
-    const Color     rightOffsetBtnColor[2]= {Color(PURPLE), Color(PURPLE_HL)};   // 偏移按钮颜色
+    const Point     rightOffsetBtnPos[2] = {Point(15, 2), Point(2, 2)};
+    const Color     rightOffsetBtnColor[2]= {Color(PURPLE), Color(PURPLE_HL)};
     const char      rightOffsetBtnName[6]= "Right";
 
-    const Point     undoBtnPos           = Point(13, 3);     // 撤销按钮位置
-    const Color     undoBtnColor         = Color(ORANGE);   // 撤销按钮颜色
-    const char      undoBtnName[5]       = "Undo";
+    // const Point     undoBtnPos           = Point(1, 2);
+    // const Color     undoBtnColor         = Color(ORANGE);
+    // const char      undoBtnName[5]       = "Undo";
 
-    const Point     redoBtnPos           = Point(14, 3);     // 重做按钮位置
-    const Color     redoBtnColor         = Color(ORANGE);   // 重做按钮颜色
-    const char      redoBtnName[5]       = "Redo";
+    // const Point     redoBtnPos           = Point(2, 2);
+    // const Color     redoBtnColor         = Color(ORANGE);
+    // const char      redoBtnName[5]       = "Redo";
 
-    const Point     transUpBtnPos[2]    = {Point(1, 2), Point(14, 2)};     // 向上转调按钮位置
-    const Color     transUpBtnColor[2]  = {Color(YELLOW), Color(YELLOW_HL)};   // 向上转调按钮颜色
+    const Point     transUpBtnPos[2]    = {Point(14, 2), Point(1, 2)};
+    const Color     transUpBtnColor[2]  = {Color(YELLOW), Color(YELLOW_HL)};
     const char      transUpBtnName[3]= "Up";
 
-    const Point     transDownBtnPos[2]  = {Point(1, 3), Point(14, 3)};     // 向下转调按钮位置
-    const Color     transDownBtnColor[2]= {Color(YELLOW), Color(YELLOW_HL)};   // 向下转调按钮颜色
+    const Point     transDownBtnPos[2]  = {Point(14, 3), Point(1, 3)};
+    const Color     transDownBtnColor[2]= {Color(YELLOW), Color(YELLOW_HL)};
     const char      transDownBtnName[5]= "Down";
 
     //-------------------------------------------------------------------------------// 
@@ -214,7 +200,6 @@ namespace MatrixOS::MidiCenter
     virtual bool Render(Point origin) 
     {
       if (!seqData) return false;
-      bool RightEdit = stepEditing.editing && stepEditing.pos.Number() / 8 == 0;
 
       StateCheck(origin);
       switch(mode)
@@ -224,21 +209,22 @@ namespace MatrixOS::MidiCenter
             SeqRender(origin, seqPos);
             if(fullScreen)
             {
-
-                ButtonRender(origin, leftBtnPos[RightEdit], Color(leftBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
-                ButtonRender(origin, rightBtnPos[RightEdit], Color(rightBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
-                ButtonRender(origin, transUpBtnPos[RightEdit], Color(transUpBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
-                ButtonRender(origin, transDownBtnPos[RightEdit], Color(transDownBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, leftBtnPos[0], Color(leftBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, rightBtnPos[0], Color(rightBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, transUpBtnPos[0], Color(transUpBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, transDownBtnPos[0], Color(transDownBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
                 if(stepEditing.editing)
                 {
-                  ButtonRender(origin, leftOffsetBtnPos[RightEdit], Color(leftOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
-                  ButtonRender(origin, rightOffsetBtnPos[RightEdit], Color(rightOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
+                  ButtonRender(origin, leftOffsetBtnPos[0], Color(leftOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
+                  ButtonRender(origin, rightOffsetBtnPos[0], Color(rightOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
+
                 }else{
-                ButtonRender(origin, copyBtnPos, editBlock.copyKeyHeld ? Color(WHITE) : copyBtnColor);
-                ButtonRender(origin, deleteBtnPos, editBlock.deleteKeyHeld ? Color(WHITE) : deleteBtnColor);
+                // ButtonRender(origin, copyBtnPos, seqData->editBlock.copyKeyHeld ? Color(WHITE) : copyBtnColor);
+                // ButtonRender(origin, deleteBtnPos, seqData->editBlock.deleteKeyHeld ? Color(WHITE) : deleteBtnColor);
                 ButtonRender(origin, settingBtnPos, Color(settingBtnColor).Dim());
-                ButtonRender(origin, undoBtnPos, Color(undoBtnColor).DimIfNot(seqData->CanUndo()));
-                ButtonRender(origin, redoBtnPos, Color(redoBtnColor).DimIfNot(seqData->CanRedo()));
+                // ButtonRender(origin, captureBtnPos, Color(captureBtnColor).DimIfNot(seqData->HasCapture()));
+                // ButtonRender(origin, undoBtnPos, Color(undoBtnColor).DimIfNot(seqData->CanUndo()));
+                // ButtonRender(origin, redoBtnPos, Color(redoBtnColor).DimIfNot(seqData->CanRedo()));
                 }
             }
             break;
@@ -279,62 +265,63 @@ namespace MatrixOS::MidiCenter
     virtual bool KeyEvent(Point xy, KeyInfo* keyInfo)
     {
       if (!seqData) return false;
-      bool RightEdit = stepEditing.editing && stepEditing.pos.Number() / 8 == 0;
 
       switch(mode)
       {
         case NORMAL:
           if(fullScreen)
           {
-            if(InArea(xy, leftBtnPos[RightEdit], Dimension(1, 1)))
-              return MoveBtnKeyEvent(xy, leftBtnPos[RightEdit], keyInfo, true);
-            if(InArea(xy, rightBtnPos[RightEdit], Dimension(1, 1)))
-              return MoveBtnKeyEvent(xy, rightBtnPos[RightEdit], keyInfo, false);
-            if(InArea(xy, transUpBtnPos[RightEdit], Dimension(1, 1)))
-              return TransBtnKeyEvent(xy, transUpBtnPos[RightEdit], keyInfo, true);
-            if(InArea(xy, transDownBtnPos[RightEdit], Dimension(1, 1)))
-              return TransBtnKeyEvent(xy, transDownBtnPos[RightEdit], keyInfo, false);
+            if(InArea(xy, leftBtnPos[0], Dimension(1, 1)))
+              return MoveBtnKeyEvent(xy, leftBtnPos[0], keyInfo, true);
+            if(InArea(xy, rightBtnPos[0], Dimension(1, 1)))
+              return MoveBtnKeyEvent(xy, rightBtnPos[0], keyInfo, false);
+            if(InArea(xy, transUpBtnPos[0], Dimension(1, 1)))
+              return TransBtnKeyEvent(xy, transUpBtnPos[0], keyInfo, true);
+            if(InArea(xy, transDownBtnPos[0], Dimension(1, 1)))
+              return TransBtnKeyEvent(xy, transDownBtnPos[0], keyInfo, false);
             
             if(stepEditing.editing)
             {
-              if(InArea(xy, leftOffsetBtnPos[RightEdit], Dimension(1, 1)))
-                return OffsetBtnKeyEvent(xy, leftOffsetBtnPos[RightEdit], keyInfo, true);
-              if(InArea(xy, rightOffsetBtnPos[RightEdit], Dimension(1, 1)))
-                return OffsetBtnKeyEvent(xy, rightOffsetBtnPos[RightEdit], keyInfo, false);
+              if(InArea(xy, leftOffsetBtnPos[0], Dimension(1, 1)))
+                return OffsetBtnKeyEvent(xy, leftOffsetBtnPos[0], keyInfo, true);
+              if(InArea(xy, rightOffsetBtnPos[0], Dimension(1, 1)))
+                return OffsetBtnKeyEvent(xy, rightOffsetBtnPos[0], keyInfo, false);
             } 
             else 
             {
-              if(InArea(xy, copyBtnPos, Dimension(1, 1)))
-                return CopyBtnKeyEvent(xy, copyBtnPos, keyInfo);
-              if(InArea(xy, deleteBtnPos, Dimension(1, 1)))
-                return DeleteBtnKeyEvent(xy, deleteBtnPos, keyInfo);
+              // if(InArea(xy, copyBtnPos, Dimension(1, 1)))
+              //   return CopyBtnKeyEvent(xy, copyBtnPos, keyInfo);
+              // if(InArea(xy, deleteBtnPos, Dimension(1, 1)))
+              //   return DeleteBtnKeyEvent(xy, deleteBtnPos, keyInfo);
               if(InArea(xy, settingBtnPos, Dimension(1, 1)))
                 return SettingBtnKeyEvent(xy, settingBtnPos, keyInfo);
-              if(InArea(xy, undoBtnPos, Dimension(1, 1)))
-                return UndoBtnKeyEvent(xy, undoBtnPos, keyInfo);
-              if(InArea(xy, redoBtnPos, Dimension(1, 1)))
-                return RedoBtnKeyEvent(xy, redoBtnPos, keyInfo);
+              // if(InArea(xy, captureBtnPos, Dimension(1, 1)))
+              //   return CaptureBtnKeyEvent(xy, captureBtnPos, keyInfo);
+              // if(InArea(xy, undoBtnPos, Dimension(1, 1)))
+              //   return UndoBtnKeyEvent(xy, undoBtnPos, keyInfo);
+              // if(InArea(xy, redoBtnPos, Dimension(1, 1)))
+              //   return RedoBtnKeyEvent(xy, redoBtnPos, keyInfo);
             }
             
-            if(editBlock.copyKeyHeld && editBlock.state == EDIT_NONE)
+            if(seqData->editBlock.copyKeyHeld && seqData->editBlock.state == EDIT_NONE)
             {
               if(InArea(xy, seqPos, seqArea) && keyInfo->state == PRESSED)
               {
-                editBlock.state = COPY_STEP;
+                seqData->editBlock.state = COPY_STEP;
                 Point ui = xy - Point(0, 1);
                 uint8_t localStep = ui.x + ui.y * dimension.x;
                 uint8_t globalStep = localStep + clip->activeBar * STEP_MAX;
-                editBlock.stepStart = globalStep;
-                editBlock.stepEnd = globalStep;
+                seqData->editBlock.stepStart = globalStep;
+                seqData->editBlock.stepEnd = globalStep;
                 return true;
               }
               else if(InArea(xy, barPos, barArea) && keyInfo->state == PRESSED)
               {
-                editBlock.state = COPY_BAR;
+                seqData->editBlock.state = COPY_BAR;
                 Point ui = xy - barPos;
                 uint8_t thisBar = ui.x;
-                editBlock.barStart = thisBar;
-                editBlock.barEnd = thisBar;
+                seqData->editBlock.barStart = thisBar;
+                seqData->editBlock.barEnd = thisBar;
                 return true;
               }
             }
@@ -538,18 +525,18 @@ namespace MatrixOS::MidiCenter
             uint8_t scale =  velocity * 239 / 127 + 16;
             
             // 删除状态下的显示逻辑
-            if (editBlock.deleteKeyHeld) {
+            if (seqData->editBlock.deleteKeyHeld) {
                 Point currentPos = Point(x, y);
-                if (currentPos == editBlock.deleteStepTarget) {
+                if (currentPos == seqData->editBlock.deleteStepTarget) {
                     thisColor = Color(RED);
                     scale = 255;  // 确保红色显示最亮
                 }
             }
             
-            if (editBlock.state == COPY_STEP) {
-                if (editBlock.stepStart >= 0) {
-                    int16_t start = std::min(editBlock.stepStart, editBlock.stepEnd);
-                    int16_t end = std::max(editBlock.stepStart, editBlock.stepEnd);
+            if (seqData->editBlock.state == COPY_STEP) {
+                if (seqData->editBlock.stepStart >= 0) {
+                    int16_t start = std::min(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
+                    int16_t end = std::max(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
                     if (globalStep >= start && globalStep <= end) {
                         thisColor = thisColor.Blink_Color(true, Color(CYAN));
                     }
@@ -563,10 +550,10 @@ namespace MatrixOS::MidiCenter
             bool hasNote = seqData->FindNote(pos);
             Color thisColor = playHead ? playHeadColor[recording] : backColor[1 + monoMode - monoMode * hasNote];
 
-            if (editBlock.state == COPY_STEP) {
-                if (editBlock.stepStart >= 0) {
-                    int16_t start = std::min(editBlock.stepStart, editBlock.stepEnd);
-                    int16_t end = std::max(editBlock.stepStart, editBlock.stepEnd);
+            if (seqData->editBlock.state == COPY_STEP) {
+                if (seqData->editBlock.stepStart >= 0) {
+                    int16_t start = std::min(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
+                    int16_t end = std::max(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
                     if (globalStep >= start && globalStep <= end) {
                         thisColor = thisColor.Blink_Color(true, Color(CYAN).Scale(64));
                     }
@@ -622,9 +609,9 @@ namespace MatrixOS::MidiCenter
         if(step >= clip->barStepMax || bar >= clip->barMax) return false;
 
         // 删除操作
-        if (editBlock.deleteKeyHeld) {
+        if (seqData->editBlock.deleteKeyHeld) {
             Point ui = xy - offset;
-            editBlock.deleteStepTarget = ui;  // 使用 deleteStepTarget
+            seqData->editBlock.deleteStepTarget = ui;
             
             if (keyInfo->state == RELEASED && !keyInfo->hold) {
 
@@ -642,18 +629,18 @@ namespace MatrixOS::MidiCenter
                         seqData->ClearNote(pos);
                     }
                 }
-                editBlock.deleteStepTarget = Point(-1, -1);  // 重置删除目标位置
+                seqData->editBlock.deleteStepTarget = Point(-1, -1);  // 重置删除目标位置
                 return true;
             }
             return false; 
         }
 
         // 复制操作
-        if (editBlock.copyKeyHeld && editBlock.state == COPY_STEP) {
+        if (seqData->editBlock.copyKeyHeld && seqData->editBlock.state == COPY_STEP) {
 
             if (keyInfo->state == PRESSED) {
-                int16_t start = std::min<int16_t>(editBlock.stepStart, editBlock.stepEnd);
-                int16_t end = std::max<int16_t>(editBlock.stepStart, editBlock.stepEnd);
+                int16_t start = std::min<int16_t>(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
+                int16_t end = std::max<int16_t>(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
                 int16_t range = end - start + 1;
                 int16_t dstStep = globalStep;
                 
@@ -700,7 +687,7 @@ namespace MatrixOS::MidiCenter
                 return true;
             }
             else if (keyInfo->state == HOLD) {
-                editBlock.stepEnd = globalStep;
+                seqData->editBlock.stepEnd = globalStep;
                 return true;
             }
             return false;
@@ -796,7 +783,7 @@ namespace MatrixOS::MidiCenter
             Color thisColor;
             
             // 在复制或删除状态下显示全范围
-            if (editBlock.copyKeyHeld || editBlock.deleteKeyHeld) {
+            if (seqData->editBlock.copyKeyHeld || seqData->editBlock.deleteKeyHeld) {
                 thisColor = x == clip->activeBar ? Color(WHITE) : barColor[hasBar + hasBar * hasNote];
             }
             // 正常状态下根据 loop 显示
@@ -815,14 +802,14 @@ namespace MatrixOS::MidiCenter
             }
             
             // 删除状态下的显示逻辑
-            if (editBlock.deleteKeyHeld && x == editBlock.deleteBarTarget.x && x < clip->barMax) {
+            if (seqData->editBlock.deleteKeyHeld && x == seqData->editBlock.deleteBarTarget.x && x < clip->barMax) {
                 thisColor = Color(RED);
             }
             // 复制状态下的显示逻辑
-            else if (editBlock.state == COPY_BAR) {
-                if (editBlock.barStart >= 0) {
-                    int8_t start = std::min<int8_t>(editBlock.barStart, editBlock.barEnd);
-                    int8_t end = std::max<int8_t>(editBlock.barStart, editBlock.barEnd);
+            else if (seqData->editBlock.state == COPY_BAR) {
+                if (seqData->editBlock.barStart >= 0) {
+                    int8_t start = std::min<int8_t>(seqData->editBlock.barStart, seqData->editBlock.barEnd);
+                    int8_t end = std::max<int8_t>(seqData->editBlock.barStart, seqData->editBlock.barEnd);
                     if (x >= start && x <= end) {
                         thisColor = thisColor.Blink_Color(true, Color(CYAN));
                     }
@@ -842,8 +829,8 @@ namespace MatrixOS::MidiCenter
         if(thisBar >= BAR_MAX) return false;
 
         // 删除操作
-        if (editBlock.deleteKeyHeld) {
-            editBlock.deleteBarTarget = Point(ui.x, -1);
+        if (seqData->editBlock.deleteKeyHeld) {
+            seqData->editBlock.deleteBarTarget = Point(ui.x, -1);
             
             if (keyInfo->state == RELEASED && !keyInfo->hold) {
                 if (thisBar < clip->barMax) {
@@ -851,17 +838,17 @@ namespace MatrixOS::MidiCenter
                     seqData->EnableTempSnapshot();
                     seqData->ClearBar(SEQ_Pos(channel, clipNum, thisBar, 0), 
                                     monoMode ? channelConfig->activeNote[channel] : 255);
-                    editBlock.deleteBarTarget = Point(-1, -1);
+                    seqData->editBlock.deleteBarTarget = Point(-1, -1);
                 }
             }
             return true;
         }
 
         // 复制操作
-        if (editBlock.copyKeyHeld && editBlock.state == COPY_BAR) {
+        if (seqData->editBlock.copyKeyHeld && seqData->editBlock.state == COPY_BAR) {
             if (keyInfo->state == PRESSED) {
-                int8_t start = std::min<int8_t>(editBlock.barStart, editBlock.barEnd);
-                int8_t end = std::max<int8_t>(editBlock.barStart, editBlock.barEnd);
+                int8_t start = std::min<int8_t>(seqData->editBlock.barStart, seqData->editBlock.barEnd);
+                int8_t end = std::max<int8_t>(seqData->editBlock.barStart, seqData->editBlock.barEnd);
                 int8_t range = end - start + 1;
                 
                 int8_t maxRange = static_cast<int8_t>(BAR_MAX - thisBar);
@@ -884,7 +871,7 @@ namespace MatrixOS::MidiCenter
                 return true;
             }
             else if (keyInfo->state == HOLD) {
-                editBlock.barEnd = thisBar;
+                seqData->editBlock.barEnd = thisBar;
                 return true;
             }
             return false;
@@ -892,21 +879,21 @@ namespace MatrixOS::MidiCenter
 
         // 更新 bar 按键状态
         if (keyInfo->state == PRESSED) {
-            if (!editBlock.barKeyStates[thisBar]) {
-                editBlock.barKeyStates[thisBar] = true;
-                editBlock.barKeyCount++;
-                if (editBlock.barKeyCount == 1) {
-                    editBlock.loopEditBar = thisBar;
+            if (!seqData->editBlock.barKeyStates[thisBar]) {
+                seqData->editBlock.barKeyStates[thisBar] = true;
+                seqData->editBlock.barKeyCount++;
+                if (seqData->editBlock.barKeyCount == 1) {
+                    seqData->editBlock.loopEditBar = thisBar;
                 }
             }
         }
         else if (keyInfo->state == HOLD) {
-            if (thisBar == editBlock.loopEditBar) {
-                if (editBlock.barKeyCount > 1) {
+            if (thisBar == seqData->editBlock.loopEditBar) {
+                if (seqData->editBlock.barKeyCount > 1) {
                     // 找到最小和最大的按下的 bar
                     int8_t start = BAR_MAX, end = -1;
                     for (int8_t i = 0; i < BAR_MAX; i++) {
-                        if (editBlock.barKeyStates[i]) {
+                        if (seqData->editBlock.barKeyStates[i]) {
                             start = std::min<int8_t>(start, i);
                             end = std::max<int8_t>(end, i);
                         }
@@ -919,7 +906,7 @@ namespace MatrixOS::MidiCenter
                         clip->SetLoop(start, end);
                     }
                 }
-                else if (editBlock.barKeyCount == 1) {
+                else if (seqData->editBlock.barKeyCount == 1) {
                     seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
                     seqData->EnableTempSnapshot();
                     if (clip->HasLoop()) {
@@ -931,17 +918,17 @@ namespace MatrixOS::MidiCenter
             }
         }
         else if (keyInfo->state == RELEASED) {
-            if (editBlock.barKeyStates[thisBar]) {
-                editBlock.barKeyStates[thisBar] = false;
-                editBlock.barKeyCount--;
-                if (editBlock.barKeyCount == 0) {
-                    editBlock.loopEditBar = -1;
+            if (seqData->editBlock.barKeyStates[thisBar]) {
+                seqData->editBlock.barKeyStates[thisBar] = false;
+                seqData->editBlock.barKeyCount--;
+                if (seqData->editBlock.barKeyCount == 0) {
+                    seqData->editBlock.loopEditBar = -1;
                 }
             }
             
             // 普通 bar 选择
-            if (!keyInfo->hold && editBlock.barKeyCount == 0) {
-                if (editBlock.copyKeyHeld || editBlock.deleteKeyHeld || 
+            if (!keyInfo->hold && seqData->editBlock.barKeyCount == 0) {
+                if (seqData->editBlock.copyKeyHeld || seqData->editBlock.deleteKeyHeld || 
                     !clip->HasLoop() || (thisBar >= clip->loopStart && thisBar <= clip->loopEnd)) {
                     if(thisBar >= clip->barMax) {
                         seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
@@ -1014,13 +1001,15 @@ namespace MatrixOS::MidiCenter
 
     bool DeleteBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
     {
-        if (keyInfo->state == PRESSED) {
-            editBlock.deleteKeyHeld = true;
-            editBlock.state = EDIT_NONE;  // 重置状态
-            editBlock.copyKeyHeld = false; // 确保复制状态被清除
+        if(keyInfo->state == PRESSED)
+        {
+            seqData->editBlock.deleteKeyHeld = true;
+            seqData->editBlock.state = EDIT_NONE;
+            seqData->editBlock.copyKeyHeld = false;
             return true;
         }
-        else if (keyInfo->state == RELEASED) {
+        else if(keyInfo->state == RELEASED)
+        {
             ResetEditBlock();
             return true;
         }
@@ -1029,37 +1018,39 @@ namespace MatrixOS::MidiCenter
 
     bool CopyBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
     {
-        if (keyInfo->state == PRESSED) {
-            editBlock.copyKeyHeld = true;
-            editBlock.state = EDIT_NONE;
+        if(keyInfo->state == PRESSED)
+        {
+            seqData->editBlock.copyKeyHeld = true;
+            seqData->editBlock.state = EDIT_NONE;
             return true;
         }
-        else if (keyInfo->state == RELEASED) {
+        else if(keyInfo->state == RELEASED)
+        {
             ResetEditBlock();
             return true;
         }
         return false;
     }
     
-    bool UndoBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
-    {
-      if(keyInfo->state == PRESSED)
-      {
-        if(seqData->CanUndo()) seqData->Undo();
-        return true;
-      }
-      return false;
-    }
+    // bool UndoBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
+    // {
+    //   if(keyInfo->state == PRESSED)
+    //   {
+    //     if(seqData->CanUndo()) seqData->Undo();
+    //     return true;
+    //   }
+    //   return false;
+    // }
 
-    bool RedoBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
-    {
-      if(keyInfo->state == PRESSED)
-      {
-        if(seqData->CanRedo()) seqData->Redo();
-        return true;
-      }
-      return false;
-    }
+    // bool RedoBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
+    // {
+    //   if(keyInfo->state == PRESSED)
+    //   {
+    //     if(seqData->CanRedo()) seqData->Redo();
+    //     return true;
+    //   }
+    //   return false;
+    // }
 
     bool SettingBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
     {
@@ -1107,7 +1098,8 @@ namespace MatrixOS::MidiCenter
                         isLeft ? -1 : 1, 
                         monoMode ? channelConfig->activeNote[channel] : 255);
                 } else {
-                    stepEditing.edited = true;
+                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                    seqData->EnableTempSnapshot();
                     seqData->ShiftClip(SEQ_Pos(channel, clipNum, 0, 0), 
                         isLeft ? -1 : 1, 
                         monoMode ? channelConfig->activeNote[channel] : 255);
@@ -1149,17 +1141,18 @@ namespace MatrixOS::MidiCenter
             HoldOffsetSuccess = false;
             if(!keyInfo->hold)
             { 
-                // 短按: offset 5个单位
+              // 短按: offset 5 或 1 个单位
+                uint8_t n = Device::KeyPad::Shift() ? 1 : 5;
                 stepEditing.edited = true;
                 seqData->OffsetStep(stepEditing.pos,
-                    isLeft ? -5 : 5,
+                    isLeft ? -n : n,
                     monoMode ? channelConfig->activeNote[channel] : 255);
                 return true;
             }
         }
         if(keyInfo->state == HOLD)
         { 
-            // 长按: offset 20个单位
+            // 长按: offset 20 个单位
             stepEditing.edited = true;
             seqData->OffsetStep(stepEditing.pos,
                 isLeft ? -20 : 20,
@@ -1228,6 +1221,32 @@ namespace MatrixOS::MidiCenter
         }
         return false;
     }
+
+    // bool CaptureBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
+    // {
+    //   if(keyInfo->state == RELEASED && !keyInfo->hold)
+    //   {
+    //     if(!seqData->HasCapture()) return false;
+
+    //     if(!Device::KeyPad::Shift()) 
+    //     {
+    //       seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+    //       seqData->EnableTempSnapshot();
+    //       seqData->EnableCapture();
+    //     }
+    //     else 
+    //     {
+    //       seqData->ClearCapture();
+    //     }
+    //     return true;
+    //   }
+    //   if(keyInfo->state == HOLD)
+    //   {
+    //     MatrixOS::UIInterface::TextScroll("Capture", captureBtnColor);
+    //     return true;
+    //   }
+    //   return false;
+    // }
 
     void SetGate(SEQ_Pos targetPos)
     {
@@ -1359,7 +1378,7 @@ namespace MatrixOS::MidiCenter
 
     void ResetEditBlock()
     {
-        editBlock = EditBlock();
+        seqData->editBlock = SEQ_EditBlock();
     }
 
   };

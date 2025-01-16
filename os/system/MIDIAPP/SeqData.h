@@ -794,11 +794,27 @@ namespace MatrixOS::MidiCenter
   };
 
   struct  SEQ_Snapshot {
-    int16_t undoPoint = -1;
+    int16_t Point = -1;
     SEQ_Pos position = SEQ_Pos(0);
     SEQ_Clip clip;                      // 保存整个clip
     std::map<int16_t, SEQ_Step,   std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Step>>> steps;  // 保存clip引用的所有steps
     std::map<int16_t, SEQ_Autom,  std::less<int16_t>, PSRAMAllocator<std::pair<const int16_t, SEQ_Autom>>> automs;// 保存clip引用的所有automs
+  };
+
+  enum    EditState : uint8_t {EDIT_NONE, COPY_BAR, COPY_STEP};
+  struct  SEQ_EditBlock {
+      EditState state = EDIT_NONE;
+      int8_t barStart = -1;
+      int8_t barEnd = -1;
+      int8_t stepStart = -1;
+      int8_t stepEnd = -1;
+      int8_t loopEditBar = -1;
+      bool barKeyStates[BAR_MAX] = {false};
+      uint8_t barKeyCount = 0;
+      bool copyKeyHeld = false;
+      bool deleteKeyHeld = false;
+      Point deleteBarTarget = Point(-1, -1);
+      Point deleteStepTarget = Point(-1, -1);
   };
 
   struct  SEQ_History
@@ -821,10 +837,13 @@ namespace MatrixOS::MidiCenter
     std::set<int16_t> patternChanged, stepChanged, automChanged; // stepID, automID
     std::set<SEQ_Step*> compEdit;
     SEQ_Pick pick;
+    SEQ_Snapshot capture;
     SEQ_History history;
     bool inited = false;
 
    public:
+    SEQ_EditBlock editBlock;
+
     void Init()
     {
       new (&song)   SEQ_Song();
@@ -837,7 +856,9 @@ namespace MatrixOS::MidiCenter
       new (&automChanged)   std::set<int16_t>();
       new (&compEdit)       std::set<SEQ_Step*>();
       new (&pick)   SEQ_Pick();
+      new (&capture) SEQ_Snapshot();
       new (&history) SEQ_History();
+      new (&editBlock) SEQ_EditBlock();
       inited = true;
     }
 
@@ -854,6 +875,8 @@ namespace MatrixOS::MidiCenter
       compEdit.~set();
       pick.~SEQ_Pick();
       history.~SEQ_History();
+      capture.~SEQ_Snapshot();
+      editBlock.~SEQ_EditBlock();
     }
 
     ~SEQ_DataStore() { if(inited) Destroy(); }
@@ -1605,6 +1628,34 @@ namespace MatrixOS::MidiCenter
 
     void            Pick_EndEditing() { pick.EndEditing(); }
 
+    //-----------------------------------CAPTURE-------------------------------------//
+
+    SEQ_Snapshot*   GetCapture() { return &capture; }
+
+    void            ClearCapture() { capture = SEQ_Snapshot(); }
+
+    void            EnableCapture() { 
+      if(capture.Point == -1)
+        return;
+      SEQ_Clip* clip = Clip(capture.position.ChannelNum(), capture.position.ClipNum());
+      if(!clip) return;
+
+      for(auto& step : capture.steps) {
+        SEQ_Pos stepPos = step.second.Position();
+        std::vector<const SEQ_Note*> notes = step.second.GetNotes();
+        for(const SEQ_Note* note : notes) {
+          AddNote(stepPos, *note);
+        }
+      }
+      
+      for(auto& autom : capture.automs) {
+        AddAutom(autom.second, autom.second.Position());
+      }
+      ClearCapture();
+    }
+
+    bool            HasCapture() { return capture.Point != -1; } 
+
     //----------------------------------UNDO REDO------------------------------------//
 
     void            CreateTempSnapshot(SEQ_Pos position, bool ignoreTimeStamp = false)
@@ -1626,7 +1677,7 @@ namespace MatrixOS::MidiCenter
       // 暂存clip
       SEQ_Clip* clip = Clip(position.ChannelNum(), position.ClipNum());
       history.tempSnapshot.clip = *clip;
-      history.tempSnapshot.undoPoint = history.currentUndoPoint;
+      history.tempSnapshot.Point = history.currentUndoPoint;
       history.tempSnapshot.position = position;
 
       // 保存clip引用的所有steps
@@ -1648,7 +1699,7 @@ namespace MatrixOS::MidiCenter
     }
 
     void            EnableTempSnapshot() {
-      if(history.tempSnapshot.undoPoint == -1) return;
+      if(history.tempSnapshot.Point == -1) return;
 
       RemoveSnapshotFrom(history.currentUndoPoint);
       history.snapshots.push_back(history.tempSnapshot);
@@ -1670,7 +1721,7 @@ namespace MatrixOS::MidiCenter
         if(undoPoint < history.firstUndoPoint || undoPoint > history.lastUndoPoint)  return;
         
         auto it = std::find_if(history.snapshots.begin(), history.snapshots.end(),
-            [undoPoint](const SEQ_Snapshot& snap) { return snap.undoPoint == undoPoint; });
+            [undoPoint](const SEQ_Snapshot& snap) { return snap.Point == undoPoint; });
         if (it == history.snapshots.end()) return;
         ClearClip(it->position.ChannelNum(), it->position.ClipNum());
         SEQ_Clip* clip = Clip(it->position.ChannelNum(), it->position.ClipNum());

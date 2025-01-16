@@ -10,9 +10,8 @@ namespace MatrixOS::MidiCenter
   class FeedBackButtons : public UIComponent
   {
   public:
-
-    std::unordered_set<uint16_t> actived;
     Dimension dimension = Dimension(4, 1);
+    std::unordered_set<uint16_t> actived;
     pair<uint16_t, uint8_t>* buttons;
     uint8_t count = 0;
     bool shift = false;

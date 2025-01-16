@@ -14,6 +14,7 @@ namespace MatrixOS::MidiCenter
     uint32_t stepTime = 0;
     int16_t playHead = 0;
     int16_t buffHead = 0;
+    int16_t capHead = 0;
     uint8_t clipNum = 0;
     uint8_t quarterTickPerStep;
     uint16_t scale = 0x0FFF;
@@ -25,6 +26,7 @@ namespace MatrixOS::MidiCenter
     bool noteBuff = false;
     bool end = true;
     bool recording = false;
+    bool capturing = false;
 
     Sequencer(uint8_t channel)
     {
@@ -34,6 +36,7 @@ namespace MatrixOS::MidiCenter
 
     void Scan();
     void Record(uint8_t channel, uint8_t byte1, uint8_t byte2);
+    void Capture(uint8_t channel, uint8_t byte1, uint8_t byte2);
     void End();
 
    private:

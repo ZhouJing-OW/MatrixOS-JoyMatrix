@@ -6,7 +6,7 @@ namespace MatrixOS::MidiCenter
 {
   string appName;
   MidiAppUI* midiAppUI;
-  FeedBackButtons* feedBack4x1;
+  SubMidiAppUI* subMidiAppUI;
   FeedBackButtons* feedBack16x2;
   ClipSelector* clipSelector;
   MultiPad* multiPad;
@@ -108,7 +108,7 @@ namespace MatrixOS::MidiCenter
       MidiCenterStart();
 
       midiAppUI = new MidiAppUI;
-      feedBack4x1 = new FeedBackButtons(Dimension(4,1), FBButtons2, 8);
+      subMidiAppUI = new SubMidiAppUI;
       feedBack16x2 = new FeedBackButtons(Dimension(16,2), FBButtons + 32, 32);
       clipSelector = new ClipSelector;
       multiPad = new MultiPad(Dimension(16, 2), 4, channelConfig, notePadConfig, drumPadConfig);
@@ -161,8 +161,8 @@ namespace MatrixOS::MidiCenter
     bpm.SetPtr(&bpmPrv);
     swing.SetPtr(&swingPrv);
     appName = "";
-    delete midiAppUI;     delete clipSelector;     delete multiPad;      seqData->Destroy();  heap_caps_free(seqData);
-    midiAppUI = nullptr;  clipSelector = nullptr;  multiPad = nullptr;   seqData = nullptr;   feedBack4x1 = nullptr;    feedBack16x2 = nullptr;
+    delete midiAppUI;     delete subMidiAppUI;     delete clipSelector;     delete multiPad;      seqData->Destroy();  heap_caps_free(seqData);   delete feedBack16x2;
+    midiAppUI = nullptr;  subMidiAppUI = nullptr;  clipSelector = nullptr;  multiPad = nullptr;   seqData = nullptr;                              feedBack16x2 = nullptr;
     Color* color = nullptr;
     MatrixOS::KnobCenter::SetColor(color);
     MatrixOS::FATFS::VarManageEnd(ROUTER_SUFFIX);
@@ -172,7 +172,7 @@ namespace MatrixOS::MidiCenter
   }
 
   void AddMidiAppTo(UI &ui, Point point) { if(midiAppUI != nullptr) ui.AddUIComponent(*midiAppUI, point); }
-  void AddFeedBack4x1To(UI &ui, Point point) { ui.AddUIComponent(*feedBack4x1, point); }
+  void AddSubMidiAppTo(UI &ui, Point point) { if(subMidiAppUI != nullptr) ui.AddUIComponent(*subMidiAppUI, point); }
   void AddFeedBack16x2To(UI &ui, Point point) { ui.AddUIComponent(*feedBack16x2, point); }
   void AddClipSelectorTo(UI &ui, Point point) { if(clipSelector != nullptr) ui.AddUIComponent(*clipSelector, point); }
   void SetMidiAppNode(NodeID nodeID) { if(midiAppUI != nullptr) midiAppUI->SetUI(nodeID); }

@@ -295,5 +295,216 @@ namespace MatrixOS::MidiCenter
       return nodesInChannel[channel].find(nodeID) != nodesInChannel[channel].end();
     }
   };
+
+  extern MidiAppUI* midiAppUI;
+  extern SEQ_DataStore* seqData;
+
+  class SubMidiAppUI: public UIComponent
+  {
+  public:
+    Dimension dimension = Dimension(4, 1);
+
+    std::unordered_set<uint16_t> actived;
+    pair<uint16_t, uint8_t>* buttons = FBButtons2;
+    uint8_t count = 8;
+    bool shift = false;
+
+    ~SubMidiAppUI() 
+    {
+      for (auto it = actived.begin(); it != actived.end(); it++)
+      {
+        MatrixOS::MidiCenter::Send_Off(ID_Type(*it), ID_Channel(*it), ID_Byte1(*it));
+      }
+      actived.clear();
+    }
+
+    virtual Dimension GetSize() { return dimension; }
+    virtual Color GetColor() { return Color(WHITE); }
+
+    virtual bool Render(Point origin) { 
+
+      if (dimension.Area() < count && shift != Device::KeyPad::Shift())
+      {
+        for (auto it = actived.begin(); it != actived.end(); it++)
+        {
+          MatrixOS::MidiCenter::Send_Off(ID_Type(*it), ID_Channel(*it), ID_Byte1(*it));
+        }
+        actived.clear();
+        shift = Device::KeyPad::Shift();
+      }
+
+      switch(midiAppUI->activeUI[midiAppUI->channel])
+      {
+        case NODE_SEQ:
+          return SeqRender(origin);
+        case NODE_ARP:
+          return EmptyRender(origin);
+        case NODE_CHORD:
+          return EmptyRender(origin);
+        case NODE_FEEDBACK:
+          return FeedBackRender(origin);
+        default:
+          return EmptyRender(origin);
+      }
+      return true; }
+
+      virtual bool KeyEvent(Point xy, KeyInfo* keyInfo) 
+      { 
+        switch(midiAppUI->activeUI[midiAppUI->channel])
+        {
+          case NODE_SEQ:
+            return SeqKeyEvent(xy, keyInfo);
+          case NODE_ARP:
+            return false;
+          case NODE_CHORD:
+            return false;
+          case NODE_FEEDBACK:
+            return FeedBackKeyEvent(xy, keyInfo);
+          default:
+            return false;
+        }
+        return false; 
+      }
+
+    private:
+    bool EmptyRender(Point origin)
+    {
+      for(uint8_t x = 0; x < dimension.x; x++)
+        for(uint8_t y = 0; y < dimension.y; y++)
+          MatrixOS::LED::SetColor(origin + Point(x, y), Color(BLANK));
+      return true;
+    }
+
+    bool SeqRender(Point origin)
+    {
+      Color copyColor = Color(CYAN);
+      Color deleteColor = Color(RED);
+      Color undoRedoColor = Color(shift ? GOLD : ORANGE);
+      bool hasUndoRedo = shift ? seqData->CanRedo() : seqData->CanUndo();
+      Color captureColor = Color(LAWN);
+      bool hasCapture = seqData->HasCapture();
+
+      MatrixOS::LED::SetColor(origin + Point(0, 0), copyColor.Blink_Color(seqData->editBlock.copyKeyHeld, Color(WHITE)));
+      MatrixOS::LED::SetColor(origin + Point(1, 0), deleteColor.Blink_Color(seqData->editBlock.deleteKeyHeld, Color(WHITE)));
+      MatrixOS::LED::SetColor(origin + Point(2, 0), undoRedoColor.DimIfNot(hasUndoRedo)); 
+      MatrixOS::LED::SetColor(origin + Point(3, 0), captureColor.DimIfNot(hasCapture));
+      return true;
+    }
+
+    bool SeqKeyEvent(Point xy, KeyInfo* keyInfo)
+    {
+      if(xy == Point(0, 0)) return CopyBtnKeyEvent(keyInfo);
+      if(xy == Point(1, 0)) return DeleteBtnKeyEvent(keyInfo);
+
+      if(keyInfo->state == RELEASED && keyInfo->hold == false)
+      {
+        if(xy == Point(2, 0))
+        {
+          if(shift) seqData->Redo();
+          else seqData->Undo();
+          return true;
+        }
+        if(xy == Point(3, 0))
+        {
+          if(!seqData->HasCapture()) return false;
+          SEQ_Snapshot* cap = seqData->GetCapture();
+          if(shift) seqData->ClearCapture();
+          else 
+          {
+            seqData->CreateTempSnapshot(cap->position);
+            seqData->EnableTempSnapshot();
+            seqData->EnableCapture();
+          }
+          return true;
+        }
+        return false;
+      }
+
+      if(keyInfo->state == HOLD)
+      {
+        if(xy == Point(2, 0))
+        {
+          MatrixOS::UIInterface::TextScroll(shift ? "Redo" : "Undo", Color(shift ? GOLD : ORANGE));
+          return true;
+        }
+        if(xy == Point(3, 0))
+        {
+          MatrixOS::UIInterface::TextScroll("Capture", Color(LAWN));
+          return true;
+        }
+        return false;
+      }
+      return false;
+    }
+
+    bool DeleteBtnKeyEvent(KeyInfo* keyInfo)
+    {
+      if(keyInfo->state == PRESSED)
+      {
+        seqData->editBlock.deleteKeyHeld = true;
+        seqData->editBlock.state = EDIT_NONE;
+        seqData->editBlock.copyKeyHeld = false;
+        return true;
+      }
+      else if(keyInfo->state == RELEASED)
+      {
+        if(!shift) seqData->editBlock = SEQ_EditBlock();
+        return true;
+      }
+      return false;
+    }
+
+    bool CopyBtnKeyEvent(KeyInfo* keyInfo)
+    {
+        if(keyInfo->state == PRESSED)
+        {
+          seqData->editBlock.copyKeyHeld = true;
+          seqData->editBlock.state = EDIT_NONE;
+          seqData->editBlock.deleteKeyHeld = false;
+          return true;
+        }
+        else if(keyInfo->state == RELEASED)
+        {
+          if(!shift)seqData->editBlock = SEQ_EditBlock();
+          return true;
+        }
+        return false;
+    }
+
+    bool FeedBackRender(Point origin)
+    {
+      for (int x = 0; x < dimension.x; x++)
+      {
+        for (int y = 0; y < dimension.y; y++)
+        {
+          uint8_t n = x + y * dimension.x;
+          MatrixOS::LED::SetColor(origin + Point(x, y), Color(palette[buttons[n + shift * count / 2].second]));
+        }
+      }
+      return true;
+    }
+
+    bool FeedBackKeyEvent(Point xy, KeyInfo* keyInfo)
+    {
+      uint8_t n = xy.x + xy.y * dimension.x;
+      
+      uint16_t midiID = buttons[n + shift * count / 2].first;
+      if (keyInfo->state == PRESSED){
+        MatrixOS::MidiCenter::Send_On(ID_Type(midiID), ID_Channel(midiID), ID_Byte1(midiID), 127);
+        actived.insert(midiID);
+        return true;
+      }
+
+      if (keyInfo->state == RELEASED){
+        MatrixOS::MidiCenter::Send_Off(ID_Type(midiID), ID_Channel(midiID), ID_Byte1(midiID));
+        actived.erase(midiID);
+        return true;
+      }
+      return false;
+    }
+
+  };
+
+
 }
 

@@ -12,11 +12,11 @@ namespace MatrixOS::MidiCenter
   ArpConfig* arpConfig;
 
   std::map<NodeID, NodeInfo> nodesInfo = {
-    {NODE_NONE,   {"",        Color(BLANK),    nullptr     }},
-    {NODE_SEQ,    {"SEQ",     Color(LAWN),     nullptr     }},
-    {NODE_CHORD,  {"CHORD",   Color(YELLOW),   chordConfig }},
-    {NODE_ARP,    {"ARP",     Color(ORANGE),   arpConfig   }},
-    {NODE_FEEDBACK, {"FEEDBACK",Color(BLUE),  nullptr     }},
+    {NODE_NONE,     {"",          Color(BLANK),     nullptr     }},
+    {NODE_SEQ,      {"SEQ",       Color(LAWN),      nullptr     }},
+    {NODE_CHORD,    {"CHORD",     Color(YELLOW),    chordConfig }},
+    {NODE_ARP,      {"ARP",       Color(ORANGE),    arpConfig   }},
+    {NODE_FEEDBACK, {"FEEDBACK",  Color(BLUE),      nullptr     }},
   };
 
   void MidiRouter(NodeID from, uint8_t type, uint8_t channel, uint8_t byte1, uint8_t byte2)
@@ -37,13 +37,16 @@ namespace MatrixOS::MidiCenter
     
     if(seqData && seqInOut[channel] > (from | 0x0F) && seqInOut[channel] < to)
     {
-      if (transportState.play && transportState.record && CNTR_SeqEditStep.empty())
+      if (CNTR_SeqEditStep.empty() && transportState.play)
       {
         auto it = nodesInChannel[channel].find(NODE_SEQ);
         if(it != nodesInChannel[channel].end())
         {
           Sequencer* seq = (Sequencer*)it->second;
-          seq->Record(channel, byte1, byte2);
+          if(transportState.record)
+            seq->Record(channel, byte1, byte2);
+          else
+            seq->Capture(channel, byte1, byte2);
         }
       }
       if(seqData->Pick(channel, byte1, byte2) == BLOCK) return;
@@ -53,8 +56,6 @@ namespace MatrixOS::MidiCenter
       MatrixOS::MIDI::Send(MidiPacket(0, byte2 == 0 ? NoteOff : NoteOn, channel, byte1, byte2));
     else
       nodesInChannel[channel][to]->RouteIn(byte1, byte2);
-
-    
   }
 
   void Send_On(int8_t type, int8_t channel, int8_t byte1, int8_t byte2)

@@ -99,7 +99,7 @@ void Drambo::Tab0(){ // Main
       MatrixOS::MidiCenter::AddClipSelectorTo(tab0);
       break;
   }
-  MatrixOS::MidiCenter::AddFeedBack4x1To(tab0, Point(4, 4));
+  MatrixOS::MidiCenter::AddSubMidiAppTo(tab0, Point(4, 4));
   // int8_t num;
   CommonUI(tab0);
   // tab0.SetScrollBar(&num, 4, COLOR_SEQ_4PAGE);
