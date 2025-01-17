@@ -302,30 +302,6 @@ namespace MatrixOS::MidiCenter
               // if(InArea(xy, redoBtnPos, Dimension(1, 1)))
               //   return RedoBtnKeyEvent(xy, redoBtnPos, keyInfo);
             }
-            
-            if(seqData->editBlock.copyKeyHeld && seqData->editBlock.state == EDIT_NONE)
-            {
-              if(InArea(xy, seqPos, seqArea) && keyInfo->state == PRESSED)
-              {
-                seqData->editBlock.state = COPY_STEP;
-                Point ui = xy - Point(0, 1);
-                uint8_t localStep = ui.x + ui.y * dimension.x;
-                uint8_t globalStep = localStep + clip->activeBar * STEP_MAX;
-                seqData->editBlock.stepStart = globalStep;
-                seqData->editBlock.stepEnd = globalStep;
-                return true;
-              }
-              else if(InArea(xy, barPos, barArea) && keyInfo->state == PRESSED)
-              {
-                seqData->editBlock.state = COPY_BAR;
-                Point ui = xy - barPos;
-                uint8_t thisBar = ui.x;
-                seqData->editBlock.barStart = thisBar;
-                seqData->editBlock.barEnd = thisBar;
-                return true;
-              }
-            }
-
           }
 
           if(InArea(xy, seqPos, seqArea))
@@ -533,10 +509,12 @@ namespace MatrixOS::MidiCenter
                 }
             }
             
-            if (seqData->editBlock.state == COPY_STEP) {
+            if (seqData->editBlock.state == COPY_STEP && 
+                channel == seqData->editBlock.srcChannel && 
+                clipNum == seqData->editBlock.srcClipNum) {
                 if (seqData->editBlock.stepStart >= 0) {
-                    int16_t start = std::min(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
-                    int16_t end = std::max(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
+                    int16_t start = std::min<int16_t>(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
+                    int16_t end = std::max<int16_t>(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
                     if (globalStep >= start && globalStep <= end) {
                         thisColor = thisColor.Blink_Color(true, Color(CYAN));
                     }
@@ -550,10 +528,12 @@ namespace MatrixOS::MidiCenter
             bool hasNote = seqData->FindNote(pos);
             Color thisColor = playHead ? playHeadColor[recording] : backColor[1 + monoMode - monoMode * hasNote];
 
-            if (seqData->editBlock.state == COPY_STEP) {
+            if (seqData->editBlock.state == COPY_STEP && 
+                channel == seqData->editBlock.srcChannel && 
+                clipNum == seqData->editBlock.srcClipNum) {
                 if (seqData->editBlock.stepStart >= 0) {
-                    int16_t start = std::min(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
-                    int16_t end = std::max(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
+                    int16_t start = std::min<int16_t>(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
+                    int16_t end = std::max<int16_t>(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
                     if (globalStep >= start && globalStep <= end) {
                         thisColor = thisColor.Blink_Color(true, Color(CYAN).Scale(64));
                     }
@@ -601,7 +581,7 @@ namespace MatrixOS::MidiCenter
         Point ui = xy - offset;
         uint8_t localStep = ui.x + ui.y * dimension.x;
         uint8_t step = localStep % STEP_MAX;
-        uint8_t bar  = localStep / STEP_MAX + clip->activeBar;
+        uint8_t bar = localStep / STEP_MAX + clip->activeBar;
         uint8_t globalStep = bar * STEP_MAX + step;
         SEQ_Pos pos = SEQ_Pos(channel, clipNum, bar, step);
 
@@ -636,61 +616,90 @@ namespace MatrixOS::MidiCenter
         }
 
         // 复制操作
-        if (seqData->editBlock.copyKeyHeld && seqData->editBlock.state == COPY_STEP) {
+        if (seqData->editBlock.copyKeyHeld) {
+          
+          if(keyInfo->state == PRESSED)
+          {
+            seqData->editBlock.stepKeyStates[globalStep] = true;
+            return true;
+          }
 
-            if (keyInfo->state == PRESSED) {
-                int16_t start = std::min<int16_t>(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
-                int16_t end = std::max<int16_t>(seqData->editBlock.stepStart, seqData->editBlock.stepEnd);
-                int16_t range = end - start + 1;
-                int16_t dstStep = globalStep;
-                
-                // 计算最大可复制步数，确保类型一致
-                int16_t maxSteps = static_cast<int16_t>(BAR_MAX * STEP_MAX - dstStep);
-                int16_t copyRange = std::min<int16_t>(range, maxSteps);
-                
-                if (copyRange > 0) {
-                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
-                    seqData->EnableTempSnapshot();
-                    for (int16_t i = 0; i < copyRange; i++) {
-                        SEQ_Pos srcPos = SEQ_Pos(channel, clipNum, 
-                            (start + i) / STEP_MAX,    // 源bar
-                            (start + i) % STEP_MAX);   // 源step
-                        
-                        SEQ_Pos dstPos = SEQ_Pos(channel, clipNum, 
-                            (dstStep + i) / STEP_MAX,  // 目标bar
-                            (dstStep + i) % STEP_MAX); // 目标step
+          if (keyInfo->state == HOLD) {
+            seqData->editBlock.state = COPY_STEP;
+            seqData->editBlock.srcChannel = channel;
+            seqData->editBlock.srcClipNum = clipNum;
 
-                        // 确保目标step在有效范围内
-                        if ((dstStep + i) % STEP_MAX >= clip->barStepMax) {
-                            // 如果超出当前bar，移动到下一个bar的开始
-                            dstStep = ((dstStep + i) / STEP_MAX + 1) * STEP_MAX;
-                            i--; // 重试当前step
-                            continue;
-                        }
-                        
-                        if (monoMode) {
-                            uint8_t activeNote = channelConfig->activeNote[channel];
-                            if (seqData->FindNote(srcPos, activeNote)) {
-                                seqData->CopyNote(srcPos, dstPos, activeNote);
-                            }
-                        } else {
-                            seqData->CopyStep(srcPos, dstPos);
-                        }
-                    }
-
-                    // 更新最大bar数
-                    uint8_t lastBar = (dstStep + copyRange - 1) / STEP_MAX + 1;
-                    if (lastBar > clip->barMax) {
-                        clip->barMax = lastBar;
-                    }
+            if (seqData->editBlock.stepKeyStates.count() > 0) 
+            {
+              int16_t start = BAR_MAX * STEP_MAX, end = -1;
+              for (int16_t i = 0; i < BAR_MAX * STEP_MAX; i++) 
+              {
+                if (seqData->editBlock.stepKeyStates[i]) 
+                {
+                  start = std::min(start, i);
+                  end = std::max(end, i);
                 }
-                return true;
+              }
+              seqData->editBlock.stepStart = start;
+              seqData->editBlock.stepEnd = end;
             }
-            else if (keyInfo->state == HOLD) {
-                seqData->editBlock.stepEnd = globalStep;
-                return true;
+            return true;
+          }
+
+          if (keyInfo->state == RELEASED) 
+          {
+            seqData->editBlock.stepKeyStates[globalStep] = false;
+
+            if(!keyInfo->hold)
+            {
+              if (seqData->editBlock.state == COPY_STEP && seqData->editBlock.stepStart >= 0) 
+              {
+                int16_t targetStep = clip->activeBar * STEP_MAX + localStep;
+                int16_t start = seqData->editBlock.stepStart;
+                int16_t end   = seqData->editBlock.stepEnd;
+                int16_t copyRange = end - start + 1;
+                
+                seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                seqData->EnableTempSnapshot();
+                for (int16_t i = 0; i < copyRange; i++) 
+                {
+                  SEQ_Pos srcPos = SEQ_Pos(seqData->editBlock.srcChannel, seqData->editBlock.srcClipNum,
+                      (start + i) / STEP_MAX, (start + i) % STEP_MAX);
+                  
+                  SEQ_Pos dstPos = SEQ_Pos(channel, clipNum,
+                      (targetStep + i) / STEP_MAX, (targetStep + i) % STEP_MAX);
+
+                  if ((targetStep + i) % STEP_MAX >= clip->barStepMax) 
+                  {
+                      targetStep = ((targetStep + i) / STEP_MAX + 1) * STEP_MAX;
+                      i--; // 重试当前step
+                      continue;
+                  }
+                  
+                  if (monoMode) 
+                  {
+                    uint8_t activeNote = channelConfig->activeNote[channel];
+                    if (seqData->FindNote(srcPos, activeNote)) 
+                    {
+                      seqData->CopyNote(srcPos, dstPos, activeNote);
+                    }
+                  } 
+                  else 
+                  {
+                    seqData->CopyStep(srcPos, dstPos);
+                  }
+                }
+
+                // 更新最大bar数
+                uint8_t lastBar = (targetStep + copyRange - 1) / STEP_MAX + 1;
+                if (lastBar > clip->barMax) {
+                    clip->barMax = lastBar;
+                }
+              }
+              return true;
             }
             return false;
+          }
         }
 
         // 普通音符编辑
@@ -758,7 +767,7 @@ namespace MatrixOS::MidiCenter
                     // MLOGD("Seq", "Editing x: %d, y: %d", editingPos.x, editingPos.y);
                     return true;
                 }
-                return true;
+                return false;
         }
     }
 
@@ -806,7 +815,9 @@ namespace MatrixOS::MidiCenter
                 thisColor = Color(RED);
             }
             // 复制状态下的显示逻辑
-            else if (seqData->editBlock.state == COPY_BAR) {
+            else if (seqData->editBlock.state == COPY_BAR && 
+                     channel == seqData->editBlock.srcChannel && 
+                     clipNum == seqData->editBlock.srcClipNum) {
                 if (seqData->editBlock.barStart >= 0) {
                     int8_t start = std::min<int8_t>(seqData->editBlock.barStart, seqData->editBlock.barEnd);
                     int8_t end = std::max<int8_t>(seqData->editBlock.barStart, seqData->editBlock.barEnd);
@@ -845,51 +856,70 @@ namespace MatrixOS::MidiCenter
         }
 
         // 复制操作
-        if (seqData->editBlock.copyKeyHeld && seqData->editBlock.state == COPY_BAR) {
+        if (seqData->editBlock.copyKeyHeld) {
+          
             if (keyInfo->state == PRESSED) {
-                int8_t start = std::min<int8_t>(seqData->editBlock.barStart, seqData->editBlock.barEnd);
-                int8_t end = std::max<int8_t>(seqData->editBlock.barStart, seqData->editBlock.barEnd);
-                int8_t range = end - start + 1;
-                
-                int8_t maxRange = static_cast<int8_t>(BAR_MAX - thisBar);
-                int8_t copyRange = std::min<int8_t>(range, maxRange);
-                
-                if (copyRange > 0) {
-                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
-                    seqData->EnableTempSnapshot();
-                    for (int8_t i = 0; i < copyRange; i++) {
-                        seqData->CopyBar(
-                            SEQ_Pos(channel, clipNum, start + i, 0),
-                            SEQ_Pos(channel, clipNum, thisBar + i, 0),
-                            monoMode ? channelConfig->activeNote[channel] : 255
-                        );
-                    }
-                    if (thisBar + copyRange > clip->barMax) {
-                        clip->barMax = thisBar + copyRange;
-                    }
-                }
+                seqData->editBlock.barKeyStates[thisBar] = true;
                 return true;
             }
             else if (keyInfo->state == HOLD) {
-                seqData->editBlock.barEnd = thisBar;
-                return true;
+              seqData->editBlock.state = COPY_BAR;
+              seqData->editBlock.srcChannel = channel;
+              seqData->editBlock.srcClipNum = clipNum;
+
+              if (seqData->editBlock.barKeyStates.count() > 0) {
+                int8_t start = BAR_MAX, end = -1;
+                for (int8_t i = 0; i < BAR_MAX; i++) {
+                  if (seqData->editBlock.barKeyStates[i]) {
+                    start = std::min(start, i);
+                    end = std::max(end, i);
+                  }
+                }
+                seqData->editBlock.barStart = start;
+                seqData->editBlock.barEnd = end;
+              }
+              return true;
             }
-            return false;
+            else if (keyInfo->state == RELEASED) {
+              seqData->editBlock.barKeyStates[thisBar] = false;
+
+              if(!keyInfo->hold && seqData->editBlock.state == COPY_BAR && seqData->editBlock.barStart >= 0)
+              {
+                seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                seqData->EnableTempSnapshot();
+                
+                uint8_t start = seqData->editBlock.barStart;
+                uint8_t end = seqData->editBlock.barEnd;
+                uint8_t copyRange = end - start + 1;
+
+                for (int8_t i = 0; i < copyRange; i++) {
+                    // 使用保存的源channel和clipNum
+                    seqData->CopyBar(
+                        SEQ_Pos(seqData->editBlock.srcChannel, seqData->editBlock.srcClipNum, start + i, 0),
+                        SEQ_Pos(channel, clipNum, thisBar + i, 0),
+                        monoMode ? channelConfig->activeNote[channel] : 255
+                    );
+                }
+                if (thisBar + copyRange > clip->barMax) {
+                  clip->barMax = thisBar + copyRange;
+                }
+                return true;
+              }
+            }
         }
 
-        // 更新 bar 按键状态
+        // bar选择操作 和 loop操作
         if (keyInfo->state == PRESSED) {
             if (!seqData->editBlock.barKeyStates[thisBar]) {
                 seqData->editBlock.barKeyStates[thisBar] = true;
-                seqData->editBlock.barKeyCount++;
-                if (seqData->editBlock.barKeyCount == 1) {
+                if (seqData->editBlock.barKeyStates.count() == 1) {
                     seqData->editBlock.loopEditBar = thisBar;
                 }
             }
         }
         else if (keyInfo->state == HOLD) {
             if (thisBar == seqData->editBlock.loopEditBar) {
-                if (seqData->editBlock.barKeyCount > 1) {
+                if (seqData->editBlock.barKeyStates.count() > 1) {
                     // 找到最小和最大的按下的 bar
                     int8_t start = BAR_MAX, end = -1;
                     for (int8_t i = 0; i < BAR_MAX; i++) {
@@ -906,7 +936,7 @@ namespace MatrixOS::MidiCenter
                         clip->SetLoop(start, end);
                     }
                 }
-                else if (seqData->editBlock.barKeyCount == 1) {
+                else if (seqData->editBlock.barKeyStates.count() == 1) {
                     seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
                     seqData->EnableTempSnapshot();
                     if (clip->HasLoop()) {
@@ -920,23 +950,21 @@ namespace MatrixOS::MidiCenter
         else if (keyInfo->state == RELEASED) {
             if (seqData->editBlock.barKeyStates[thisBar]) {
                 seqData->editBlock.barKeyStates[thisBar] = false;
-                seqData->editBlock.barKeyCount--;
-                if (seqData->editBlock.barKeyCount == 0) {
+                if (seqData->editBlock.barKeyStates.count() == 0) {
                     seqData->editBlock.loopEditBar = -1;
                 }
             }
             
             // 普通 bar 选择
-            if (!keyInfo->hold && seqData->editBlock.barKeyCount == 0) {
-                if (seqData->editBlock.copyKeyHeld || seqData->editBlock.deleteKeyHeld || 
-                    !clip->HasLoop() || (thisBar >= clip->loopStart && thisBar <= clip->loopEnd)) {
-                    if(thisBar >= clip->barMax) {
-                        seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
-                        seqData->EnableTempSnapshot();
-                        clip->barMax = thisBar + 1;
-                    }
-                    clip->activeBar = thisBar;
-                }
+            if (!keyInfo->hold && seqData->editBlock.barKeyStates.count() == 0) {
+              if ( !clip->HasLoop() || (thisBar >= clip->loopStart && thisBar <= clip->loopEnd)) {
+                  if(thisBar >= clip->barMax) {
+                      seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                      seqData->EnableTempSnapshot();
+                      clip->barMax = thisBar + 1;
+                  }
+                  clip->activeBar = thisBar;
+              }
             }
         }
         return true;
@@ -944,7 +972,6 @@ namespace MatrixOS::MidiCenter
 
     void StepSetRender(Point origin, Point offset)
     {
-      ;
         // 显示当前每个 bar 的 step 数量
         for(uint8_t x = 0; x < 16; x++) {
             Point xy = origin + offset + Point(x, 0);
@@ -1379,6 +1406,10 @@ namespace MatrixOS::MidiCenter
     void ResetEditBlock()
     {
         seqData->editBlock = SEQ_EditBlock();
+        seqData->editBlock.barKeyStates.reset();
+        seqData->editBlock.stepKeyStates.reset();
+        seqData->editBlock.srcChannel = 255;  // 重置源channel
+        seqData->editBlock.srcClipNum = 255;  // 重置源clipNum
     }
 
   };

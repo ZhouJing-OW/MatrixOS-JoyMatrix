@@ -804,17 +804,20 @@ namespace MatrixOS::MidiCenter
   enum    EditState : uint8_t {EDIT_NONE, COPY_BAR, COPY_STEP};
   struct  SEQ_EditBlock {
       EditState state = EDIT_NONE;
+      int8_t srcChannel = -1;
+      int8_t srcClipNum = -1;  
       int8_t barStart = -1;
       int8_t barEnd = -1;
-      int8_t stepStart = -1;
-      int8_t stepEnd = -1;
+      int16_t stepStart = -1;
+      int16_t stepEnd = -1;
       int8_t loopEditBar = -1;
-      bool barKeyStates[BAR_MAX] = {false};
-      uint8_t barKeyCount = 0;
       bool copyKeyHeld = false;
       bool deleteKeyHeld = false;
       Point deleteBarTarget = Point(-1, -1);
       Point deleteStepTarget = Point(-1, -1);
+
+      std::bitset<BAR_MAX> barKeyStates;
+      std::bitset<BAR_MAX * STEP_MAX> stepKeyStates;
   };
 
   struct  SEQ_History
