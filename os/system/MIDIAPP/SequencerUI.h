@@ -75,6 +75,10 @@ namespace MatrixOS::MidiCenter
     const char      settingBtnName[8]     = "Setting";
     const Point     settingBtnPos         = Point(0, 3);
 
+    const Color     QuantizeBtnColor      = Color(TURQUOISE);
+    const char      QuantizeBtnName[9]    = "Quantize";
+    const Point     QuantizeBtnPos        = Point(0, 2);
+
     // const Color     captureBtnColor       = Color(BLUE);
     // const char      captureBtnName[8]     = "Capture";
     // const Point     captureBtnPos         = Point(0, 2);
@@ -213,6 +217,7 @@ namespace MatrixOS::MidiCenter
                 ButtonRender(origin, rightBtnPos[0], Color(rightBtnColor[HoldMoveSuccess]).DimIfNot(hasNotes));
                 ButtonRender(origin, transUpBtnPos[0], Color(transUpBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
                 ButtonRender(origin, transDownBtnPos[0], Color(transDownBtnColor[HoldTransSuccess]).DimIfNot(hasNotes));
+                ButtonRender(origin, QuantizeBtnPos, Color(QuantizeBtnColor).DimIfNot(hasOffset()));
                 if(stepEditing.editing)
                 {
                   ButtonRender(origin, leftOffsetBtnPos[0], Color(leftOffsetBtnColor[HoldOffsetSuccess]).DimIfNot(hasNotes));
@@ -279,6 +284,8 @@ namespace MatrixOS::MidiCenter
               return TransBtnKeyEvent(xy, transUpBtnPos[0], keyInfo, true);
             if(InArea(xy, transDownBtnPos[0], Dimension(1, 1)))
               return TransBtnKeyEvent(xy, transDownBtnPos[0], keyInfo, false);
+            if(InArea(xy, QuantizeBtnPos, Dimension(1, 1)))
+              return QuantizeBtnKeyEvent(xy, QuantizeBtnPos, keyInfo);
             
             if(stepEditing.editing)
             {
@@ -1249,6 +1256,42 @@ namespace MatrixOS::MidiCenter
         return false;
     }
 
+    bool QuantizeBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
+    {
+      if(keyInfo->state == RELEASED && !keyInfo->hold)
+      {
+        if(!hasOffset()) return false;
+        
+        if(stepEditing.editing)
+        {
+          seqData->SetOffset(stepEditing.pos, 0, stepEditing.note);
+          stepEditing.edited = true;
+        }
+        else
+        {
+          seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+          seqData->EnableTempSnapshot();
+          
+          uint8_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+          uint8_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;  
+          for(uint8_t bar = startBar; bar <= endBar; bar++)
+          {
+            for(uint8_t step = 0; step < clip->barStepMax; step++)
+            {
+              seqData->SetOffset(SEQ_Pos(channel, clipNum, bar, step), 0, monoMode ? channelConfig->activeNote[channel] : 255);
+            }
+          }
+        }
+        
+      }
+      if(keyInfo->state == HOLD)
+      {
+        MatrixOS::UIInterface::TextScroll(QuantizeBtnName, QuantizeBtnColor);
+        return true;
+      }
+      return false;
+    }
+
     // bool CaptureBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
     // {
     //   if(keyInfo->state == RELEASED && !keyInfo->hold)
@@ -1274,6 +1317,29 @@ namespace MatrixOS::MidiCenter
     //   }
     //   return false;
     // }
+
+    bool hasOffset()
+    {
+      if(stepEditing.editing)
+      {
+        return seqData->GetOffset(stepEditing.pos, stepEditing.note) != 0;
+      } 
+      else
+      {
+        if(clip->Empty()) return false;
+        int8_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+        int8_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+
+        for(int8_t bar = startBar; bar <= endBar; bar++)
+        {
+          for(uint8_t step = 0; step < clip->barStepMax; step++)
+          {
+            if(seqData->GetOffset(SEQ_Pos(channel, clipNum, bar, step), monoMode ? channelConfig->activeNote[channel] : 255) != 0) return true;
+          }
+        }
+      }
+      return false;
+    }
 
     void SetGate(SEQ_Pos targetPos)
     {

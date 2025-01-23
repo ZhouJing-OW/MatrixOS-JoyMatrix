@@ -28,9 +28,9 @@ namespace MatrixOS::MidiCenter
     {
       Device::AnalogInput::SetUpDown(&renderFrom, scrollMax);
 
-      for (uint8_t x = 0; x < dimension.x; x++){
+      for (uint8_t x = 0; x < dimension.x; x++) {
         uint8_t editingClip = seqData->EditingClip(x);
-        for (uint8_t y = 0; y < dimension.x; y++){
+        for (uint8_t y = 0; y < dimension.x; y++) {
           uint8_t thisClip = renderFrom + y;
           if(thisClip >= CLIP_MAX)
           {

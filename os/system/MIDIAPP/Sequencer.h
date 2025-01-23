@@ -26,7 +26,7 @@ namespace MatrixOS::MidiCenter
     bool noteBuff = false;
     bool end = true;
     bool recording = false;
-    bool capturing = false;
+    int16_t lastCapPoint = -1;
 
     Sequencer(uint8_t channel)
     {
@@ -41,7 +41,7 @@ namespace MatrixOS::MidiCenter
 
    private:
     bool HasNoteInRange(uint8_t channel, uint8_t clipNum, int8_t startBar, int8_t endBar);
-    void MoveHead(int16_t& head);
+    void MoveHead();
     void GetNoteQueue(bool firstStep = false);
     void GetAutomQueue();
     void FirstStepBuff();

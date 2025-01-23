@@ -1638,23 +1638,63 @@ namespace MatrixOS::MidiCenter
     void            ClearCapture() { capture = SEQ_Snapshot(); }
 
     void            EnableCapture() { 
-      if(capture.Point == -1)
-        return;
-      SEQ_Clip* clip = Clip(capture.position.ChannelNum(), capture.position.ClipNum());
-      if(!clip) return;
+        if(capture.Point == -1) return;
+        
+        SEQ_Clip* clip = Clip(capture.position.ChannelNum(), capture.position.ClipNum());
+        if(!clip) return;
 
-      for(auto& step : capture.steps) {
-        SEQ_Pos stepPos = step.second.Position();
-        std::vector<const SEQ_Note*> notes = step.second.GetNotes();
-        for(const SEQ_Note* note : notes) {
-          AddNote(stepPos, *note);
+        // 确定应用范围
+        uint8_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+        uint8_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+        uint16_t rangeSize = (endBar - startBar + 1) * STEP_MAX;
+
+        // 计算目标起始位置
+        int16_t targetPos = ((capture.Point / STEP_MAX) % (endBar - startBar + 1)) * STEP_MAX 
+                            + (capture.Point % STEP_MAX);
+        int16_t srcPos = capture.Point;
+
+        // 遍历整个应用范围
+        for(uint16_t i = 0; i < rangeSize; i++) {
+            uint8_t targetBar = startBar + (targetPos / STEP_MAX);
+            uint8_t targetStep = targetPos % STEP_MAX;
+
+            if (targetStep < clip->barStepMax) {
+                // 处理音符数据
+                auto stepIt = capture.steps.find(srcPos);
+                if (stepIt != capture.steps.end()) {
+                    std::vector<const SEQ_Note*> notes = stepIt->second.GetNotes();
+                    for(const SEQ_Note* note : notes) {
+                        AddNote(SEQ_Pos(capture.position.ChannelNum(), 
+                                      capture.position.ClipNum(), 
+                                      targetBar, 
+                                      targetStep), 
+                               *note);
+                    }
+                }
+
+                // 处理自动化数据
+                auto automIt = capture.automs.find(srcPos);
+                if (automIt != capture.automs.end()) {
+                    AddAutom(automIt->second, 
+                            SEQ_Pos(capture.position.ChannelNum(),
+                                   capture.position.ClipNum(),
+                                   targetBar,
+                                   targetStep));
+                }
+            }
+
+            targetPos--;
+            if (targetPos < startBar * STEP_MAX) {
+                targetPos = (endBar + 1) * STEP_MAX - 1;
+            }
+
+            srcPos--;
+            if (srcPos < 0) {
+                srcPos = BAR_MAX * STEP_MAX - 1;
+            }
         }
-      }
-      
-      for(auto& autom : capture.automs) {
-        AddAutom(autom.second, autom.second.Position());
-      }
-      ClearCapture();
+        
+        ClearCapture();
     }
 
     bool            HasCapture() { return capture.Point != -1; } 

@@ -36,8 +36,7 @@ namespace MatrixOS::MidiCenter
     {
       // if(channel == 0) MLOGD("Sequencer", "tickCount: %d, PlayHead: %d", tickCount, playHead);
       stepTime = stepInterval / 2 + MatrixOS::SYS::Millis();
-      MoveHead(buffHead);
-      capHead = buffHead;
+      MoveHead();
       GetNoteQueue();
       noteBuff = true;
     }
@@ -70,14 +69,11 @@ namespace MatrixOS::MidiCenter
     if(cap->position.ChannelNum() != this->channel || cap->position.ClipNum() != this->clipNum) seqData->ClearCapture(); 
     if(cap->Point == -1) {
       cap->position = SEQ_Pos(channel, clipNum, 0, 0);
-      if(transportState.play) capHead = buffHead; 
-      else capHead = 0;
       cap->Point = capHead;
     }
 
     SEQ_Step tempStep = SEQ_Step();
     tempStep.SetPos(SEQ_Pos(channel, clipNum, capHead / STEP_MAX, capHead % STEP_MAX));
-    uint16_t stepIndex = tempStep.Position().BarNum() * STEP_MAX + tempStep.Position().Number();
     
     //如果capHead > Point, 则删除capHead到 Point之间的step
     if(capHead > cap->Point) {
@@ -85,6 +81,12 @@ namespace MatrixOS::MidiCenter
         cap->steps.erase(i);
       }
     }
+    if(lastCapPoint > 0) {
+      for(uint16_t i = BAR_MAX * STEP_MAX - 1; i > lastCapPoint; i--) {
+        cap->steps.erase(i);
+      }
+      lastCapPoint = -1;
+    }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 
     if(byte2 > 0) {
       if(transportState.play) {
@@ -92,7 +94,7 @@ namespace MatrixOS::MidiCenter
         int8_t offset = ((now - stepTime) * 120) / stepInterval;
         offset = std::clamp(offset, int8_t(-60), int8_t(60));
         tempStep.AddNote(SEQ_Note(byte1, byte2, 0, offset));
-        auto step_it = cap->steps.emplace(stepIndex, tempStep).first;
+        auto step_it = cap->steps.emplace(capHead, tempStep).first;
         recNotes.emplace(byte1, std::make_pair(stepTime,  &(step_it->second)));
         cap->Point = capHead;
       }
@@ -124,55 +126,44 @@ namespace MatrixOS::MidiCenter
     end = true;
   }
 
-  void Sequencer::MoveHead(int16_t& head)
+  void Sequencer::MoveHead()
   {
-    head++;
     SEQ_Clip* clip = seqData->Clip(channel, clipNum);
-    if (!clip) return;
 
-    if (head % STEP_MAX >= clip->barStepMax) {
-      head = (head / STEP_MAX + 1) * STEP_MAX;
-    }
-
-    uint8_t currentBar = head / STEP_MAX;
-    uint8_t currentStep = head % STEP_MAX;
+    // 移动 buffHead
+    uint8_t nextBuffBar = buffHead / STEP_MAX;
+    uint8_t nextCapBar = capHead / STEP_MAX;
+    uint8_t nextStep = buffHead % STEP_MAX;
     
-    if (clip->HasLoop()) {
-      uint16_t loopStart = clip->loopStart * STEP_MAX;
-      uint16_t loopEnd = clip->loopEnd * STEP_MAX + clip->barStepMax;
-
-      if(head >= loopEnd) { head = loopStart; }
-      if(head < loopStart) { head = loopStart + currentStep; }
-
-      if (recording) {
-        if (!HasNoteInRange(channel, clipNum, clip->loopStart, clip->loopEnd)) {
-          head = clip->loopStart * STEP_MAX + currentStep;
-          return;
-        }
-      }
-    } else {
-      
-      if (recording) {
-        if (!HasNoteInRange(channel, clipNum, 0, clip->barMax - 1)) {
-          head = currentStep;
-          currentBar = 0;
+    // 检查是否需要跳转到下一个 bar
+    if (++nextStep >= clip->barStepMax) {
+        nextStep = 0;
+        nextBuffBar++;
+        nextCapBar++;
+        
+        // 处理 buffHead 的 loop 和 bar 范围限制
+        if (clip->HasLoop()) {
+            if (nextBuffBar > clip->loopEnd) {
+                nextBuffBar = clip->loopStart;
+            }
+        } else if (nextBuffBar >= clip->barMax) {
+            nextBuffBar = 0;
         }
 
-        if (currentBar >= clip->barMax - 1 && clip->barMax < BAR_MAX) {
-          clip->barMax = currentBar + 1;
+        // 处理 capHead 的 bar 范围
+        if (nextCapBar >= BAR_MAX) {
+            nextCapBar = 0;
         }
-
-        if (currentBar >= BAR_MAX) {
-          head = 0;
-        }
-        return;
-      } 
-
-      if(currentBar >= clip->barMax ) { head = 0; }
-      
     }
     
-    
+    buffHead = nextBuffBar * STEP_MAX + nextStep;
+    capHead = nextCapBar * STEP_MAX + nextStep;
+
+    if(capHead == 0) {
+      SEQ_Snapshot* cap = seqData->GetCapture();
+      lastCapPoint = cap->Point;
+      cap->Point = 0;
+    }
   }
 
   void Sequencer::GetNoteQueue(bool firstStep)
