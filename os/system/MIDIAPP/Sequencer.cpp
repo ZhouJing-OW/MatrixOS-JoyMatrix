@@ -49,7 +49,8 @@ namespace MatrixOS::MidiCenter
   void Sequencer::Record(uint8_t channel, uint8_t byte1, uint8_t byte2)
   {
     if (byte2 > 0) {  // Note On
-        if(recording) seqData->EnableTempSnapshot();
+        seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+        seqData->EnableTempSnapshot();
         
         SEQ_Step* recStep = seqData->Step(SEQ_Pos(channel, clipNum, buffHead / STEP_MAX, buffHead % STEP_MAX), true);
         uint32_t now = MatrixOS::SYS::Millis();
@@ -144,13 +145,20 @@ namespace MatrixOS::MidiCenter
         uint8_t startBar = clip->HasLoop() ? clip->loopStart : 0;
         uint8_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
 
-        if(recording && !HasNoteInRange(channel, clipNum, startBar, endBar))
-          nextBuffBar = startBar;
+        if(recording)
+        {
+          if(!HasNoteInRange(channel, clipNum, startBar, endBar))
+            nextBuffBar = startBar;
+          else if(nextBuffBar > endBar)
+          {
+            if (!clip->HasLoop() && nextBuffBar < BAR_MAX)
+              clip->barMax = nextBuffBar + 1;
+            else 
+              nextBuffBar = startBar;
+          }
+        }
         else if(nextBuffBar > endBar)
         {
-          if (!clip->HasLoop() && nextBuffBar < BAR_MAX)
-            clip->barMax = nextBuffBar + 1;
-          else 
             nextBuffBar = startBar;
         }
         

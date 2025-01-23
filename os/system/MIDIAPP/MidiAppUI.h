@@ -24,7 +24,7 @@ namespace MatrixOS::MidiCenter
     int8_t largePad[16];
     bool holdFN = false;
 
-    enum MultiPadType                       { FULL_PAD,         HALF_PAD,           MINI_PAD };
+    enum MultiPadType                       {FULL_PAD,          HALF_PAD,           MINI_PAD};
     const Point MultiPadOrigin[3] =         {Point(0, 0),       Point(0, 2),        Point(4, 2)};
     const Dimension MultiPadDimension[3] =  {Dimension(16, 4),  Dimension(16, 2),   Dimension(8, 2)};
 
@@ -98,6 +98,10 @@ namespace MatrixOS::MidiCenter
         if (ui->fullScreen < 0) largePad[channel] = true;
         else largePad[channel] = false;
       }
+      
+      for(uint8_t x = 0; x < dimension.x; x++)                                      // set all pixel to blank
+        for(uint8_t y = 0; y < dimension.y; y++)
+          MatrixOS::LED::SetColor(Point(x, y) + origin, Color(BLANK));
 
       if(largePad[channel] && !Device::KeyPad::fnState.active())                                                         // full screen keyboard
       {
@@ -109,10 +113,6 @@ namespace MatrixOS::MidiCenter
         multiPad->Render(origin + MultiPadOrigin[FULL_PAD]);
         return true;
       }
-
-      for(uint8_t x = 0; x < dimension.x; x++)                                      // set all pixel to blank
-        for(uint8_t y = 0; y < dimension.y; y++)
-          MatrixOS::LED::SetColor(Point(x, y) + origin, Color(BLANK));
       // MatrixOS::LED::SetColor(origin, Color(RED));                                  // the back button
 
       if(ui != nullptr && ui->fullScreen && !Device::KeyPad::fnState.active())
