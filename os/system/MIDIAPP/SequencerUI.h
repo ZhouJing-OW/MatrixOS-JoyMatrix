@@ -554,7 +554,7 @@ namespace MatrixOS::MidiCenter
       // 如果在编辑状态，闪烁offset标识
       if(stepEditing.editing && MatrixOS::SYS::Millis() / 500 % 2 == 0)
       {
-        int8_t stepOffset = seqData->GetOffset(stepEditing.pos);
+        int8_t stepOffset = seqData->GetOffset(stepEditing.pos, stepEditing.note);
         if (stepOffset != 0)
         {
           uint8_t currentStep = stepEditing.pos.Number();
