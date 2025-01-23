@@ -140,16 +140,20 @@ namespace MatrixOS::MidiCenter
         nextStep = 0;
         nextBuffBar++;
         nextCapBar++;
-        
-        // 处理 buffHead 的 loop 和 bar 范围限制
-        if (clip->HasLoop()) {
-            if (nextBuffBar > clip->loopEnd) {
-                nextBuffBar = clip->loopStart;
-            }
-        } else if (nextBuffBar >= clip->barMax) {
-            nextBuffBar = 0;
-        }
 
+        uint8_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+        uint8_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+
+        if(recording && !HasNoteInRange(channel, clipNum, startBar, endBar))
+          nextBuffBar = startBar;
+        else if(nextBuffBar > endBar)
+        {
+          if (!clip->HasLoop() && nextBuffBar < BAR_MAX)
+            clip->barMax = nextBuffBar + 1;
+          else 
+            nextBuffBar = startBar;
+        }
+        
         // 处理 capHead 的 bar 范围
         if (nextCapBar >= BAR_MAX) {
             nextCapBar = 0;
@@ -159,8 +163,8 @@ namespace MatrixOS::MidiCenter
     buffHead = nextBuffBar * STEP_MAX + nextStep;
     capHead = nextCapBar * STEP_MAX + nextStep;
 
-    if(capHead == 0) {
-      SEQ_Snapshot* cap = seqData->GetCapture();
+    SEQ_Snapshot* cap = seqData->GetCapture();
+    if(capHead == 0 && cap->Point != -1) {
       lastCapPoint = cap->Point;
       cap->Point = 0;
     }
