@@ -83,13 +83,13 @@ bool MultiPad::DrumKeyEvent(Point xy, KeyInfo* keyInfo)
     uint8_t i = 0;
     if (xy.x < width)
     {
+      i = xy.x + (dimension.y - xy.y - 1) * width;
       if((Device::KeyPad::fnState.active())) 
       {
         channelConfig->activeNote[channel] = (con + i)->byte1;
         MatrixOS::Component::DrumNote_Setting(drumConfig, pos + i);
         return true;
       } 
-      i = xy.x + (dimension.y - xy.y - 1) * width;
     }
     else if (xy.x >= dimension.x - width && !settingMode)
       i = xy.x - (dimension.x - width) + (dimension.y - xy.y - 1) * width;
