@@ -123,6 +123,7 @@ namespace MatrixOS::MidiCenter
         buffHead = 0;
     }
     
+    capHead = 0;
     firstStepBuff = false;
     end = true;
   }

@@ -1339,16 +1339,7 @@ namespace MatrixOS::MidiCenter
           {
               SEQ_Pos srcPos(src.ChannelNum(), src.ClipNum(), src.BarNum(), s);
               SEQ_Pos dstPos(dst.ChannelNum(), dst.ClipNum(), dst.BarNum(), s);
-              
-              // 获取源step的所有音符
-              SEQ_Step* tempStep = Step(srcPos);
-              std::vector<const SEQ_Note*> srcNotes = tempStep->GetNotes();
-              
-              for(const SEQ_Note* srcNote : srcNotes)
-              {
-                  if(srcNote->note == note)
-                      AddNote(dstPos, *srcNote);
-              }
+              CopyNote(srcPos, dstPos, note);
           }
       }
     }

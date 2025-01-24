@@ -79,6 +79,10 @@ namespace MatrixOS::MidiCenter
     const char      QuantizeBtnName[9]    = "Quantize";
     const Point     QuantizeBtnPos        = Point(0, 2);
 
+    // const Color     duplicateBtnColor[2]  = {Color(CYAN), Color(RED)};
+    // const char      duplicateBtnName[10]  = "Duplicate";
+    // const Point     duplicateBtnPos       = Point(1, 3);
+
     // const Color     captureBtnColor       = Color(BLUE);
     // const char      captureBtnName[8]     = "Capture";
     // const Point     captureBtnPos         = Point(0, 2);
@@ -227,6 +231,7 @@ namespace MatrixOS::MidiCenter
                 // ButtonRender(origin, copyBtnPos, seqData->editBlock.copyKeyHeld ? Color(WHITE) : copyBtnColor);
                 // ButtonRender(origin, deleteBtnPos, seqData->editBlock.deleteKeyHeld ? Color(WHITE) : deleteBtnColor);
                 ButtonRender(origin, settingBtnPos, Color(settingBtnColor).Dim());
+                // ButtonRender(origin, duplicateBtnPos, Color(duplicateBtnColor[Device::KeyPad::Shift()]));
                 // ButtonRender(origin, captureBtnPos, Color(captureBtnColor).DimIfNot(seqData->HasCapture()));
                 // ButtonRender(origin, undoBtnPos, Color(undoBtnColor).DimIfNot(seqData->CanUndo()));
                 // ButtonRender(origin, redoBtnPos, Color(redoBtnColor).DimIfNot(seqData->CanRedo()));
@@ -286,7 +291,6 @@ namespace MatrixOS::MidiCenter
               return TransBtnKeyEvent(xy, transDownBtnPos[0], keyInfo, false);
             if(InArea(xy, QuantizeBtnPos, Dimension(1, 1)))
               return QuantizeBtnKeyEvent(xy, QuantizeBtnPos, keyInfo);
-            
             if(stepEditing.editing)
             {
               if(InArea(xy, leftOffsetBtnPos[0], Dimension(1, 1)))
@@ -302,6 +306,8 @@ namespace MatrixOS::MidiCenter
               //   return DeleteBtnKeyEvent(xy, deleteBtnPos, keyInfo);
               if(InArea(xy, settingBtnPos, Dimension(1, 1)))
                 return SettingBtnKeyEvent(xy, settingBtnPos, keyInfo);
+              // if(InArea(xy, duplicateBtnPos, Dimension(1, 1)))
+              //   return DuplicateBtnKeyEvent(xy, duplicateBtnPos, keyInfo);
               // if(InArea(xy, captureBtnPos, Dimension(1, 1)))
               //   return CaptureBtnKeyEvent(xy, captureBtnPos, keyInfo);
               // if(InArea(xy, undoBtnPos, Dimension(1, 1)))
@@ -937,11 +943,10 @@ namespace MatrixOS::MidiCenter
                     }
                     
                     // 设置 loop 范围
-                    if (end - start + 1 != BAR_MAX) {
-                        seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
-                        seqData->EnableTempSnapshot();
-                        clip->SetLoop(start, end);
-                    }
+                    seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+                    seqData->EnableTempSnapshot();
+                    clip->SetLoop(start, end);
+                    
                 }
                 else if (seqData->editBlock.barKeyStates.count() == 1) {
                     seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
@@ -1065,6 +1070,59 @@ namespace MatrixOS::MidiCenter
         }
         return false;
     }
+
+    // bool DuplicateBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
+    // {
+
+    //   uint8_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+    //   uint8_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+    //   uint8_t loopLength = endBar - startBar + 1;
+      
+    //   if(keyInfo->state == RELEASED && !keyInfo->hold)
+    //   {
+    //     if(Device::KeyPad::Shift())
+    //     {
+    //       if(endBar - startBar < 1) return false;
+
+    //       seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+    //       seqData->EnableTempSnapshot();
+
+    //       // 删除loop范围内的后一半的bar
+    //       for(uint8_t bar = BAR_MAX - 1; bar >= startBar + loopLength / 2; bar--)
+    //       {
+    //         seqData->ClearBar(SEQ_Pos(channel, clipNum, bar, 0));
+    //       }
+    //       // 有loop时设置loop范围，无loop时设置barMax
+    //       if(clip->HasLoop())
+    //       {
+    //         clip->SetLoop(startBar, startBar + loopLength / 2 - 1);
+    //       }
+    //       clip->barMax = startBar + loopLength / 2;
+    //     }
+    //     else
+    //     {
+    //       if(BAR_MAX - startBar < loopLength * 2) return false;
+
+    //       seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+    //       seqData->EnableTempSnapshot();
+
+    //       // 将当前loop范围的所有bar向后重复一遍
+    //       for (uint8_t bar = startBar; bar <= endBar; bar++)
+    //       {
+    //         seqData->CopyBar(SEQ_Pos(channel, clipNum, bar, 0), SEQ_Pos(channel, clipNum, bar + loopLength, 0));
+    //       }
+
+    //       // 有loop时设置loop范围，无loop时设置barMax
+    //       if(clip->HasLoop())
+    //       {
+    //         clip->SetLoop(startBar, startBar + loopLength * 2 - 1);
+    //       }
+    //       clip->barMax = startBar + loopLength * 2;
+    //     }
+    //     return true;
+    //   }
+    //   return false;
+    // }
     
     // bool UndoBtnKeyEvent(Point xy, Point offset, KeyInfo* keyInfo)
     // {
@@ -1327,10 +1385,10 @@ namespace MatrixOS::MidiCenter
       else
       {
         if(clip->Empty()) return false;
-        int8_t startBar = clip->HasLoop() ? clip->loopStart : 0;
-        int8_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+        uint8_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+        uint8_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
 
-        for(int8_t bar = startBar; bar <= endBar; bar++)
+        for(uint8_t bar = startBar; bar <= endBar; bar++)
         {
           for(uint8_t step = 0; step < clip->barStepMax; step++)
           {

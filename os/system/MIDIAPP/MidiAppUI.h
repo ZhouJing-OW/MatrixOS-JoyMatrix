@@ -308,6 +308,8 @@ namespace MatrixOS::MidiCenter
     pair<uint16_t, uint8_t>* buttons = FBButtons2;
     uint8_t count = 8;
     bool shift = false;
+    bool shiftCopy = false;
+    bool shiftDelete = false;
 
     ~SubMidiAppUI() 
     {
@@ -448,7 +450,48 @@ namespace MatrixOS::MidiCenter
       }
       else if(keyInfo->state == RELEASED)
       {
-        if(!shift) seqData->editBlock = SEQ_EditBlock();
+        if(shift) 
+        {
+          shiftDelete = true;
+          return true;
+        }
+
+        if(shiftDelete)
+        {
+          shiftDelete = false;
+          seqData->editBlock = SEQ_EditBlock();
+          return true;
+        }
+        
+        seqData->editBlock = SEQ_EditBlock();
+
+        if(!keyInfo->shortHold) // half
+        {
+          uint8_t channel = MatrixOS::UserVar::global_channel;
+          uint8_t clipNum = seqData->EditingClip(channel);
+          SEQ_Clip* clip  = seqData->Clip(channel, clipNum);
+
+          uint8_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+          uint8_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+          uint8_t loopLength = endBar - startBar + 1;
+
+          if(endBar - startBar < 1) return false;
+
+          seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+          seqData->EnableTempSnapshot();
+
+          // 删除loop范围内的后一半的bar
+          for(uint8_t bar = BAR_MAX - 1; bar >= startBar + loopLength / 2; bar--)
+          {
+            seqData->ClearBar(SEQ_Pos(channel, clipNum, bar, 0));
+          }
+          // 有loop时设置loop范围，无loop时设置barMax
+          if(clip->HasLoop())
+          {
+            clip->SetLoop(startBar, startBar + loopLength / 2 - 1);
+          }
+          clip->barMax = startBar + loopLength / 2;
+        }
         return true;
       }
       return false;
@@ -465,7 +508,49 @@ namespace MatrixOS::MidiCenter
         }
         else if(keyInfo->state == RELEASED)
         {
-          if(!shift)seqData->editBlock = SEQ_EditBlock();
+          if(shift)
+          {
+            shiftCopy = true;
+            return true;
+          }
+
+          if(shiftCopy)
+          {
+            shiftCopy = false;
+            seqData->editBlock = SEQ_EditBlock();
+            return true;
+          }
+
+          seqData->editBlock = SEQ_EditBlock();
+
+          if(!keyInfo->shortHold) //Duplicate
+          {
+            uint8_t channel = MatrixOS::UserVar::global_channel;
+            uint8_t clipNum = seqData->EditingClip(channel);
+            SEQ_Clip* clip  = seqData->Clip(channel, clipNum);
+
+            uint8_t startBar = clip->HasLoop() ? clip->loopStart : 0;
+            uint8_t endBar = clip->HasLoop() ? clip->loopEnd : clip->barMax - 1;
+            uint8_t loopLength = endBar - startBar + 1;
+
+            if(BAR_MAX - startBar < loopLength * 2) return false;
+
+            seqData->CreateTempSnapshot(SEQ_Pos(channel, clipNum, 0, 0));
+            seqData->EnableTempSnapshot();
+
+            // 将当前loop范围的所有bar向后重复一遍
+            for (uint8_t bar = startBar; bar <= endBar; bar++)
+            {
+              seqData->CopyBar(SEQ_Pos(channel, clipNum, bar, 0), SEQ_Pos(channel, clipNum, bar + loopLength, 0));
+            }
+
+            // 有loop时设置loop范围，无loop时设置barMax
+            if(clip->HasLoop())
+            {
+              clip->SetLoop(startBar, startBar + loopLength * 2 - 1);
+            }
+            clip->barMax = startBar + loopLength * 2;
+          }
           return true;
         }
         return false;
